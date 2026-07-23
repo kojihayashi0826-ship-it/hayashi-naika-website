@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>林内科医院｜予約・スタッフ募集編集</title>
+  <link rel="stylesheet" href="site-editor.css?v=20260724-1">
+  <script src="site-editor.js?v=20260724-1" defer></script>
+</head>
+<body>
+  <header class="editor-header">
+    <div><strong>林内科医院</strong><span>予約・スタッフ募集編集</span></div>
+    <a href="./" target="_blank" rel="noopener">公開サイトを見る</a>
+  </header>
+  <main class="editor-main">
+    <section class="editor-intro">
+      <h1>表示内容を編集</h1>
+      <p>ここで変更しても公開サイトは直接変わりません。最後にJSONファイルを作成し、GitHubの <code>data/site-updates.json</code> と置き換えてください。</p>
+      <div class="load-row">
+        <button type="button" class="secondary" data-load-current>現在の設定を読み込む</button>
+        <label class="file-button">JSONを選択<input type="file" accept="application/json,.json" data-file-input></label>
+        <span data-load-status>未読込</span>
+      </div>
+    </section>
+
+    <form data-editor-form>
+      <section class="editor-card">
+        <div class="card-heading"><div><p>RESERVATION</p><h2>デジスマ予約ボタン</h2></div><label class="switch"><input type="checkbox" data-field="reservation.enabled"><span>表示する</span></label></div>
+        <label>ボタンの文言<input type="text" maxlength="50" data-field="reservation.buttonText"></label>
+        <label>デジスマ予約URL<input type="url" maxlength="500" placeholder="https://qr.digikar-smart.jp/…/reserve" data-field="reservation.url"></label>
+        <label>補足文<textarea rows="3" maxlength="250" data-field="reservation.note"></textarea></label>
+      </section>
+
+      <section class="editor-card">
+        <div class="card-heading"><div><p>RECRUIT</p><h2>スタッフ募集</h2></div><label class="switch"><input type="checkbox" data-field="recruitment.enabled"><span>表示する</span></label></div>
+        <label>見出し<input type="text" maxlength="80" data-field="recruitment.title"></label>
+        <label>案内文<textarea rows="3" maxlength="400" data-field="recruitment.lead"></textarea></label>
+        <div class="conditions-heading"><h3>募集条件</h3><button type="button" class="secondary" data-add-condition>条件を追加</button></div>
+        <div class="conditions" data-conditions></div>
+        <label>応募方法・補足<textarea rows="3" maxlength="500" data-field="recruitment.note"></textarea></label>
+        <div class="two-columns">
+          <label>問い合わせボタンの文言<input type="text" maxlength="50" data-field="recruitment.buttonText"></label>
+          <label>問い合わせ先<input type="text" maxlength="500" placeholder="tel:0761246288" data-field="recruitment.buttonUrl"></label>
+        </div>
+      </section>
+
+      <div class="download-bar">
+        <p data-editor-message>設定を読み込み、内容を編集してください。</p>
+        <button type="submit" class="primary">更新用JSONを作成</button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
+Disallow: /site-editor.html
 
-Sitemap: https://www.hayashi-clinic.example/sitemap.xml
+Sitemap: https://www.hayashinaika.clinic/sitemap.xml

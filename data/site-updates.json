@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-23T16:00:00+09:00",
+  "updatedAt": "2026-07-24T00:00:00+09:00",
   "highlight": {
     "enabled": false,
     "mode": "banner",
@@ -7,6 +7,47 @@
     "body": "",
     "linkText": "",
     "linkUrl": ""
+  },
+  "reservation": {
+    "enabled": false,
+    "buttonText": "予約はこちら（デジスマ）",
+    "url": "",
+    "note": "予約された方を優先してご案内しますが、診療状況によりお待ちいただく場合があります。"
+  },
+  "recruitment": {
+    "enabled": false,
+    "title": "スタッフ募集中",
+    "lead": "林内科医院では、一緒に働いていただけるスタッフを募集しています。",
+    "conditions": [
+      {
+        "id": "recruit-1",
+        "label": "募集職種",
+        "value": "正看護師・准看護師"
+      },
+      {
+        "id": "recruit-2",
+        "label": "年齢",
+        "value": "詳細はお問い合わせください"
+      },
+      {
+        "id": "recruit-3",
+        "label": "経験",
+        "value": "経験・ブランク等はご相談ください"
+      },
+      {
+        "id": "recruit-4",
+        "label": "待遇",
+        "value": "経験・勤務条件等を考慮のうえ決定します"
+      },
+      {
+        "id": "recruit-5",
+        "label": "通勤",
+        "value": "車通勤可"
+      }
+    ],
+    "note": "応募方法や勤務条件の詳細は、診療時間内にお電話でお問い合わせください。",
+    "buttonText": "電話で問い合わせる",
+    "buttonUrl": "tel:0761246288"
   },
   "news": [],
   "closures": [],

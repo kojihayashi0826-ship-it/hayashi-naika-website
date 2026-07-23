@@ -57,6 +57,8 @@ const defaultManagedContent = {
   // 検査・ワクチン・健診・重要なお知らせ（ハイライト）は data/site-updates.json で編集します。
   // 管理データ取得失敗時に、古いお知らせや仮の休診日を代替表示しない設計です。
   highlight: { enabled: false, mode: "banner", title: "", body: "", linkText: "", linkUrl: "" },
+  reservation: { enabled: false, buttonText: "予約はこちら（デジスマ）", url: "", note: "" },
+  recruitment: { enabled: false, title: "スタッフ募集中", lead: "", conditions: [], note: "", buttonText: "", buttonUrl: "" },
   tests: [],
   vaccines: [],
   vaccineNote: "",
@@ -157,7 +159,11 @@ const readableJapaneseSelector = [
   ".faq-list p",
   ".contact-details",
   ".site-banner-text",
-  ".highlight-modal-box p"
+  ".highlight-modal-box p",
+  ".recruitment-section h2",
+  ".recruitment-section p",
+  ".recruitment-conditions dt",
+  ".recruitment-conditions dd"
 ].join(",");
 
 function escapeForRegExp(value) {
@@ -513,6 +519,7 @@ function initPageMotion() {
     ".map-card",
     ".access-info",
     ".news-list article",
+    ".recruitment-card",
     ".faq-list details",
     ".contact-inner"
   ].join(","));
@@ -591,6 +598,10 @@ async function loadManagedContent() {
       news: Array.isArray(content.news) ? content.news : [],
       highlight: (content.highlight && typeof content.highlight === "object")
         ? content.highlight : defaultManagedContent.highlight,
+      reservation: (content.reservation && typeof content.reservation === "object")
+        ? content.reservation : defaultManagedContent.reservation,
+      recruitment: (content.recruitment && typeof content.recruitment === "object")
+        ? content.recruitment : defaultManagedContent.recruitment,
       tests: Array.isArray(content.tests) ? content.tests : defaultManagedContent.tests,
       vaccines: Array.isArray(content.vaccines) ? content.vaccines : defaultManagedContent.vaccines,
       vaccineNote: typeof content.vaccineNote === "string" ? content.vaccineNote : defaultManagedContent.vaccineNote,
@@ -655,6 +666,104 @@ function renderPreventionContent(content) {
   renderNote("[data-vaccine-note]", content.vaccineNote);
   renderList("[data-checkup-list]", content.checkups, "label");
   renderNote("[data-checkup-note]", content.checkupNote);
+}
+
+
+function renderReservation(reservation) {
+  const link = document.querySelector("[data-reservation-link]");
+  const note = document.querySelector("[data-reservation-note]");
+  if (!link) return;
+
+  const enabled = !!(reservation && reservation.enabled);
+  const url = reservation && typeof reservation.url === "string" ? reservation.url.trim() : "";
+  const linkOk = enabled && isSafeLink(url);
+
+  if (linkOk) {
+    link.textContent = (reservation.buttonText || "予約はこちら（デジスマ）").trim();
+    link.href = url;
+    link.hidden = false;
+    if (url.startsWith("http")) {
+      link.target = "_blank";
+      link.rel = "noopener";
+    } else {
+      link.removeAttribute("target");
+      link.removeAttribute("rel");
+    }
+  } else {
+    link.hidden = true;
+    link.removeAttribute("href");
+  }
+
+  if (note) {
+    const noteText = reservation && typeof reservation.note === "string" ? reservation.note.trim() : "";
+    note.textContent = noteText;
+    note.hidden = !linkOk || noteText === "";
+  }
+}
+
+function renderRecruitment(recruitment) {
+  const section = document.querySelector("[data-recruitment-section]");
+  if (!section) return;
+
+  const enabled = !!(recruitment && recruitment.enabled);
+  section.hidden = !enabled;
+  document.querySelectorAll("[data-recruitment-nav], [data-recruitment-footer]").forEach((link) => {
+    link.hidden = !enabled;
+  });
+  if (!enabled) return;
+
+  const title = section.querySelector("[data-recruitment-title]");
+  const lead = section.querySelector("[data-recruitment-lead]");
+  const conditions = section.querySelector("[data-recruitment-conditions]");
+  const note = section.querySelector("[data-recruitment-note]");
+  const button = section.querySelector("[data-recruitment-link]");
+
+  if (title) title.textContent = (recruitment.title || "スタッフ募集中").trim();
+  if (lead) {
+    const text = typeof recruitment.lead === "string" ? recruitment.lead.trim() : "";
+    lead.textContent = text;
+    lead.hidden = text === "";
+  }
+
+  if (conditions) {
+    conditions.replaceChildren();
+    const items = Array.isArray(recruitment.conditions) ? recruitment.conditions : [];
+    items.filter((item) => item && item.label && item.value).forEach((item) => {
+      const row = document.createElement("div");
+      const dt = document.createElement("dt");
+      const dd = document.createElement("dd");
+      dt.textContent = item.label;
+      dd.textContent = item.value;
+      row.append(dt, dd);
+      conditions.appendChild(row);
+    });
+    conditions.hidden = conditions.children.length === 0;
+  }
+
+  if (note) {
+    const text = typeof recruitment.note === "string" ? recruitment.note.trim() : "";
+    note.textContent = text;
+    note.hidden = text === "";
+  }
+
+  if (button) {
+    const url = typeof recruitment.buttonUrl === "string" ? recruitment.buttonUrl.trim() : "";
+    if (url && isSafeLink(url)) {
+      button.textContent = (recruitment.buttonText || "お問い合わせ").trim();
+      button.href = url;
+      button.hidden = false;
+      if (url.startsWith("http")) {
+        button.target = "_blank";
+        button.rel = "noopener";
+      } else {
+        button.removeAttribute("target");
+        button.removeAttribute("rel");
+      }
+    } else {
+      button.hidden = true;
+      button.removeAttribute("href");
+    }
+  }
 }
 
 function highlightKey(highlight) {
@@ -847,6 +956,8 @@ loadManagedContent().then((content) => {
   renderNews(content.news, content.loadError);
   renderTests(content.tests);
   renderPreventionContent(content);
+  renderReservation(content.reservation);
+  renderRecruitment(content.recruitment);
   renderHighlight(content.highlight);
   protectJapanesePhrases();
   updateTodayStatus();
