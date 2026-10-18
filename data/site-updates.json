@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-18T17:35:27.258Z",
+  "updatedAt": "2026-10-18T17:53:47.413Z",
   "siteStatus": {
     "enabled": true,
     "title": "正式公開前・ウェブサイト調整中",
@@ -7,7 +7,7 @@
   },
   "highlight": {
     "enabled": true,
-    "mode": "popup",
+    "mode": "banner",
     "title": "休診のお知らせ",
     "body": "10月30日、10月31日は新医院への移転のため休診とさせて頂きます。",
     "linkText": "",
@@ -180,5 +180,5 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "a6d838ac-ebe1-47c4-a784-51bed69cf968"
+  "revision": "04997567-7d9f-4faf-8b77-391059b321bb"
 }
