@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-19T01:35:00+09:00",
+  "updatedAt": "2026-10-18T17:26:25.760Z",
   "siteStatus": {
     "enabled": true,
     "title": "正式公開前・ウェブサイト調整中",
@@ -63,12 +63,12 @@
       "id": "closure-1792341394487-a3d790a675fe7",
       "start": "2026-10-30",
       "end": "2026-10-31",
-      "label": "臨時休診",
       "period": "all",
+      "label": "臨時休診",
+      "noticeDate": "2026-10-18",
+      "body": "新医院への移転のため休診とさせて頂きます。",
       "published": true,
-      "announce": true,
-      "noticeDate": "2026-10-19",
-      "body": "新医院への移転のため休診とさせて頂きます。"
+      "announce": true
     }
   ],
   "tests": [
@@ -180,5 +180,5 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "calendar-sync-20261019-initial"
+  "revision": "82d34de4-d751-46b5-b12f-3d32b99bf3a1"
 }
