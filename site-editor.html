@@ -3,51 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex,nofollow">
-  <title>林内科医院｜予約・スタッフ募集編集</title>
-  <link rel="stylesheet" href="site-editor.css?v=20260724-1">
-  <script src="site-editor.js?v=20260724-1" defer></script>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#244837">
+  <title>林内科医院｜サイト更新アプリ</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="site-editor.css?v=20261019-1">
+  <script src="site-editor.js?v=20261019-1" defer></script>
 </head>
 <body>
   <header class="editor-header">
-    <div><strong>林内科医院</strong><span>予約・スタッフ募集編集</span></div>
+    <div class="editor-brand"><strong>林内科医院</strong><span>サイト更新アプリ</span></div>
     <a href="./" target="_blank" rel="noopener">公開サイトを見る</a>
   </header>
+
   <main class="editor-main">
-    <section class="editor-intro">
-      <h1>表示内容を編集</h1>
-      <p>ここで変更しても公開サイトは直接変わりません。最後にJSONファイルを作成し、GitHubの <code>data/site-updates.json</code> と置き換えてください。</p>
+    <section class="editor-intro" aria-labelledby="editor-title">
+      <p class="editor-kicker">SITE CONTENT MANAGER</p>
+      <h1 id="editor-title">掲載内容を編集</h1>
+      <p>お知らせ・流行情報、重要案内、臨時休診、スタッフ募集をChrome上で編集できます。編集後は更新用JSONを作成し、GitHubの <code>data/site-updates.json</code> と置き換えます。</p>
+      <ol class="editor-steps">
+        <li><span>1</span>現在の設定を読み込む</li>
+        <li><span>2</span>内容を編集する</li>
+        <li><span>3</span>JSONを保存してGitHubへ反映</li>
+      </ol>
       <div class="load-row">
-        <button type="button" class="secondary" data-load-current>現在の設定を読み込む</button>
-        <label class="file-button">JSONを選択<input type="file" accept="application/json,.json" data-file-input></label>
-        <span data-load-status>未読込</span>
+        <button type="button" class="secondary" data-load-current>現在の設定を再読込</button>
+        <label class="file-button">手元のJSONを選択<input type="file" accept="application/json,.json" data-file-input></label>
+        <span class="load-status" data-load-status aria-live="polite">読み込み中…</span>
       </div>
     </section>
 
-    <form data-editor-form>
-      <section class="editor-card">
-        <div class="card-heading"><div><p>RESERVATION</p><h2>デジスマ予約ボタン</h2></div><label class="switch"><input type="checkbox" data-field="reservation.enabled"><span>表示する</span></label></div>
-        <label>ボタンの文言<input type="text" maxlength="50" data-field="reservation.buttonText"></label>
-        <label>デジスマ予約URL<input type="url" maxlength="500" placeholder="https://qr.digikar-smart.jp/…/reserve" data-field="reservation.url"></label>
-        <label>補足文<textarea rows="3" maxlength="250" data-field="reservation.note"></textarea></label>
-      </section>
+    <nav class="editor-tabs" role="tablist" aria-label="編集項目">
+      <button type="button" role="tab" aria-selected="true" data-tab="site">サイト案内</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="news">お知らせ・流行情報</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="recruitment">スタッフ募集</button>
+    </nav>
 
-      <section class="editor-card">
-        <div class="card-heading"><div><p>RECRUIT</p><h2>スタッフ募集</h2></div><label class="switch"><input type="checkbox" data-field="recruitment.enabled"><span>表示する</span></label></div>
-        <label>見出し<input type="text" maxlength="80" data-field="recruitment.title"></label>
-        <label>案内文<textarea rows="3" maxlength="400" data-field="recruitment.lead"></textarea></label>
-        <div class="conditions-heading"><h3>募集条件</h3><button type="button" class="secondary" data-add-condition>条件を追加</button></div>
-        <div class="conditions" data-conditions></div>
-        <label>応募方法・補足<textarea rows="3" maxlength="500" data-field="recruitment.note"></textarea></label>
-        <div class="two-columns">
-          <label>問い合わせボタンの文言<input type="text" maxlength="50" data-field="recruitment.buttonText"></label>
-          <label>問い合わせ先<input type="text" maxlength="500" placeholder="tel:0761246288" data-field="recruitment.buttonUrl"></label>
+    <form data-editor-form novalidate>
+      <div class="editor-panel" data-panel="site">
+        <section class="editor-card">
+          <div class="card-heading">
+            <div><p>SITE STATUS</p><h2>正式公開前の案内</h2></div>
+            <label class="switch"><input type="checkbox" data-field="siteStatus.enabled"><span>表示する</span></label>
+          </div>
+          <p class="field-help">現在表示中の「ウェブサイト調整中」の案内です。正式公開後はスイッチをOFFにしてください。</p>
+          <label>短い見出し<input type="text" maxlength="80" data-field="siteStatus.title"></label>
+          <label>案内文<textarea rows="3" maxlength="300" data-field="siteStatus.body"></textarea></label>
+        </section>
+
+        <section class="editor-card">
+          <div class="card-heading">
+            <div><p>IMPORTANT NOTICE</p><h2>重要なお知らせ</h2></div>
+            <label class="switch"><input type="checkbox" data-field="highlight.enabled"><span>表示する</span></label>
+          </div>
+          <p class="field-help">臨時休診やワクチン入荷など、特に目立たせたい情報に使用します。</p>
+          <div class="two-columns">
+            <label>表示方法
+              <select data-field="highlight.mode">
+                <option value="banner">画面上部の帯</option>
+                <option value="popup">ポップアップ</option>
+              </select>
+            </label>
+            <label>見出し<input type="text" maxlength="100" data-field="highlight.title"></label>
+          </div>
+          <label>本文<textarea rows="3" maxlength="500" data-field="highlight.body"></textarea></label>
+          <div class="two-columns">
+            <label>リンクの文言<input type="text" maxlength="60" placeholder="詳しく見る" data-field="highlight.linkText"></label>
+            <label>リンク先<input type="text" maxlength="500" placeholder="#news または https://…" data-field="highlight.linkUrl"></label>
+          </div>
+        </section>
+
+        <section class="editor-card">
+          <div class="card-heading">
+            <div><p>CLOSURES</p><h2>臨時休診</h2></div>
+            <button type="button" class="secondary compact" data-add-closure>休診日を追加</button>
+          </div>
+          <p class="field-help">診療カレンダーに反映されます。通常の木曜・日曜・祝日は自動表示されるため、ここへの登録は不要です。</p>
+          <div class="stack-list" data-closures></div>
+        </section>
+      </div>
+
+      <div class="editor-panel" data-panel="news" hidden>
+        <section class="editor-card">
+          <div class="card-heading">
+            <div><p>NEWS &amp; HEALTH INFO</p><h2>お知らせ・流行情報</h2></div>
+            <button type="button" class="primary compact" data-add-news>新規追加</button>
+          </div>
+          <p class="field-help">「公開する」をOFFにすると下書きとして保存され、公開サイトには表示されません。日付の新しい順に自動表示されます。</p>
+          <div class="stack-list news-editor-list" data-news-items></div>
+        </section>
+      </div>
+
+      <div class="editor-panel" data-panel="recruitment" hidden>
+        <section class="editor-card">
+          <div class="card-heading">
+            <div><p>RECRUIT</p><h2>スタッフ募集</h2></div>
+            <label class="switch"><input type="checkbox" data-field="recruitment.enabled"><span>掲載する</span></label>
+          </div>
+          <label>見出し<input type="text" maxlength="80" data-field="recruitment.title"></label>
+          <label>案内文<textarea rows="3" maxlength="400" data-field="recruitment.lead"></textarea></label>
+          <div class="subheading-row"><h3>募集条件</h3><button type="button" class="secondary compact" data-add-condition>条件を追加</button></div>
+          <div class="stack-list" data-conditions></div>
+          <label>応募方法・補足<textarea rows="3" maxlength="500" data-field="recruitment.note"></textarea></label>
+          <div class="two-columns">
+            <label>問い合わせボタンの文言<input type="text" maxlength="50" data-field="recruitment.buttonText"></label>
+            <label>問い合わせ先<input type="text" maxlength="500" placeholder="tel:0761246288" data-field="recruitment.buttonUrl"></label>
+          </div>
+        </section>
+      </div>
+
+      <div class="save-bar">
+        <p data-editor-message aria-live="polite">現在の設定を読み込んでいます。</p>
+        <div class="save-actions">
+          <button type="button" class="secondary" data-save-folder disabled>サイトフォルダへ直接保存</button>
+          <button type="submit" class="primary" data-download-json disabled>更新用JSONを作成</button>
         </div>
-      </section>
-
-      <div class="download-bar">
-        <p data-editor-message>設定を読み込み、内容を編集してください。</p>
-        <button type="submit" class="primary">更新用JSONを作成</button>
       </div>
     </form>
   </main>

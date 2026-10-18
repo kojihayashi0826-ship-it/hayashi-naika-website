@@ -54,10 +54,10 @@ const maxHolidayYear = Math.max(
 const defaultManagedContent = {
   closures: [],
   news: [],
-  // 検査・ワクチン・健診・重要なお知らせ（ハイライト）は data/site-updates.json で編集します。
+  // サイト案内・お知らせ・休診・スタッフ募集・検査等は data/site-updates.json で管理します。
   // 管理データ取得失敗時に、古いお知らせや仮の休診日を代替表示しない設計です。
+  siteStatus: { enabled: true, title: "正式公開前・ウェブサイト調整中", body: "新医院の開院に向けて、掲載内容を最終調整しています。内容は変更になる場合があります。" },
   highlight: { enabled: false, mode: "banner", title: "", body: "", linkText: "", linkUrl: "" },
-  reservation: { enabled: false, buttonText: "予約はこちら（デジスマ）", url: "", note: "" },
   recruitment: { enabled: false, title: "スタッフ募集中", lead: "", conditions: [], note: "", buttonText: "", buttonUrl: "" },
   tests: [],
   vaccines: [],
@@ -135,8 +135,8 @@ const protectedJapanesePhrases = [
 
 const readableJapaneseSelector = [
   ".hero-lead",
-  ".reservation-copy h3",
-  ".reservation-copy p",
+  ".walkin-copy h3",
+  ".walkin-copy p",
   ".guide-card h3",
   ".guide-card p",
   ".first-visit-intro",
@@ -158,6 +158,7 @@ const readableJapaneseSelector = [
   ".faq-list summary",
   ".faq-list p",
   ".contact-details",
+  ".prelaunch-notice",
   ".site-banner-text",
   ".highlight-modal-box p",
   ".recruitment-section h2",
@@ -508,7 +509,7 @@ function initPageMotion() {
   window.addEventListener("scroll", updateHeader, { passive: true });
 
   const revealTargets = document.querySelectorAll([
-    ".quick-guide .reservation-bar",
+    ".quick-guide .walkin-bar",
     ".quick-guide .guide-card",
     ".section-heading",
     ".care-card",
@@ -596,10 +597,10 @@ async function loadManagedContent() {
     return {
       closures: Array.isArray(content.closures) ? content.closures : [],
       news: Array.isArray(content.news) ? content.news : [],
+      siteStatus: (content.siteStatus && typeof content.siteStatus === "object")
+        ? content.siteStatus : defaultManagedContent.siteStatus,
       highlight: (content.highlight && typeof content.highlight === "object")
         ? content.highlight : defaultManagedContent.highlight,
-      reservation: (content.reservation && typeof content.reservation === "object")
-        ? content.reservation : defaultManagedContent.reservation,
       recruitment: (content.recruitment && typeof content.recruitment === "object")
         ? content.recruitment : defaultManagedContent.recruitment,
       tests: Array.isArray(content.tests) ? content.tests : defaultManagedContent.tests,
@@ -669,35 +670,27 @@ function renderPreventionContent(content) {
 }
 
 
-function renderReservation(reservation) {
-  const link = document.querySelector("[data-reservation-link]");
-  const note = document.querySelector("[data-reservation-note]");
-  if (!link) return;
 
-  const enabled = !!(reservation && reservation.enabled);
-  const url = reservation && typeof reservation.url === "string" ? reservation.url.trim() : "";
-  const linkOk = enabled && isSafeLink(url);
+function renderSiteStatus(siteStatus) {
+  const section = document.querySelector("[data-site-status]");
+  if (!section) return;
 
-  if (linkOk) {
-    link.textContent = (reservation.buttonText || "予約はこちら（デジスマ）").trim();
-    link.href = url;
-    link.hidden = false;
-    if (url.startsWith("http")) {
-      link.target = "_blank";
-      link.rel = "noopener";
-    } else {
-      link.removeAttribute("target");
-      link.removeAttribute("rel");
-    }
-  } else {
-    link.hidden = true;
-    link.removeAttribute("href");
+  const enabled = !!(siteStatus && siteStatus.enabled);
+  section.hidden = !enabled;
+  if (!enabled) return;
+
+  const title = section.querySelector("[data-site-status-title]");
+  const body = section.querySelector("[data-site-status-body]");
+  const titleText = typeof siteStatus.title === "string" ? siteStatus.title.trim() : "";
+  const bodyText = typeof siteStatus.body === "string" ? siteStatus.body.trim() : "";
+
+  if (title) {
+    title.textContent = titleText;
+    title.hidden = titleText === "";
   }
-
-  if (note) {
-    const noteText = reservation && typeof reservation.note === "string" ? reservation.note.trim() : "";
-    note.textContent = noteText;
-    note.hidden = !linkOk || noteText === "";
+  if (body) {
+    body.textContent = bodyText;
+    body.hidden = bodyText === "";
   }
 }
 
@@ -956,7 +949,7 @@ loadManagedContent().then((content) => {
   renderNews(content.news, content.loadError);
   renderTests(content.tests);
   renderPreventionContent(content);
-  renderReservation(content.reservation);
+  renderSiteStatus(content.siteStatus);
   renderRecruitment(content.recruitment);
   renderHighlight(content.highlight);
   protectJapanesePhrases();

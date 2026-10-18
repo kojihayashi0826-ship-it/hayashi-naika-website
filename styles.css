@@ -151,13 +151,13 @@ svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: 
 .seasonal-closures { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .calendar-card .seasonal-closures { margin-top: 0; }
 .seasonal-closures span { padding: 3px 9px; color: var(--red); background: var(--red-light); border-radius: 999px; font-size: 11px; font-weight: 700; }
-.reservation-bar { display: flex; align-items: center; justify-content: space-between; gap: 30px; margin-top: 20px; padding: 24px 30px; background: white; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
-.reservation-copy { display: flex; align-items: center; gap: 18px; }
-.reservation-copy h3, .reservation-copy p { margin: 0; }
-.reservation-copy h3 { font-family: var(--serif); font-size: 22px; }
-.reservation-copy p:last-child { color: var(--muted); font-size: 12px; }
-.reservation-icon { display: grid; flex: 0 0 56px; width: 56px; height: 56px; color: white; background: var(--green); border-radius: 50%; place-items: center; }
-.reservation-icon svg { width: 29px; }
+.walkin-bar { display: flex; align-items: center; justify-content: space-between; gap: 30px; margin-top: 20px; padding: 24px 30px; background: white; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+.walkin-copy { display: flex; align-items: center; gap: 18px; }
+.walkin-copy h3, .walkin-copy p { margin: 0; }
+.walkin-copy h3 { font-family: var(--serif); font-size: 22px; }
+.walkin-copy p:last-child { color: var(--muted); font-size: 12px; }
+.walkin-icon { display: grid; flex: 0 0 56px; width: 56px; height: 56px; color: white; background: var(--green); border-radius: 50%; place-items: center; }
+.walkin-icon svg { width: 29px; }
 
 .section { padding: 105px 0; }
 .section-heading { margin-bottom: 45px; }
@@ -333,8 +333,8 @@ svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: 
   .hero-visual img { margin-top: 0; }
   .parking-badge { right: 0; bottom: 7px; padding: 10px 13px; }
   .guide-grid { grid-template-columns: 1fr; }
-  .reservation-bar { align-items: stretch; flex-direction: column; }
-  .reservation-bar .button { width: 100%; }
+  .walkin-bar { align-items: stretch; flex-direction: column; }
+  .walkin-bar .button { width: 100%; }
   .calendar-header { align-items: flex-start; flex-direction: column; }
   .calendar-card .monthly-calendar { display: block; }
   .calendar-card .calendar-header { display: flex; margin-bottom: 12px; }
@@ -508,12 +508,12 @@ h1, h2, h3 { font-family: var(--rounded); }
 .today-actions .text-link { padding: 8px 0; font-size: 13px; }
 
 .quick-guide { margin-top: 0; padding: 34px 0 52px; background: #fdfcf9; }
-.reservation-bar { margin-top: 0; margin-bottom: 20px; padding: 20px 24px; background: #eaf3ee; border: 1px solid #d2e2d9; border-radius: 8px; box-shadow: 0 10px 26px rgba(49, 85, 69, .06); }
-.reservation-copy { align-items: flex-start; gap: 14px; }
-.reservation-icon { flex-basis: 34px; width: 34px; height: 34px; background: var(--green-dark); border-radius: 50%; }
-.reservation-icon svg { width: 19px; stroke-width: 2.2; }
-.reservation-copy h3 { font-family: var(--rounded); font-size: 17px; font-weight: 700; }
-.reservation-copy p:last-child { margin-top: 2px; font-size: 12px; }
+.walkin-bar { margin-top: 0; margin-bottom: 20px; padding: 20px 24px; background: #eaf3ee; border: 1px solid #d2e2d9; border-radius: 8px; box-shadow: 0 10px 26px rgba(49, 85, 69, .06); }
+.walkin-copy { align-items: flex-start; gap: 14px; }
+.walkin-icon { flex-basis: 34px; width: 34px; height: 34px; background: var(--green-dark); border-radius: 50%; }
+.walkin-icon svg { width: 19px; stroke-width: 2.2; }
+.walkin-copy h3 { font-family: var(--rounded); font-size: 17px; font-weight: 700; }
+.walkin-copy p:last-child { margin-top: 2px; font-size: 12px; }
 .guide-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 18px; }
 .guide-card { height: 100%; padding: 26px 28px; border-color: #e2e7e4; border-radius: 8px; box-shadow: 0 8px 24px rgba(38, 52, 46, .04); }
 .fever-card, .hours-card { min-height: 242px; }
@@ -642,7 +642,7 @@ h1, h2, h3 { font-family: var(--rounded); }
   .today-actions { display: none; }
   .quick-guide { padding: 24px 0 36px; }
   .guide-grid { grid-template-columns: 1fr; }
-  .reservation-bar { align-items: flex-start; padding: 17px 18px; }
+  .walkin-bar { align-items: flex-start; padding: 17px 18px; }
   .guide-card { padding: 21px 20px; }
   .fever-card, .hours-card { min-height: 0; }
   .calendar-card { padding: 21px 20px; }
@@ -673,7 +673,7 @@ h1, h2, h3 { font-family: var(--rounded); }
   .hero-visual img { max-height: 200px; }
   .parking-badge span { display: none; }
   .parking-badge svg { width: 24px; }
-  .reservation-copy h3 { font-size: 16px; }
+  .walkin-copy h3 { font-size: 16px; }
   .fever-card { grid-template-columns: 36px 1fr; }
   .fever-card .card-icon { width: 36px; height: 36px; }
   .hours-card { padding-inline: 14px; }
@@ -802,7 +802,7 @@ body { background: #ffffff; }
 .status-icon span::after { display: block; }
 
 .quick-guide { background: #f9fcfa; }
-.reservation-bar { background: #eaf6f0; border-color: #cfe5d9; }
+.walkin-bar { background: #eaf6f0; border-color: #cfe5d9; }
 .guide-card { background: #ffffff; border-color: #dce9e2; box-shadow: 0 10px 28px rgba(45,89,68,.055); }
 .fever-card { background: #fff4f5; border-color: #f0dfe2; }
 .calendar-card { background: #f1f7f9; border-color: #d9e7eb; }
@@ -1033,7 +1033,7 @@ button,
    Prefer phrase-aware Japanese wrapping and protect important medical terms. */
 :where(
   .hero-lead,
-  .reservation-copy p,
+  .walkin-copy p,
   .guide-card p,
   .first-visit-intro,
   .step-body p,
@@ -1065,7 +1065,7 @@ button,
 @supports (word-break: auto-phrase) {
   :where(
     .hero-lead,
-    .reservation-copy p,
+    .walkin-copy p,
     .guide-card p,
     .first-visit-intro,
     .step-body p,
@@ -1220,10 +1220,7 @@ button,
 }
 
 
-/* ===== 予約リンク・スタッフ募集 ===== */
-.reservation-actions { display: grid; flex: 0 0 auto; gap: 7px; justify-items: end; max-width: 310px; }
-.reservation-button { white-space: nowrap; }
-.reservation-actions small { color: var(--muted); font-size: 10px; line-height: 1.55; text-align: right; }
+/* ===== 受診案内・スタッフ募集 ===== */
 
 .recruitment-section { background: #f6f2e9; }
 .recruitment-heading { align-items: end; }
@@ -1240,12 +1237,48 @@ button,
 .recruitment-contact p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.9; }
 
 @media (max-width: 760px) {
-  .reservation-actions { width: 100%; max-width: none; justify-items: stretch; }
-  .reservation-actions small { text-align: left; }
   .recruitment-card { grid-template-columns: 1fr; gap: 24px; padding: 24px; }
   .recruitment-contact { padding: 20px; }
 }
 
 @media (max-width: 480px) {
   .recruitment-conditions > div { grid-template-columns: 1fr; gap: 5px; }
+}
+
+
+/* ===== 正式公開前の案内 ===== */
+.prelaunch-notice {
+  position: relative;
+  z-index: 23;
+  color: #5c4a23;
+  background: #fff8e8;
+  border-bottom: 1px solid #ead9ad;
+}
+.prelaunch-notice[hidden] { display: none; }
+.prelaunch-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 48px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.prelaunch-label {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  color: #6a511c;
+  background: #f5e7bd;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+.prelaunch-notice p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+}
+@media (max-width: 620px) {
+  .prelaunch-inner { align-items: flex-start; flex-direction: column; gap: 4px; padding-top: 9px; padding-bottom: 10px; }
+  .prelaunch-notice p { font-size: 12px; }
 }

@@ -1,5 +1,10 @@
 {
-  "updatedAt": "2026-07-24T00:00:00+09:00",
+  "updatedAt": "2026-10-19T00:00:00+09:00",
+  "siteStatus": {
+    "enabled": true,
+    "title": "正式公開前・ウェブサイト調整中",
+    "body": "新医院の開院に向けて、掲載内容を最終調整しています。内容は変更になる場合があります。"
+  },
   "highlight": {
     "enabled": false,
     "mode": "banner",
@@ -7,12 +12,6 @@
     "body": "",
     "linkText": "",
     "linkUrl": ""
-  },
-  "reservation": {
-    "enabled": false,
-    "buttonText": "予約はこちら（デジスマ）",
-    "url": "",
-    "note": "予約された方を優先してご案内しますが、診療状況によりお待ちいただく場合があります。"
   },
   "recruitment": {
     "enabled": false,
@@ -27,7 +26,7 @@
       {
         "id": "recruit-2",
         "label": "年齢",
-        "value": "詳細はお問い合わせください"
+        "value": "不問"
       },
       {
         "id": "recruit-3",
@@ -49,7 +48,16 @@
     "buttonText": "電話で問い合わせる",
     "buttonUrl": "tel:0761246288"
   },
-  "news": [],
+  "news": [
+    {
+      "id": "news-flumist-draft-202611",
+      "date": "2026-11-01",
+      "category": "vaccine",
+      "title": "フルミスト入荷予定のお知らせ",
+      "body": "入荷時期・対象年齢・費用などは、確定後にお知らせします。",
+      "published": false
+    }
+  ],
   "closures": [],
   "tests": [
     {
