@@ -1,125 +1,118 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
   <meta name="theme-color" content="#244837">
   <title>林内科医院｜サイト更新アプリ</title>
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="stylesheet" href="site-editor.css?v=20261019-1">
-  <script src="site-editor.js?v=20261019-1" defer></script>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="site-editor.css?v=20261019-2">
+  <link rel="stylesheet" href="calendar-sync.css?v=20261019-2">
+  <link rel="stylesheet" href="editor-publish.css?v=20261019-2">
+  <script src="clinic-schedule.js?v=20261019-2" defer></script>
+  <script src="site-editor.js?v=20261019-2" defer></script>
+  <script src="github-publisher.js?v=20261019-2" defer></script>
 </head>
 <body>
   <header class="editor-header">
     <div class="editor-brand"><strong>林内科医院</strong><span>サイト更新アプリ</span></div>
-    <a href="./" target="_blank" rel="noopener">公開サイトを見る</a>
+    <a href="./" target="_blank" rel="noopener noreferrer">公開サイトを見る ↗</a>
   </header>
-
   <main class="editor-main">
-    <section class="editor-intro" aria-labelledby="editor-title">
+    <section class="editor-intro">
       <p class="editor-kicker">SITE CONTENT MANAGER</p>
-      <h1 id="editor-title">掲載内容を編集</h1>
-      <p>お知らせ・流行情報、重要案内、臨時休診、スタッフ募集をChrome上で編集できます。編集後は更新用JSONを作成し、GitHubの <code>data/site-updates.json</code> と置き換えます。</p>
-      <ol class="editor-steps">
-        <li><span>1</span>現在の設定を読み込む</li>
-        <li><span>2</span>内容を編集する</li>
-        <li><span>3</span>JSONを保存してGitHubへ反映</li>
-      </ol>
-      <div class="load-row">
-        <button type="button" class="secondary" data-load-current>現在の設定を再読込</button>
-        <label class="file-button">手元のJSONを選択<input type="file" accept="application/json,.json" data-file-input></label>
-        <span class="load-status" data-load-status aria-live="polite">読み込み中…</span>
-      </div>
+      <h1>編集して、そのまま公開。</h1>
+      <p>お知らせ、臨時休診、スタッフ募集をこの画面から更新します。ファイルの入れ替えは不要です。</p>
+      <ol class="editor-steps"><li><span>1</span>GitHubに接続</li><li><span>2</span>内容を編集・確認</li><li><span>3</span>「公開する」を押す</li></ol>
     </section>
-
-    <nav class="editor-tabs" role="tablist" aria-label="編集項目">
-      <button type="button" role="tab" aria-selected="true" data-tab="site">サイト案内</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="news">お知らせ・流行情報</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="recruitment">スタッフ募集</button>
-    </nav>
-
-    <form data-editor-form novalidate>
-      <div class="editor-panel" data-panel="site">
-        <section class="editor-card">
-          <div class="card-heading">
-            <div><p>SITE STATUS</p><h2>正式公開前の案内</h2></div>
-            <label class="switch"><input type="checkbox" data-field="siteStatus.enabled"><span>表示する</span></label>
-          </div>
-          <p class="field-help">現在表示中の「ウェブサイト調整中」の案内です。正式公開後はスイッチをOFFにしてください。</p>
-          <label>短い見出し<input type="text" maxlength="80" data-field="siteStatus.title"></label>
-          <label>案内文<textarea rows="3" maxlength="300" data-field="siteStatus.body"></textarea></label>
-        </section>
-
-        <section class="editor-card">
-          <div class="card-heading">
-            <div><p>IMPORTANT NOTICE</p><h2>重要なお知らせ</h2></div>
-            <label class="switch"><input type="checkbox" data-field="highlight.enabled"><span>表示する</span></label>
-          </div>
-          <p class="field-help">臨時休診やワクチン入荷など、特に目立たせたい情報に使用します。</p>
-          <div class="two-columns">
-            <label>表示方法
-              <select data-field="highlight.mode">
-                <option value="banner">画面上部の帯</option>
-                <option value="popup">ポップアップ</option>
-              </select>
-            </label>
-            <label>見出し<input type="text" maxlength="100" data-field="highlight.title"></label>
-          </div>
-          <label>本文<textarea rows="3" maxlength="500" data-field="highlight.body"></textarea></label>
-          <div class="two-columns">
-            <label>リンクの文言<input type="text" maxlength="60" placeholder="詳しく見る" data-field="highlight.linkText"></label>
-            <label>リンク先<input type="text" maxlength="500" placeholder="#news または https://…" data-field="highlight.linkUrl"></label>
-          </div>
-        </section>
-
-        <section class="editor-card">
-          <div class="card-heading">
-            <div><p>CLOSURES</p><h2>臨時休診</h2></div>
-            <button type="button" class="secondary compact" data-add-closure>休診日を追加</button>
-          </div>
-          <p class="field-help">診療カレンダーに反映されます。通常の木曜・日曜・祝日は自動表示されるため、ここへの登録は不要です。</p>
-          <div class="stack-list" data-closures></div>
-        </section>
+    <details class="connection-card" data-connection open>
+      <summary><strong>GitHub接続</strong><span class="connection-chip" data-connection-state>未接続</span></summary>
+      <div class="connection-body">
+        <p class="field-help">接続先：<strong>hayashi-naika-website / main</strong>。初回のみ接続キーを設定します。権限のない人がこの画面を開いても公開サイトは変更できません。</p>
+        <div data-credentials-new>
+          <div class="token-row"><label>GitHub接続キー<input type="password" data-token autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label><a class="secondary token-link" data-token-link target="_blank" rel="noopener noreferrer">接続キーを作成 ↗</a></div>
+          <label class="inline-check"><input type="checkbox" data-remember>このChromeに暗号化して保存する（自分専用の端末のみ）</label>
+          <div class="two-columns" data-vault-passwords hidden><label>解除用パスワード（12文字以上）<input type="password" data-vault-pass autocomplete="new-password" minlength="12"></label><label>同じパスワードを再入力<input type="password" data-vault-confirm autocomplete="new-password"></label></div>
+          <div class="connect-actions"><button type="button" class="primary" data-connect>接続する</button></div>
+        </div>
+        <div data-credentials-saved hidden>
+          <p>このChromeに接続キーが暗号化保存されています。</p>
+          <div class="token-row"><label>解除用パスワード<input type="password" data-unlock-pass autocomplete="current-password"></label><button type="button" class="primary" data-unlock>解除して接続</button></div>
+          <button type="button" class="text-button" data-forget>保存した接続キーを削除・再設定</button>
+        </div>
+        <div data-connected-controls hidden><p data-connected-user></p><button type="button" class="secondary" data-disconnect>接続を解除する</button></div>
+        <p class="connection-feedback" data-connection-message role="status" aria-live="polite">接続キーはGitHubだけに送信します。このチャットや掲載本文には貼り付けないでください。</p>
+        <details class="setup-help"><summary>初回設定の手順</summary>
+          <ol><li>「接続キーを作成」を開き、GitHubにログインします。</li><li><strong>Repository access → Only select repositories</strong> を選び、<strong>hayashi-naika-website</strong> だけを指定します。</li><li>Repository permissions の <strong>Contents → Read and write</strong> を確認します。その他の追加権限は不要です。</li><li>Generate token で発行されたキーを上の欄に貼り、接続します。</li></ol>
+          <p>作成画面の有効期限は90日を初期指定しています。期限切れ・失効時は新しいキーに差し替えてください。暗号化保存を選ぶと、次回から解除用パスワードで接続できます。パスワードはGitHubのログインパスワードとは別にしてください。</p>
+          <p>接続中のキーはメモリー内だけで使用します。操作のない状態が30分続くと接続を解除します。暗号化保存も共有端末・不審な拡張機能のある端末では使用しないでください。</p>
+        </details>
       </div>
-
-      <div class="editor-panel" data-panel="news" hidden>
+    </details>
+    <div class="load-row">
+      <button type="button" class="secondary" data-load-current>最新の内容を読み込む</button>
+      <span class="load-status" data-load-status role="status">読み込み中…</span>
+    </div>
+    <div class="draft-recovery" data-draft-recovery hidden><span>このChromeに未公開の編集内容が残っています。</span><button type="button" class="secondary compact" data-restore-draft>編集を再開</button><button type="button" class="text-button" data-discard-draft>破棄</button></div>
+    <nav class="editor-tabs" role="tablist" aria-label="編集項目">
+      <button type="button" role="tab" aria-selected="true" data-tab="news">お知らせ・流行情報</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="closures">臨時休診・カレンダー</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="recruitment">スタッフ募集</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="site">サイト案内</button>
+    </nav>
+    <form data-editor-form novalidate>
+      <div class="editor-panel" data-panel="news">
         <section class="editor-card">
-          <div class="card-heading">
-            <div><p>NEWS &amp; HEALTH INFO</p><h2>お知らせ・流行情報</h2></div>
-            <button type="button" class="primary compact" data-add-news>新規追加</button>
-          </div>
-          <p class="field-help">「公開する」をOFFにすると下書きとして保存され、公開サイトには表示されません。日付の新しい順に自動表示されます。</p>
+          <div class="card-heading"><div><p>NEWS &amp; HEALTH INFO</p><h2>お知らせ・流行情報</h2></div><button type="button" class="primary compact" data-add-news>新規追加</button></div>
+          <p class="field-help">「掲載する」をONにした記事が、「公開する」を押した後にサイトへ反映されます。表示用の日付を将来にしても予約投稿にはなりません。</p>
+          <button type="button" class="secondary compact" data-new-closure-notice>休診のお知らせを作成 →</button>
+          <p class="privacy-note">「非掲載」はサイト画面に出さない設定です。公開リポジトリ・JSONには残るため、患者情報・応募者情報・機密事項は入力しないでください。</p>
           <div class="stack-list news-editor-list" data-news-items></div>
         </section>
       </div>
-
+      <div class="editor-panel" data-panel="closures" hidden>
+        <section class="editor-card">
+          <div class="card-heading"><div><p>CLOSURES &amp; CALENDAR</p><h2>臨時休診のお知らせ</h2></div><button type="button" class="primary compact" data-add-closure>休診日を追加</button></div>
+          <p class="field-help">日付と休診時間帯を入力すると、カレンダー・本日の診療・お知らせが連動します。1日の休診は開始日だけで入力できます。木曜・日曜・祝日の登録は不要です。</p>
+          <div class="stack-list" data-closures></div>
+        </section>
+        <section class="editor-card"><div class="card-heading"><div><p>LIVE PREVIEW</p><h2>カレンダー表示の確認</h2></div></div><p class="field-help">編集中の内容です。公開サイトは「公開する」を押すまで変わりません。</p><div data-editor-calendar></div></section>
+      </div>
       <div class="editor-panel" data-panel="recruitment" hidden>
         <section class="editor-card">
-          <div class="card-heading">
-            <div><p>RECRUIT</p><h2>スタッフ募集</h2></div>
-            <label class="switch"><input type="checkbox" data-field="recruitment.enabled"><span>掲載する</span></label>
-          </div>
+          <div class="card-heading"><div><p>RECRUIT</p><h2>スタッフ募集</h2></div><label class="switch"><input type="checkbox" data-field="recruitment.enabled"><span>掲載する</span></label></div>
           <label>見出し<input type="text" maxlength="80" data-field="recruitment.title"></label>
           <label>案内文<textarea rows="3" maxlength="400" data-field="recruitment.lead"></textarea></label>
           <div class="subheading-row"><h3>募集条件</h3><button type="button" class="secondary compact" data-add-condition>条件を追加</button></div>
           <div class="stack-list" data-conditions></div>
           <label>応募方法・補足<textarea rows="3" maxlength="500" data-field="recruitment.note"></textarea></label>
-          <div class="two-columns">
-            <label>問い合わせボタンの文言<input type="text" maxlength="50" data-field="recruitment.buttonText"></label>
-            <label>問い合わせ先<input type="text" maxlength="500" placeholder="tel:0761246288" data-field="recruitment.buttonUrl"></label>
-          </div>
+          <div class="two-columns"><label>問い合わせボタンの文言<input type="text" maxlength="50" data-field="recruitment.buttonText"></label><label>問い合わせ先<input type="text" maxlength="500" placeholder="tel:0761246288" data-field="recruitment.buttonUrl"></label></div>
         </section>
       </div>
-
-      <div class="save-bar">
-        <p data-editor-message aria-live="polite">現在の設定を読み込んでいます。</p>
-        <div class="save-actions">
-          <button type="button" class="secondary" data-save-folder disabled>サイトフォルダへ直接保存</button>
-          <button type="submit" class="primary" data-download-json disabled>更新用JSONを作成</button>
-        </div>
+      <div class="editor-panel" data-panel="site" hidden>
+        <section class="editor-card">
+          <div class="card-heading"><div><p>SITE STATUS</p><h2>正式公開前の案内</h2></div><label class="switch"><input type="checkbox" data-field="siteStatus.enabled"><span>表示する</span></label></div>
+          <p class="field-help">正式公開後はスイッチをOFFにして公開してください。</p>
+          <label>短い見出し<input type="text" maxlength="80" data-field="siteStatus.title"></label>
+          <label>案内文<textarea rows="3" maxlength="300" data-field="siteStatus.body"></textarea></label>
+        </section>
+        <section class="editor-card">
+          <div class="card-heading"><div><p>IMPORTANT NOTICE</p><h2>重要なお知らせ</h2></div><label class="switch"><input type="checkbox" data-field="highlight.enabled"><span>表示する</span></label></div>
+          <p class="field-help">ページ上部で目立たせる案内です。<strong>ここに日付を文章で書くだけではカレンダーには反映されません。</strong>休診日は「臨時休診・カレンダー」で登録してください。</p>
+          <div class="two-columns"><label>表示方法<select data-field="highlight.mode"><option value="banner">画面上部の帯</option><option value="popup">ポップアップ</option></select></label><label>見出し<input type="text" maxlength="100" data-field="highlight.title"></label></div>
+          <label>本文<textarea rows="3" maxlength="500" data-field="highlight.body"></textarea></label>
+          <div class="two-columns"><label>リンクの文言<input type="text" maxlength="60" data-field="highlight.linkText"></label><label>リンク先<input type="text" maxlength="500" placeholder="#news または https://…" data-field="highlight.linkUrl"></label></div>
+        </section>
       </div>
+      <div class="save-bar"><div><p data-editor-message role="status" aria-live="polite">現在の内容を読み込んでいます。</p><p class="publish-status" data-publish-status aria-live="polite"></p></div><div class="save-actions"><button type="button" class="secondary" data-preview disabled>表示プレビュー</button><button type="submit" class="primary" data-publish disabled>公開する</button></div></div>
     </form>
+    <div class="publish-followup" data-publish-followup hidden><button type="button" class="secondary compact" data-check-publish>公開サイトへの反映を確認</button><a href="./" target="_blank" rel="noopener noreferrer">公開サイトを開く ↗</a><a data-commit-link target="_blank" rel="noopener noreferrer" hidden>変更履歴 ↗</a></div>
+    <details class="backup-tools"><summary>バックアップ・復元</summary><div class="backup-actions"><button type="button" class="secondary" data-download-json disabled>バックアップJSONを保存</button><label class="file-button">JSONから編集内容を復元<input type="file" accept="application/json,.json" data-file-input></label><button type="button" class="secondary" data-restore-previous disabled>1回前の公開内容を読み込む</button><button type="button" class="secondary" data-save-folder disabled>ローカルフォルダへ保存</button></div><p>復元・ローカル保存だけでは公開サイトは変わりません。内容を確認後、「公開する」を押してください。</p></details>
+    <p class="editor-footer">医院用の端末でご利用ください。公開先は data/site-updates.json に固定しています。<a href="START_HERE.html" target="_blank" rel="noopener noreferrer">操作ガイド</a></p>
   </main>
+  <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章と休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
 </body>
 </html>

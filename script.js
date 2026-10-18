@@ -1,55 +1,6 @@
-const schedule = {
-  0: [],
-  1: [["09:00", "12:00"], ["13:30", "18:30"]],
-  2: [["09:00", "12:00"], ["13:30", "18:30"]],
-  3: [["09:00", "12:00"], ["13:30", "18:30"]],
-  4: [],
-  5: [["09:00", "12:00"], ["13:30", "18:30"]],
-  6: [["09:00", "12:00"], ["13:30", "18:30"]]
-};
-
-// 診療カレンダーは当月から1年先まで表示します。翌年分は正式確定前の暫定情報として扱います。
-const nationalHolidays = {
-  "2026-01-01": "元日",
-  "2026-01-12": "成人の日",
-  "2026-02-11": "建国記念の日",
-  "2026-02-23": "天皇誕生日",
-  "2026-03-20": "春分の日",
-  "2026-04-29": "昭和の日",
-  "2026-05-03": "憲法記念日",
-  "2026-05-04": "みどりの日",
-  "2026-05-05": "こどもの日",
-  "2026-05-06": "休日",
-  "2026-07-20": "海の日",
-  "2026-08-11": "山の日",
-  "2026-09-21": "敬老の日",
-  "2026-09-22": "休日",
-  "2026-09-23": "秋分の日",
-  "2026-10-12": "スポーツの日",
-  "2026-11-03": "文化の日",
-  "2026-11-23": "勤労感謝の日",
-  "2027-01-01": "元日",
-  "2027-01-11": "成人の日",
-  "2027-02-11": "建国記念の日",
-  "2027-02-23": "天皇誕生日",
-  "2027-03-21": "春分の日",
-  "2027-03-22": "休日",
-  "2027-04-29": "昭和の日",
-  "2027-05-03": "憲法記念日",
-  "2027-05-04": "みどりの日",
-  "2027-05-05": "こどもの日",
-  "2027-07-19": "海の日",
-  "2027-08-11": "山の日",
-  "2027-09-20": "敬老の日",
-  "2027-09-23": "秋分の日",
-  "2027-10-11": "スポーツの日",
-  "2027-11-03": "文化の日",
-  "2027-11-23": "勤労感謝の日"
-};
-
-const maxHolidayYear = Math.max(
-  ...Object.keys(nationalHolidays).map((key) => Number(key.slice(0, 4)))
-);
+const schedule = ClinicSchedule.regular;
+const nationalHolidays = ClinicSchedule.holidays;
+let managedContentUnavailable = false;
 
 const defaultManagedContent = {
   closures: [],
@@ -224,201 +175,45 @@ function formatShortDate(date) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
-function getSpecialClosure(key) {
-  return specialClosureRanges.find(({ start, end }) => key >= start && key <= end);
-}
-
-function getClosedReason(date) {
-  const key = dateKey(date);
-  const special = getSpecialClosure(key);
-  if (special) return special.label;
-  if (nationalHolidays[key]) return nationalHolidays[key];
-  if (date.getDay() === 4) return "木曜休診";
-  if (date.getDay() === 0) return "日曜休診";
-  return "";
-}
-
-function minutes(time) {
-  const [hour, minute] = time.split(":").map(Number);
-  return hour * 60 + minute;
-}
-
-function findNextOpening(fromDate) {
-  const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + 1);
-  for (let offset = 0; offset < 370; offset += 1) {
-    const candidate = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset);
-    const sessions = getClosedReason(candidate) ? [] : schedule[candidate.getDay()];
-    if (sessions && sessions.length > 0) {
-      return { date: candidate, time: sessions[0][0] };
-    }
-  }
-  return null;
-}
-
-function formatNextOpening(nextOpening) {
-  if (!nextOpening) return "次回診療日は診療時間表をご確認ください";
-  const dateText = new Intl.DateTimeFormat("ja-JP", {
-    month: "numeric",
-    day: "numeric",
-    weekday: "short"
-  }).format(nextOpening.date);
-  return `次回は${dateText} ${nextOpening.time}からです`;
-}
-
 function updateTodayStatus() {
-  const now = new Date();
-  const day = now.getDay();
-  const current = now.getHours() * 60 + now.getMinutes();
-  const closedReason = getClosedReason(now);
-  const sessions = closedReason ? [] : schedule[day];
   const panel = document.querySelector(".today-panel");
   const date = document.querySelector("#today-date");
   const label = document.querySelector("#today-label");
   const detail = document.querySelector("#today-detail");
   if (!panel || !date || !label || !detail) return;
-
-  date.textContent = new Intl.DateTimeFormat("ja-JP", {
-    month: "long",
-    day: "numeric",
-    weekday: "short"
-  }).format(now) + "の診療";
-
-  const active = sessions.find(([start, end]) => current >= minutes(start) && current < minutes(end));
-  const upcoming = sessions.find(([start]) => current < minutes(start));
-  const nextOpening = findNextOpening(now);
-
+  const now = new Date();
+  const clock = ClinicSchedule.japanNow(now);
+  date.textContent = ClinicSchedule.pretty(clock.key) + "の診療";
   panel.classList.remove("closed");
-
-  if (closedReason) {
-    panel.classList.add("closed");
-    label.textContent = "本日は休診日です";
-    detail.textContent = `${closedReason}。${formatNextOpening(nextOpening)}`;
+  if (managedContentUnavailable) {
+    label.textContent = "診療状況はお電話でご確認ください";
+    detail.textContent = "臨時休診情報を取得できません（0761-24-6288）";
     return;
   }
-
-  if (active) {
-    label.textContent = "本日は診療しています";
+  const state = ClinicSchedule.dayState(clock.key, specialClosureRanges);
+  const minutes = time => { const [h,m] = time.split(":").map(Number); return h*60+m; };
+  const active = state.sessions.find(([a,b]) => clock.minute >= minutes(a) && clock.minute < minutes(b));
+  const upcoming = state.sessions.find(([a]) => clock.minute < minutes(a));
+  const next = ClinicSchedule.nextOpening(now, specialClosureRanges);
+  const nextText = next ? `次回は${ClinicSchedule.pretty(next.key)} ${next.time}からです` : "次回診療日はお電話でご確認ください";
+  if (state.closed) {
+    panel.classList.add("closed"); label.textContent = "本日は休診日です";
+    detail.textContent = `${state.reason}。${nextText}`;
+  } else if (active) {
+    label.textContent = state.partial ? `診療中（本日は${state.status}）` : "本日は診療しています";
     detail.textContent = `${active[1]}まで（受付時間はお問い合わせください）`;
   } else if (upcoming) {
-    label.textContent = "本日は診療日です";
+    label.textContent = state.partial ? `本日は${state.status}です` : "本日は診療日です";
     detail.textContent = `次の診療は${upcoming[0]}からです`;
   } else {
     panel.classList.add("closed");
-    label.textContent = sessions.length ? "本日の診療は終了しました" : "本日は休診日です";
-    detail.textContent = formatNextOpening(nextOpening);
+    label.textContent = state.partial ? `本日は${state.status}です` : "本日の診療は終了しました";
+    detail.textContent = nextText;
   }
 }
 
 function renderMonthlyCalendar() {
-  const calendar = document.querySelector("[data-calendar]");
-  if (!calendar) return;
-
-  const title = calendar.querySelector("[data-calendar-title]");
-  const grid = calendar.querySelector("[data-calendar-grid]");
-  const note = calendar.querySelector("[data-calendar-note]");
-  const summary = calendar.querySelector("[data-closure-summary]");
-  const prev = calendar.querySelector("[data-calendar-prev]");
-  const next = calendar.querySelector("[data-calendar-next]");
-  const today = new Date();
-  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-  const firstVisibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastVisibleMonth = new Date(today.getFullYear(), today.getMonth() + 12, 1);
-  let activeMonth = new Date(firstVisibleMonth);
-
-  function sameMonth(a, b) {
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
-  }
-
-  function draw() {
-    const year = activeMonth.getFullYear();
-    const month = activeMonth.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    const specialNotes = [];
-
-    title.textContent = `${year}年${month + 1}月`;
-    grid.innerHTML = "";
-
-    weekdays.forEach((weekday) => {
-      const cell = document.createElement("div");
-      cell.className = "calendar-weekday";
-      cell.textContent = weekday;
-      grid.appendChild(cell);
-    });
-
-    for (let i = 0; i < firstDay; i += 1) {
-      const cell = document.createElement("div");
-      cell.className = "calendar-day is-empty";
-      cell.setAttribute("aria-hidden", "true");
-      grid.appendChild(cell);
-    }
-
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      const date = new Date(year, month, day);
-      const reason = getClosedReason(date);
-      const key = dateKey(date);
-      const cell = document.createElement("div");
-      cell.className = "calendar-day";
-      cell.textContent = day;
-
-      if (reason) cell.classList.add("is-closed");
-      if (getSpecialClosure(key)) cell.classList.add("is-special");
-      if (key === dateKey(today)) cell.classList.add("is-today");
-      cell.setAttribute("aria-label", reason ? `${formatShortDate(date)} ${reason}` : `${formatShortDate(date)} 診療日`);
-
-      if (reason && !["木曜休診", "日曜休診"].includes(reason)) {
-        specialNotes.push(`${formatShortDate(date)} ${reason}`);
-      }
-
-      grid.appendChild(cell);
-    }
-
-    let noteText = specialNotes.length
-      ? `この月の休診：${[...new Set(specialNotes)].join("、")}`
-      : "休診：木曜・日曜・祝日。長期休診は決まり次第更新します。";
-
-    if (year > today.getFullYear()) {
-      noteText += " ※翌年の祝日・休診予定は暫定です。正式決定後に更新します。";
-    }
-    if (year > maxHolidayYear) {
-      noteText += ` ※${year}年の祝日は未登録のため反映されていません。`;
-    }
-    note.textContent = noteText;
-
-    if (summary) {
-      const monthStart = dateKey(new Date(year, month, 1));
-      const monthEnd = dateKey(new Date(year, month, daysInMonth));
-      const labels = specialClosureRanges
-        .filter(({ start, end }) => start <= monthEnd && end >= monthStart)
-        .map(({ label }) => label);
-      summary.replaceChildren();
-      [...new Set(labels)].forEach((label) => {
-        const badge = document.createElement("span");
-        badge.textContent = label;
-        summary.appendChild(badge);
-      });
-      summary.hidden = labels.length === 0;
-    }
-
-    prev.disabled = sameMonth(activeMonth, firstVisibleMonth);
-    next.disabled = sameMonth(activeMonth, lastVisibleMonth);
-    prev.setAttribute("aria-disabled", String(prev.disabled));
-    next.setAttribute("aria-disabled", String(next.disabled));
-  }
-
-  prev.addEventListener("click", () => {
-    if (prev.disabled) return;
-    activeMonth = new Date(activeMonth.getFullYear(), activeMonth.getMonth() - 1, 1);
-    draw();
-  });
-
-  next.addEventListener("click", () => {
-    if (next.disabled) return;
-    activeMonth = new Date(activeMonth.getFullYear(), activeMonth.getMonth() + 1, 1);
-    draw();
-  });
-
-  draw();
+  ClinicSchedule.renderCalendar(document.querySelector("[data-calendar]"), specialClosureRanges, { loadError: managedContentUnavailable });
 }
 
 function formatNewsDate(value) {
@@ -433,7 +228,8 @@ function renderNews(items, loadError = false) {
   const categoryLabels = {
     notice: "お知らせ",
     trend: "流行情報",
-    vaccine: "予防接種"
+    vaccine: "予防接種",
+    closure: "臨時休診"
   };
   const publishedItems = Array.isArray(items) ? items
     .filter((item) => item && item.published !== false && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.title)
@@ -588,12 +384,13 @@ function initHeroZoomLoop() {
 }
 
 async function loadManagedContent() {
-  if (window.location.protocol === "file:") return defaultManagedContent;
+  if (window.location.protocol === "file:") return { ...defaultManagedContent, loadError: true };
 
   try {
-    const response = await fetch("data/site-updates.json", { cache: "no-store" });
+    const response = await fetch("data/site-updates.json?v=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(12000) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const content = await response.json();
+    if (!content || !Array.isArray(content.closures) || !Array.isArray(content.news)) throw new Error("更新データの形式が不正です");
     return {
       closures: Array.isArray(content.closures) ? content.closures : [],
       news: Array.isArray(content.news) ? content.news : [],
@@ -768,7 +565,10 @@ function isSafeLink(url) {
   return /^(https?:\/\/|tel:|#)/.test(url);
 }
 
+let disposeHighlight = null;
 function renderHighlight(highlight) {
+  if (disposeHighlight) { disposeHighlight(); disposeHighlight = null; }
+  document.body.classList.remove("has-banner", "modal-open");
   const banner = document.querySelector("[data-highlight-banner]");
   const modal = document.querySelector("[data-highlight-modal]");
   if (!banner || !modal) return;
@@ -841,22 +641,21 @@ function renderHighlight(highlight) {
       }
     };
 
-    const close = () => {
+    const close = (dismiss = true) => {
       modal.hidden = true;
       document.body.classList.remove("modal-open");
       backgroundStates.forEach(({ element, inert }) => { element.inert = inert; });
       document.removeEventListener("keydown", onKeyDown);
       try {
-        window.localStorage.setItem(key, "closed");
+        if (dismiss) window.localStorage.setItem(key, "closed");
       } catch (error) {
         /* localStorage不可でも閉じる動作は継続 */
       }
       if (previousFocus && document.contains(previousFocus)) previousFocus.focus();
     };
 
-    modal.querySelectorAll("[data-modal-close]").forEach((element) => {
-      element.addEventListener("click", close, { once: true });
-    });
+    disposeHighlight = () => close(false);
+    modal.querySelectorAll("[data-modal-close]").forEach((element) => { element.onclick = () => close(true); });
 
     backgroundStates.forEach(({ element }) => { element.inert = true; });
     document.body.classList.add("modal-open");
@@ -884,10 +683,10 @@ function renderHighlight(highlight) {
   }
   const bannerClose = banner.querySelector("[data-banner-close]");
   if (bannerClose) {
-    bannerClose.addEventListener("click", () => {
+    bannerClose.onclick = () => {
       banner.hidden = true;
       document.body.classList.remove("has-banner");
-    }, { once: true });
+    };
   }
   banner.hidden = false;
   document.body.classList.add("has-banner");
@@ -944,9 +743,14 @@ if (showAllButton) {
   });
 }
 
-loadManagedContent().then((content) => {
-  specialClosureRanges = content.closures;
-  renderNews(content.news, content.loadError);
+let lastContentSignature = "";
+function applyManagedContent(content) {
+  const signature = JSON.stringify(content);
+  if (signature === lastContentSignature) { updateTodayStatus(); renderMonthlyCalendar(); return; }
+  lastContentSignature = signature;
+  specialClosureRanges = ClinicSchedule.active(content.closures);
+  managedContentUnavailable = content.loadError;
+  renderNews([...content.news, ...ClinicSchedule.closureNews(content.closures)], content.loadError);
   renderTests(content.tests);
   renderPreventionContent(content);
   renderSiteStatus(content.siteStatus);
@@ -955,7 +759,15 @@ loadManagedContent().then((content) => {
   protectJapanesePhrases();
   updateTodayStatus();
   renderMonthlyCalendar();
-  initPageMotion();
-  // 開きっぱなしのタブでも診療状況が古くならないよう毎分更新する
-  setInterval(updateTodayStatus, 60000);
-});
+}
+let refreshingContent = false;
+async function refreshManagedContent() {
+  if (refreshingContent) return;
+  refreshingContent = true;
+  try { applyManagedContent(await loadManagedContent()); }
+  finally { refreshingContent = false; }
+}
+refreshManagedContent().then(initPageMotion);
+setInterval(updateTodayStatus, 60000);
+setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 120000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshManagedContent(); });

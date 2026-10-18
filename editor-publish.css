@@ -1,0 +1,36 @@
+[hidden]{display:none!important}
+.editor-main{max-width:1100px;padding-bottom:60px}
+.editor-intro h1{font-size:clamp(25px,3.5vw,38px);letter-spacing:.01em}
+.editor-intro>p{max-width:760px}
+.editor-tabs{grid-template-columns:1.2fr 1.3fr 1fr .85fr;margin-top:24px}
+.connection-card{background:#fff;border:1px solid #d3dfd6;border-radius:12px;margin:24px 0 20px;overflow:hidden}
+.connection-card>summary{display:flex;gap:16px;align-items:center;padding:19px 22px;cursor:pointer;list-style:none}
+.connection-card>summary:after{content:'設定を開く';margin-left:auto;font-size:12px;color:#627267}
+.connection-card[open]>summary:after{content:'閉じる'}
+.connection-chip{font-size:11px;background:#f1f2ef;color:#59645d;padding:4px 10px;border-radius:30px}
+.connection-chip.is-connected{background:#e3f1e6;color:#244837}
+.connection-body{padding:0 22px 22px;display:grid;gap:12px}
+.connection-body label{display:grid;font-size:13px;font-weight:600;gap:7px}
+.connection-body input{width:100%;min-height:44px;border:1px solid #b9c8bf;border-radius:7px;font:inherit;padding:10px 12px;box-sizing:border-box}
+.token-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px}
+.token-link{display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap;font-size:13px}
+.inline-check{display:flex!important;align-items:center;gap:8px;font-size:13px!important;font-weight:500!important;margin:14px 0}
+.inline-check input{width:18px!important;min-height:18px!important;height:18px;padding:0;accent-color:#244837;flex-shrink:0}
+.connect-actions{margin-top:14px}.connection-feedback{margin:0;font-size:12px;line-height:1.7;white-space:pre-line;color:#53645a}
+.connection-feedback.is-error{color:#9a343c}.connection-feedback.is-success{color:#244837}
+.setup-help{font-size:12px;line-height:1.85;background:#f7f9f6;padding:12px 14px;border-radius:8px}
+.setup-help summary{cursor:pointer;font-weight:700}.setup-help ol{padding-left:24px}.setup-help li{margin:8px 0}
+.text-button{border:0;background:none;color:#476354;text-decoration:underline;font-size:12px;padding:8px 0;cursor:pointer}
+.closure-row{display:grid;grid-template-columns:1fr;gap:14px;padding:20px;background:#fafbf8}
+.closure-dates{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.closure-flags{display:flex;gap:24px;flex-wrap:wrap}.closure-flags .inline-check{margin:0}
+.privacy-note{font-size:11px;line-height:1.7;color:#7a6140;background:#faf4e8;padding:10px 12px;border-radius:6px;margin:16px 0}
+.publish-status{color:#365e44!important;font-weight:600}.publish-followup{display:flex;flex-wrap:wrap;gap:15px;align-items:center;margin:18px 0;font-size:12px}
+.save-bar{bottom:14px;z-index:20}.save-bar .primary{min-width:140px}.save-actions button{white-space:nowrap}
+.draft-recovery{display:flex;align-items:center;gap:15px;padding:13px 18px;background:#fff4d9;border:1px solid #e4d1a3;border-radius:8px;margin:14px 0;font-size:12px}
+.backup-tools{margin:24px 0;font-size:12px;color:#55675b}.backup-tools summary{cursor:pointer}.backup-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}
+.editor-footer{font-size:11px;line-height:1.8;color:#738177}
+.preview-dialog{width:min(900px,calc(100% - 30px));max-height:90vh;border:1px solid #d0ddd3;border-radius:14px;padding:26px;color:#273b30;box-sizing:border-box;background:#f6f8f4}
+.preview-dialog::backdrop{background:rgba(21,36,28,.6)}.preview-heading{display:flex;justify-content:space-between;align-items:center;gap:20px}.preview-heading h2{margin:5px 0}
+.preview-card{background:#fff;border:1px solid #dce5dd;border-radius:9px;padding:20px;margin:14px 0}.preview-card h3{font-size:17px;margin:0 0 10px}.preview-card p{white-space:pre-line;line-height:1.9;font-size:14px;overflow-wrap:anywhere}
+@media(max-width:760px){.editor-tabs{grid-template-columns:1fr 1fr;gap:4px;top:65px}.editor-tabs button{font-size:12px}.token-row,.closure-dates{grid-template-columns:1fr}.connection-body{padding:0 16px 18px}.connection-card>summary{padding:16px}.connection-card>summary:after{font-size:10px}.connection-card input{font-size:16px}.save-actions{grid-template-columns:1fr 1fr!important}.save-bar{bottom:8px;padding:12px}.closure-row{padding:14px}.preview-dialog{padding:15px}.draft-recovery{flex-wrap:wrap}.closure-flags{gap:12px}.editor-main{padding-bottom:30px}}

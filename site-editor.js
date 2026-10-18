@@ -28,6 +28,7 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 let data = clone(defaultData);
 let loaded = false;
 let dirty = false;
+let baseDocument = null;
 
 const form = document.querySelector("[data-editor-form]");
 const status = document.querySelector("[data-load-status]");
@@ -42,16 +43,11 @@ function makeId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function localDateString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+function localDateString() { return ClinicSchedule.japanNow().key; }
 
 function safeData(input) {
-  const source = input && typeof input === "object" ? input : {};
+  if (!input || typeof input !== "object" || !Array.isArray(input.news) || !Array.isArray(input.closures)) throw new Error("お知らせ・休診情報を含むsite-updates.jsonを指定してください。");
+  const source = input;
   const merged = { ...clone(defaultData), ...source };
   merged.siteStatus = { ...defaultData.siteStatus, ...(source.siteStatus || {}) };
   merged.highlight = { ...defaultData.highlight, ...(source.highlight || {}) };
@@ -73,14 +69,7 @@ function safeData(input) {
         published: item?.published !== false
       }))
     : [];
-  merged.closures = Array.isArray(source.closures)
-    ? source.closures.map((item) => ({
-        id: item?.id || makeId("closure"),
-        start: typeof item?.start === "string" ? item.start : "",
-        end: typeof item?.end === "string" ? item.end : "",
-        label: typeof item?.label === "string" ? item.label : "臨時休診"
-      }))
-    : [];
+  merged.closures = source.closures.map(item => ({ ...ClinicSchedule.normalize(item), id: item?.id || makeId("closure") }));
   return merged;
 }
 
@@ -113,13 +102,17 @@ function setLoaded(text) {
   status.textContent = text;
   downloadButton.disabled = false;
   folderButton.disabled = !("showDirectoryPicker" in window);
-  setMessage("内容を編集後、更新用JSONを作成してください。");
+  document.querySelector("[data-preview]").disabled = false;
+  baseDocument = clone(data);
+  setMessage("内容を編集し、表示を確認してから「公開する」を押してください。");
+  document.dispatchEvent(new CustomEvent("clinic-editor-loaded"));
 }
 
 function markDirty() {
   if (!loaded) return;
   dirty = true;
-  setMessage("未保存の変更があります。");
+  setMessage("未公開の変更があります。");
+  document.dispatchEvent(new CustomEvent("clinic-editor-changed"));
 }
 
 function emptyState(text) {
@@ -156,7 +149,7 @@ function renderNews() {
     titleWrap.className = "item-card-title";
     const chip = document.createElement("span");
     chip.className = `status-chip${item.published ? " is-published" : ""}`;
-    chip.textContent = item.published ? "公開中" : "下書き";
+    chip.textContent = item.published ? "掲載対象" : "非掲載";
     const heading = document.createElement("strong");
     heading.textContent = item.title || `新しいお知らせ ${index + 1}`;
     titleWrap.append(chip, heading);
@@ -205,7 +198,7 @@ function renderNews() {
     publishInput.checked = item.published !== false;
     publishInput.dataset.newsField = "published";
     const publishText = document.createElement("span");
-    publishText.textContent = "公開する";
+    publishText.textContent = "掲載する";
     publishLabel.append(publishInput, publishText);
     meta.append(dateLabel, categoryLabel, publishLabel);
 
@@ -243,61 +236,67 @@ function collectNews() {
   }));
 }
 
+function closureField(row, key, labelText, type, value) {
+  const label = document.createElement("label"); label.textContent = labelText;
+  const input = document.createElement(type === "textarea" ? "textarea" : type === "select" ? "select" : "input");
+  if (type === "select") {
+    Object.entries(ClinicSchedule.periods).forEach(([value,text]) => { const option = document.createElement("option"); option.value=value; option.textContent=text; input.append(option); });
+  } else if (type === "textarea") { input.rows=3; input.maxLength=800; }
+  else input.type = type;
+  if (type === "text") input.maxLength=80;
+  input.dataset.closureField = key;
+  if (type === "checkbox") { input.checked=Boolean(value); label.className="inline-check"; label.prepend(input); }
+  else { input.value=value || ""; label.append(input); }
+  row.append(label); return input;
+}
+
 function renderClosures() {
   closuresRoot.replaceChildren();
-  if (data.closures.length === 0) {
-    closuresRoot.appendChild(emptyState("臨時休診は未登録です。"));
-    return;
-  }
-
-  data.closures.forEach((item, index) => {
-    const row = document.createElement("div");
-    row.className = "item-card closure-row";
-    row.dataset.id = item.id || makeId("closure");
-
-    const startLabel = document.createElement("label");
-    startLabel.textContent = "開始日";
-    const start = document.createElement("input");
-    start.type = "date";
-    start.value = item.start || "";
-    start.dataset.closureField = "start";
-    startLabel.appendChild(start);
-
-    const endLabel = document.createElement("label");
-    endLabel.textContent = "終了日";
-    const end = document.createElement("input");
-    end.type = "date";
-    end.value = item.end || item.start || "";
-    end.dataset.closureField = "end";
-    endLabel.appendChild(end);
-
-    const label = document.createElement("label");
-    label.textContent = "表示名";
-    const labelInput = document.createElement("input");
-    labelInput.type = "text";
-    labelInput.maxLength = 80;
-    labelInput.value = item.label || "臨時休診";
-    labelInput.dataset.closureField = "label";
-    label.appendChild(labelInput);
-
-    const remove = createButton("削除", "danger-button", () => {
-      collectClosures();
-      data.closures.splice(index, 1);
-      renderClosures();
-      markDirty();
+  if (!data.closures.length) closuresRoot.append(emptyState("臨時休診は未登録です。「休診日を追加」から入力してください。"));
+  data.closures.forEach((item,index) => {
+    const card=document.createElement("article"); card.className="item-card closure-row"; card.dataset.id=item.id || makeId("closure");
+    const header=document.createElement("div"); header.className="item-card-header";
+    const title=document.createElement("strong"); title.textContent=`休診のお知らせ ${index+1}`;
+    header.append(title,createButton("削除", "danger-button",()=>{
+      if (!window.confirm("この休診を削除しますか？公開後にカレンダーとお知らせの両方から消えます。")) return;
+      collectClosures(); data.closures.splice(index,1); renderClosures(); markDirty();
+    })); card.append(header);
+    const dates=document.createElement("div"); dates.className="closure-dates";
+    const start=closureField(dates,"start","開始日","date",item.start);
+    const end=closureField(dates,"end","終了日（1日だけなら空欄可）","date",item.end);
+    closureField(dates,"period","休診する時間帯","select",item.period || "all");
+    let previousStart=start.value;
+    start.addEventListener("input",()=>{
+      if (!end.value || end.value === previousStart) end.value=start.value;
+      previousStart=start.value; collectClosures(); updateClosurePreview(true,start.value);
     });
-    row.append(startLabel, endLabel, label, remove);
-    closuresRoot.appendChild(row);
+    card.append(dates);
+    const text=document.createElement("div"); text.className="two-columns";
+    closureField(text,"label","見出し（例：移転に伴う臨時休診）","text",item.label);
+    closureField(text,"noticeDate","お知らせの掲載日（表示用）","date",item.noticeDate || localDateString());
+    card.append(text);
+    closureField(card,"body","補足・理由（任意）","textarea",item.body);
+    const flags=document.createElement("div"); flags.className="closure-flags";
+    closureField(flags,"published","この休診を反映する","checkbox",item.published !== false);
+    closureField(flags,"announce","「お知らせ」にも自動掲載する","checkbox",item.announce !== false);
+    card.append(flags); closuresRoot.append(card);
   });
+  updateClosurePreview();
 }
 
 function collectClosures() {
-  data.closures = [...closuresRoot.querySelectorAll(".closure-row")].map((row) => ({
-    id: row.dataset.id || makeId("closure"),
-    start: row.querySelector('[data-closure-field="start"]').value,
-    end: row.querySelector('[data-closure-field="end"]').value,
-    label: row.querySelector('[data-closure-field="label"]').value.trim()
-  })).filter((item) => item.start || item.end || item.label);
+  data.closures = [...closuresRoot.querySelectorAll(".closure-row")].map(row => {
+    const c={id:row.dataset.id};
+    row.querySelectorAll("[data-closure-field]").forEach(input=> { c[input.dataset.closureField]=input.type === "checkbox" ? input.checked : input.value.trim(); });
+    c.end=c.end || c.start;
+    return c;
+  });
+}
+function updateClosurePreview(jump=false,targetDate="") {
+  const root = document.querySelector("[data-editor-calendar]");
+  const first = data.closures.find(c=>c.published !== false && ClinicSchedule.isDate(c.start));
+  const month=jump && ClinicSchedule.isDate(targetDate) ? targetDate.slice(0,7) : jump && first ? first.start.slice(0,7) : undefined;
+  ClinicSchedule.renderCalendar(root,data.closures,{limit:false,month});
 }
 
 function renderConditions() {
@@ -383,7 +382,7 @@ function collect() {
     buttonText: getValue("recruitment.buttonText"),
     buttonUrl: getValue("recruitment.buttonUrl")
   };
-  data.updatedAt = new Date().toISOString();
+
 }
 
 function isSafeLink(value) {
@@ -402,19 +401,20 @@ function validate() {
     errors.push("重要なお知らせのリンク先は、https://、http://、tel:、# のいずれかで始めてください。");
   }
   data.news.forEach((item, index) => {
-    if (item.published && !/^\d{4}-\d{2}-\d{2}$/.test(item.date)) {
+    if (item.published && !ClinicSchedule.isDate(item.date)) {
       errors.push(`公開するお知らせ ${index + 1} の日付を入力してください。`);
     }
     if (item.published && !item.title) {
       errors.push(`公開するお知らせ ${index + 1} の見出しを入力してください。`);
     }
   });
-  data.closures.forEach((item, index) => {
-    if (!item.start || !item.end || !item.label) {
-      errors.push(`臨時休診 ${index + 1} は開始日・終了日・表示名をすべて入力してください。`);
-    } else if (item.end < item.start) {
-      errors.push(`臨時休診 ${index + 1} は終了日を開始日以降にしてください。`);
-    }
+  data.closures.forEach((item,index) => {
+    if (item.published === false) return;
+    if (!ClinicSchedule.isDate(item.start) || !ClinicSchedule.isDate(item.end) || !item.label) errors.push(`臨時休診 ${index+1} の日付・見出しを入力してください。`);
+    else if (item.end < item.start) errors.push(`臨時休診 ${index+1} の終了日は開始日以降にしてください。`);
+    else if ((Date.parse(item.end)-Date.parse(item.start))/86400000 >= 366) errors.push(`臨時休診 ${index+1} は366日以内で指定してください。`);
+    if (item.announce && !ClinicSchedule.isDate(item.noticeDate)) errors.push(`臨時休診 ${index+1} の掲載日を入力してください。`);
+    if (!Object.hasOwn(ClinicSchedule.periods,item.period)) errors.push(`臨時休診 ${index+1} の時間帯を確認してください。`);
   });
   if (data.recruitment.enabled && !data.recruitment.title) {
     errors.push("スタッフ募集を掲載する場合は、見出しを入力してください。");
@@ -434,10 +434,12 @@ function preparedJson() {
 }
 
 async function loadCurrent() {
+  if (dirty && !window.confirm("未公開の変更を破棄して、最新の内容を読み込みますか？")) return;
+  if (window.ClinicPublisher?.isConnected()) return window.ClinicPublisher.reload();
   status.textContent = "読み込み中…";
   try {
     if (window.location.protocol === "file:") throw new Error("file protocol");
-    const response = await fetch("data/site-updates.json", { cache: "no-store" });
+    const response = await fetch("data/site-updates.json?v=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(12000) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     data = safeData(await response.json());
     render();
@@ -453,9 +455,11 @@ async function loadCurrent() {
 
 function loadFromFile(file) {
   return file.text().then((text) => {
-    data = safeData(JSON.parse(text));
-    render();
-    setLoaded(`${file.name} を読み込みました`);
+    const restored = safeData(JSON.parse(text));
+    if (!window.confirm("ファイルの内容を編集画面へ読み込みます。公開サイトはまだ変更されません。続けますか？")) return;
+    data = restored; render();
+    if (!loaded) setLoaded(`${file.name} を読み込みました`);
+    markDirty();
   });
 }
 
@@ -486,8 +490,7 @@ async function saveToFolder() {
     const writable = await fileHandle.createWritable();
     await writable.write(text);
     await writable.close();
-    dirty = false;
-    setMessage("サイトフォルダ内の data/site-updates.json を更新しました。次にGitHubへ反映してください。", "success");
+    setMessage("ローカルフォルダへ保存しました。公開サイトはまだ変更されていません。", "success");
   } catch (error) {
     if (error?.name === "AbortError") return;
     setMessage(error.message || "フォルダへの保存に失敗しました。", "error");
@@ -534,7 +537,7 @@ document.querySelector("[data-add-news]").addEventListener("click", () => {
 
 document.querySelector("[data-add-closure]").addEventListener("click", () => {
   collectClosures();
-  data.closures.push({ id: makeId("closure"), start: "", end: "", label: "臨時休診" });
+  data.closures.push({ id: makeId("closure"), start: "", end: "", label: "臨時休診", period: "all", published: true, announce: true, noticeDate: localDateString(), body: "" });
   renderClosures();
   closuresRoot.lastElementChild?.querySelector("input")?.focus();
   markDirty();
@@ -550,13 +553,14 @@ document.querySelector("[data-add-condition]").addEventListener("click", () => {
 
 form.addEventListener("input", (event) => {
   if (event.target.matches("input, textarea, select")) markDirty();
+  if (event.target.matches("[data-closure-field]")) { collectClosures(); updateClosurePreview(); }
   if (event.target.matches('[data-news-field="published"], [data-news-field="title"]')) {
     const row = event.target.closest(".news-row");
     const chip = row?.querySelector(".status-chip");
     const heading = row?.querySelector(".item-card-title strong");
     if (chip) {
       const published = row.querySelector('[data-news-field="published"]').checked;
-      chip.textContent = published ? "公開中" : "下書き";
+      chip.textContent = published ? "掲載対象" : "非掲載";
       chip.classList.toggle("is-published", published);
     }
     if (heading && event.target.matches('[data-news-field="title"]')) {
@@ -565,17 +569,46 @@ form.addEventListener("input", (event) => {
   }
 });
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  try {
-    const text = preparedJson();
-    downloadJson(text);
-    dirty = false;
-    setMessage("site-updates.json を作成しました。GitHubの data フォルダ内で置き換えてください。", "success");
-  } catch (error) {
-    setMessage(error.message || "入力内容を確認してください。", "error");
-  }
+downloadButton.addEventListener("click",()=>{
+  try { downloadJson(preparedJson()); setMessage("バックアップを保存しました。公開サイトはまだ変更されていません。"); }
+  catch(error) { setMessage(error.message,"error"); }
 });
+form.addEventListener("submit",event=>{
+  event.preventDefault();
+  if (window.ClinicPublisher) window.ClinicPublisher.publish();
+  else setMessage("公開機能を読み込めませんでした。ページを再読み込みしてください。","error");
+});
+document.querySelector("[data-new-closure-notice]").addEventListener("click",()=>{
+  document.querySelector('[data-tab="closures"]').click();
+  document.querySelector("[data-add-closure]").click();
+});
+document.querySelector('[data-tab="closures"]').addEventListener("click",()=>updateClosurePreview(true));
+
+function showPreview() {
+  try { collect(); const errors=validate(); if (errors.length) throw new Error(errors[0]); }
+  catch(error) { setMessage(error.message,"error"); return; }
+  const root=document.querySelector("[data-preview-body]"); root.replaceChildren();
+  const section=(title,body)=>{ const card=document.createElement("section"); card.className="preview-card"; const h=document.createElement("h3"); h.textContent=title; card.append(h); if (body) { const p=document.createElement("p"); p.textContent=body; card.append(p); } root.append(card); return card; };
+  if (data.siteStatus.enabled) section(data.siteStatus.title,data.siteStatus.body);
+  if (data.highlight.enabled) section(data.highlight.title,data.highlight.body);
+  const cal=section("診療カレンダー"); const widget=document.createElement("div"); cal.append(widget);
+  const first=ClinicSchedule.active(data.closures).find(c=>c.end>=localDateString());
+  ClinicSchedule.renderCalendar(widget,data.closures,{limit:false,month:first?.start.slice(0,7)});
+  const news=[...data.news.filter(c=>c.published),...ClinicSchedule.closureNews(data.closures)].sort((a,b)=>b.date.localeCompare(a.date));
+  if (!news.length) section("お知らせ","現在、新しいお知らせはありません。");
+  news.forEach(n=>section(`${n.date}　${n.title}`,n.body));
+  if (data.recruitment.enabled) section(data.recruitment.title,[data.recruitment.lead,...data.recruitment.conditions.map(c=>c.label+"："+c.value),data.recruitment.note].join("\n"));
+  document.querySelector("[data-preview-dialog]").showModal();
+}
+document.querySelector("[data-preview]").addEventListener("click",showPreview);
+document.querySelector("[data-close-preview]").addEventListener("click",()=>document.querySelector("[data-preview-dialog]").close());
+// Arrow-key operation for tabs; buttons are also usable with Tab and Enter.
+tabButtons.forEach((button,index)=>button.addEventListener("keydown",event=>{
+  if (!["ArrowLeft","ArrowRight","Home","End"].includes(event.key)) return;
+  event.preventDefault();
+  const next=event.key === "Home" ? 0 : event.key === "End" ? tabButtons.length-1 : (index+(event.key === "ArrowRight" ? 1 : -1)+tabButtons.length)%tabButtons.length;
+  tabButtons[next].focus(); tabButtons[next].click();
+}));
 
 folderButton.addEventListener("click", saveToFolder);
 window.addEventListener("beforeunload", (event) => {
@@ -585,4 +618,4 @@ window.addEventListener("beforeunload", (event) => {
 });
 
 render();
-loadCurrent();
+window.editorReady = loadCurrent();

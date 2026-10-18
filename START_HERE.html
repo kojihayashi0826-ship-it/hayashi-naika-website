@@ -1,0 +1,74 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer"><title>初回設定と操作ガイド｜林内科医院</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#243e32;background:#f4f6f3;margin:0;line-height:1.85}main{max-width:850px;margin:32px auto;padding:32px 44px;background:white;border-radius:16px;box-shadow:0 5px 28px #1931260c}h1{font-size:28px;line-height:1.5}h2{font-size:21px;border-top:1px solid #dfe6df;padding-top:24px;margin-top:36px}p,li{overflow-wrap:anywhere}a{color:#245e40}ol,ul{padding-left:1.6em}nav{background:#eaf1e9;padding:16px;border-radius:8px}@media(max-width:600px){main{padding:22px;margin:0;border-radius:0}h1{font-size:24px}}</style></head><body><main><nav><strong>初回の設置・接続後は、Chromeから「編集 → 公開」で更新できます。</strong><br><a href="site-editor.html">更新アプリを開く →</a>　<a href="TEST_REPORT.md">動作確認の範囲</a></nav><h1>林内科医院：更新アプリの使い方</h1>
+<h2>この版でできること</h2>
+<p>Chromeで接続し、お知らせ・流行情報・スタッフ募集・臨時休診・サイト案内を編集して「公開する」を押すと、GitHubへ直接保存します。通常の更新でJSONのダウンロードや手作業のアップロードは不要です。</p>
+<p>更新アプリ： https://www.hayashinaika.clinic/site-editor.html
+対象：kojihayashi0826-ship-it/hayashi-naika-website、mainブランチ
+書き込み先：data/site-updates.json（最上位のsite-updates.jsonではありません）</p>
+<h2>1. 初回の設置</h2>
+<p>このZIPを展開し、ファイルを現在のGitHubリポジトリへ配置します。ZIP自体やZIPを包むフォルダを配置するのではなく、index.html、script.js、site-editor.htmlなどがリポジトリの最上位に並ぶようにします。</p>
+<p>今回の更新・追加ファイル：</p>
+<ul>
+<li>index.html / script.js</li>
+<li>clinic-schedule.js / calendar-sync.css</li>
+<li>site-editor.html / site-editor.js</li>
+<li>github-publisher.js / editor-publish.css</li>
+<li>data/site-updates.json</li>
+<li>README_FIRST.md / GITHUB_UPDATE_GUIDE.md / PUBLISH_GUIDE.md</li>
+</ul>
+<p>site-editor.css、styles.css、assets、CNAMEなどは引き続き使用します。既存の他のファイルを削除する必要はありません。GitHub Pagesのビルド完了後、Chromeで更新アプリを開きます。古い画面の場合は強制再読み込みしてください。</p>
+<p>※このZIPをダウンロード・展開しただけでは、本番サイトは更新されません。</p>
+<h2>2. 初回のGitHub接続</h2>
+<ol>
+<li>更新アプリの「接続キーを作成」を押し、GitHubへログインします。</li>
+<li>Repository accessで「Only select repositories」を選び、「hayashi-naika-website」だけを指定します。</li>
+<li>Repository permissionsの「Contents」が「Read and write」になっていることを確認します。Metadataは自動付与されます。その他の追加権限は不要です。</li>
+<li>Generate tokenでキーを発行し、github_pat_で始まる文字列を更新アプリの「GitHub接続キー」に貼り付けます。</li>
+<li>自分専用の端末なら「このChromeに暗号化して保存する」を選び、12文字以上の解除用パスワードを2回入力します。</li>
+<li>「接続する」を押します。</li>
+</ol>
+<p>接続キー作成画面には90日の有効期限を初期指定します。期限切れや失効時には新しいキーを設定してください。GitHubの設定変更やアカウント側の制約によって、表示項目や許可条件が異なる場合があります。</p>
+<p>暗号化保存を選ぶと、次回から解除用パスワードで接続できます。保存しない場合は、画面を開き直すたびに接続キーを入力します。キーや解除用パスワードをチャット・記事本文・公開JSONへ記載しないでください。</p>
+<p>GitHubのパスワードを更新アプリへ入力する方式ではありません。本人の許可を省略して公開できる設定にもしていません。</p>
+<h2>3. 普段のお知らせ更新</h2>
+<p>接続 → 編集 → 「表示プレビュー」 → 「公開する」。</p>
+<p>「お知らせ・流行情報」で新規追加し、掲載対象の記事の「掲載する」をONにします。日付は表示用です。将来の日付を入力しても予約投稿にはなりません。</p>
+<p>スタッフ募集は「掲載する」をONにすると本文とナビゲーションに現れます。OFFにして公開すると両方から消えます。募集条件は追加・変更・削除できます。</p>
+<p>「サイト案内」では開院前案内のON/OFF、重要な帯・ポップアップも編集できます。</p>
+<h2>4. 臨時休診とカレンダーの連動</h2>
+<p>「臨時休診・カレンダー」→「休診日を追加」で登録します。</p>
+<ul>
+<li>開始日：休診日を選びます。1日だけの場合、終了日は同じ日が自動入力されます。終了日を空欄にしても開始日と同じ日として扱います。</li>
+<li>終了日：連続休診の最終日です。この日を含めて反映します。</li>
+<li>時間帯：終日休診／午前休診／午後休診を選択します。</li>
+<li>見出し・補足：移転・学会等、必要な説明を入力します。</li>
+<li>この休診を反映する：ONの休診だけを反映します。</li>
+<li>お知らせにも自動掲載する：ONで同じ日付をお知らせ欄にも自動表示します。</li>
+</ul>
+<p>終日休診は赤色＋「終日休診」、半日休診は黄系の背景＋「午前休診」「午後休診」で表示します。通常の木曜・日曜・祝日は淡い色の休診表示です。重複した午前休診・午後休診は終日休診として扱い、通常の休診日を半日診療日に変えることはありません。</p>
+<p>カレンダー、お知らせ、ページ上部の「本日の診療」は同じデータで判定します。修正・取消しも一度の公開で連動します。お知らせだけを消す場合は「お知らせにも自動掲載する」をOFF、休診自体を取り消す場合は「この休診を反映する」をOFFにします。</p>
+<p>重要なお知らせの文章に日付を手入力しただけでは連動しません。必ず専用の「臨時休診・カレンダー」で日付を登録してください。</p>
+<p>カレンダーは当月から1年先まで、プレビューはそれ以外の月も確認できます。祝日は既存の2026・2027年分を引き継いでいます。2028年以降は別途祝日データの更新が必要で、未登録の年には注意表示が出ます。診療時間そのものは今回変更していません。</p>
+<h2>5. 公開状態の見分け方</h2>
+<p>「GitHubへ送信しました」＝リポジトリへの保存が終わった状態です。
+「公開サイトへの反映を確認しました」＝公開JSONから今回の更新識別子を読み取れた状態です。</p>
+<p>送信後、管理画面を開いている間は公開先を一定間隔で確認します。GitHub Pagesのビルドやキャッシュの影響で反映に時間がかかることがあります。確認できない場合は「公開サイトへの反映を確認」を押してください。保存成功とサイト反映成功を混同しない表示にしています。</p>
+<h2>6. 競合・失敗・復元</h2>
+<p>別端末やGitHubで先に更新されていた場合、古い内容での上書きを停止します。編集中の内容をバックアップJSONへ保存し、最新の内容を読み込んで必要な変更だけ入れ直してください。書き込み時もGitHubのSHAチェックで競合を検出します。</p>
+<p>通信中に送信結果を確認できなかった場合は、無条件に再送しません。最新のGitHubデータに今回の識別子があるかを確認し、確定できない場合はその旨を表示します。</p>
+<p>「バックアップ・復元」にはJSONの保存・読み込み、1回前の公開内容の読み込みを用意しています。復元しても「公開する」を押すまで本番サイトは変わりません。GitHubにも変更履歴が残ります。</p>
+<p>未公開の編集内容は、利用可能な場合にChrome内へ自動保存します。以前の下書きがあると再開ボタンが表示されます。ただしブラウザーの保存データ削除・プライベートモード・容量制限等により保持できない場合があります。</p>
+<h2>7. 安全上の注意</h2>
+<p>接続キーは原則として接続中のメモリー内だけで使用します。暗号化保存を選ぶと、PBKDF2-SHA256（600,000回）＋AES-256-GCMで暗号化し、ランダムなsaltとIVとともにそのChromeへ保存します。解除用パスワード自体は保存しません。操作がない状態で30分経過すると接続を解除します。</p>
+<p>暗号化保存は共有端末や不審な拡張機能のある端末では使用しないでください。ブラウザーや端末の乗っ取りに対する絶対的な保護ではありません。接続キーのContents権限はこのリポジトリ単位であり、data/site-updates.jsonだけにGitHub側で制限されるわけではありません。</p>
+<p>公開サイト・GitHubリポジトリ・配信JSONは第三者から閲覧できます。「非掲載」はウェブページ上の表示設定で、秘密保存ではありません。患者氏名・病歴・応募者の個人情報・認証情報は入力しないでください。</p>
+<p>管理画面はnoindexで、外部スクリプトを読み込まないContent Security Policyを設定しています。</p>
+<h2>今回引き継いだ内容</h2>
+<p>既存リポジトリ最上位のsite-updates.jsonにあった2026年10月30〜31日の移転に伴う臨時休診を、正しいdata/site-updates.jsonへ引き継いでいます。重要ポップアップ自体は元の設定どおりOFF、休診はカレンダーとお知らせに表示する設定です。フルミストの記事とスタッフ募集は非掲載のままです。</p>
+<h2>参照した公式資料</h2>
+<ul>
+<li>GitHub personal access token： https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens</li>
+<li>GitHub Contents API： https://docs.github.com/en/rest/repos/contents</li>
+<li>GitHub Pagesの公開元： https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site</li>
+<li>Web Crypto deriveKey： https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey</li>
+</ul>
+</main></body></html>
