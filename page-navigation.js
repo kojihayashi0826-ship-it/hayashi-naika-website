@@ -2,7 +2,7 @@
   'use strict';
 
   // Keep bookmarked links to the former home-page sections working.
-  const legacyPages = { '#care': 'care.html', '#tests': 'tests.html', '#doctor': 'doctor.html' };
+  const legacyPages = { '#care': 'care.html', '#tests': 'tests.html', '#doctor': 'doctor.html', '#vaccine': 'vaccines.html', '#checkups': 'checkups.html' };
   const followLegacyLink = () => {
     const file = location.pathname.split('/').pop();
     const destination = legacyPages[location.hash];

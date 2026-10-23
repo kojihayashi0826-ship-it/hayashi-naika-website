@@ -1290,8 +1290,10 @@ button,
 .subpage-return { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; padding-block: 28px 56px; }
 .page-links-section { padding-block: 56px; background: #f7faf8; }
 .page-links-section .section-heading { margin-bottom: 26px; }
-.page-links-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.page-link-card { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 8px 20px; padding: 28px 26px; background: white; border: 1px solid var(--line); border-radius: 12px; }
+.page-links-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px; }
+.page-link-card { grid-column: span 2; display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 8px 20px; padding: 28px 26px; background: white; border: 1px solid var(--line); border-radius: 12px; }
+.page-link-card:nth-child(n+4) { grid-column: span 3; }
+.prevention-detail .prevention-grid { grid-template-columns: minmax(0, 1fr); max-width: 800px; }
 .page-link-card:hover { border-color: var(--green); background: var(--green-light); }
 .page-link-card:focus-visible, .back-to-top:focus-visible { outline: 3px solid var(--green-dark); outline-offset: 5px; }
 .page-link-icon { grid-row: span 2; display: grid; place-items: center; width: 56px; height: 56px; color: var(--green-dark); background: #f1f7f3; border-radius: 16px; }
@@ -1324,6 +1326,7 @@ button,
 .back-to-top:hover { background: #244837; }
 @media (max-width: 820px) {
   .page-links-grid { grid-template-columns: 1fr; gap: 12px; }
+  .page-links-grid .page-link-card { grid-column: auto; }
   .page-link-card { padding: 22px 20px; gap: 6px 18px; }
   .subpage-heading { padding-block: 20px 28px; }
   .subpage-return { gap: 18px; }
