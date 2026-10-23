@@ -24,3 +24,8 @@ JSONファイルを手作業でアップロードする必要はありません�
 詳しい手順・安全上の注意：START_HERE.html（Chromeで開けます）
 テキスト版：PUBLISH_GUIDE.md
 テストの範囲：TEST_REPORT.md
+
+## 管理方式について
+
+旧PHP管理画面は廃止しました。現在はGitHub Pages対応の site-editor.html を使用します。
+操作案内は [ADMIN_GUIDE.md](ADMIN_GUIDE.md)、廃止理由・旧設定キーに関する注意は [MAINTENANCE.md](MAINTENANCE.md) を参照してください。
