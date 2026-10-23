@@ -36,14 +36,14 @@
   }
   function fingerprint(value) { return JSON.stringify(stable(value)); }
   function readStorage(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
-  function removeStorage(key) { try { localStorage.removeItem(key); } catch { /* No persistence in restricted browsers. */ } }
+  function removeStorage(key) { if(key===draftKey)window.ClinicDrafts?.remove().catch(()=>{}); try { localStorage.removeItem(key); } catch { /* No persistence in restricted browsers. */ } }
   function writeStorage(key, value) { localStorage.setItem(key,JSON.stringify(value)); }
   function connectionMessage(text, type="") {
     const element=q("[data-connection-message]"); element.textContent=text;
     element.classList.toggle("is-error",type==="error"); element.classList.toggle("is-success",type==="success");
   }
   function syncControls() {
-    q("[data-publish]").disabled=!connected || !loaded || !dirty || publishing || connecting;
+    q("[data-publish]").disabled=!connected || !loaded || !dirty || publishing || connecting || window.ClinicEditorContent?.isBusy();
     q("[data-publish]").textContent=publishing ? "送信中…" : "公開する";
     q("[data-connect]").disabled=connecting || publishing;
     q("[data-unlock]").disabled=connecting || publishing;
@@ -101,7 +101,7 @@
     try {
       response=await fetch(url,{...options,redirect:"error",cache:"no-store",referrerPolicy:"no-referrer",
         signal:AbortSignal.timeout(25000),headers:{Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",Authorization:`Bearer ${credential}`,...(options.body ? {"Content-Type":"application/json"} : {})}});
-    } catch { const e=new Error("GitHubとの通信を確認できません。ネット接続を確認し、再度お試しください。"); e.uncertain=options.method==="PUT"; throw e; }
+    } catch { const e=new Error("GitHubとの通信を確認できません。ネット接続を確認し、再度お試しください。"); e.uncertain=["PUT","PATCH"].includes(options.method); throw e; }
     if (!response.ok) {
       let text;
       if (response.status===401) text="接続キーが無効または有効期限切れです。新しいキーで接続してください。";
@@ -111,12 +111,12 @@
       else if (response.status===409) text="別の更新と競合しました。バックアップを保存し、最新の内容を読み込んでから編集し直してください。";
       else if (response.status===422) text="GitHubが更新を受け付けませんでした。入力内容とmainブランチの保護ルールを確認してください。";
       else text=`GitHubから正常な応答を取得できません（HTTP ${response.status}）。公開状態を確認してください。`;
-      const error=new Error(text); error.status=response.status; error.uncertain=response.status>=500 && options.method==="PUT"; throw error;
+      const error=new Error(text); error.status=response.status; error.uncertain=response.status>=500 && ["PUT","PATCH"].includes(options.method); throw error;
     }
     return response.json();
   }
-  async function remoteDocument(credential=token) {
-    const file=await github(`${contentEndpoint}?ref=${encodeURIComponent(branch)}&t=${Date.now()}`,{},credential);
+  async function remoteDocument(credential=token,ref=branch) {
+    const file=await github(`${contentEndpoint}?ref=${encodeURIComponent(ref)}&t=${Date.now()}`,{},credential);
     if (typeof file.sha!=="string") throw new Error("更新元の識別情報を取得できませんでした。");
     const content=safeData(JSON.parse(decodeContent(file)));
     return {sha:file.sha,data:content};
@@ -178,20 +178,22 @@
     } catch(error) { setMessage(error.message,"error"); }
     finally { syncControls(); }
   }
-  function saveDraft() {
+  async function saveDraft() {
     if (!loaded || !dirty || publishing) return;
     collect();
-    try { writeStorage(draftKey,{savedAt:new Date().toISOString(),base:baseDocument,data}); }
-    catch { /* beforeunload still protects unsaved content; backup export remains available. */ }
+    const snapshot=copy({savedAt:new Date().toISOString(),base:baseDocument,data});
+    try { await ClinicDrafts.write(snapshot);localStorage.removeItem(draftKey); }
+    catch {try{writeStorage(draftKey,snapshot);}catch{setMessage("下書きを端末に保存できません。画面を閉じる前に公開するか、バックアップJSONを保存してください。","error");}}
   }
-  function showRecovery() {
-    const saved=readStorage(draftKey);
+  async function readDraft(){try{return (await ClinicDrafts.read()) || readStorage(draftKey);}catch{return readStorage(draftKey);}}
+  async function showRecovery() {
+    const saved=await readDraft();
     q("[data-draft-recovery]").hidden=!saved?.data || fingerprint(saved.data)===fingerprint(data);
   }
-  function restoreDraft() {
-    const saved=readStorage(draftKey); if (!saved?.data) return;
+  async function restoreDraft() {
+    const saved=await readDraft(); if (!saved?.data) return;
     if (dirty && !confirm("現在の編集内容を、Chromeに残っている編集内容へ置き換えますか？")) return;
-    if (saved.base && baseDocument && fingerprint(saved.base)!==fingerprint(baseDocument)) {
+    if (saved.base && baseDocument && fingerprint(safeData(saved.base))!==fingerprint(baseDocument)) {
       setMessage("下書き作成後に公開元が更新されています。自動復元を停止しました。下書きをJSON保存し、必要な変更だけ転記してください。","error");
       downloadJson(JSON.stringify(saved.data,null,2)+"\n"); return;
     }
@@ -219,13 +221,34 @@
     if (sha && /^[a-f0-9]{40}$/.test(sha)) { q("[data-commit-link]").href=`https://github.com/${owner}/${repo}/commit/${sha}`; q("[data-commit-link]").hidden=false; }
     syncControls(); startVerification();
   }
+  async function commitMedia(next, files) {
+    const ref=await github(`${apiRoot}/git/ref/heads/${branch}`);
+    const head=ref.object?.sha;
+    if(!head)throw new Error("公開元の識別情報を取得できませんでした。");
+    const current=await remoteDocument(token,head);
+    if(current.sha!==baseSha)throw new Error("別の更新を検出しました。最新の内容を読み込んでから編集し直してください。");
+    const parent=await github(`${apiRoot}/git/commits/${head}`);
+    const tree=[];
+    for(let i=0;i<files.length;i++){
+      setMessage(`写真・資料を送信中… ${i+1} / ${files.length}`);
+      const blob=await github(`${apiRoot}/git/blobs`,{method:"POST",body:JSON.stringify({encoding:"base64",content:files[i].content})});
+      tree.push({path:files[i].path,mode:"100644",type:"blob",sha:blob.sha});
+    }
+    const documentBlob=await github(`${apiRoot}/git/blobs`,{method:"POST",body:JSON.stringify({encoding:"utf-8",content:JSON.stringify(next,null,2)+"\n"})});
+    tree.push({path,mode:"100644",type:"blob",sha:documentBlob.sha});
+    const built=await github(`${apiRoot}/git/trees`,{method:"POST",body:JSON.stringify({base_tree:parent.tree.sha,tree})});
+    const commit=await github(`${apiRoot}/git/commits`,{method:"POST",body:JSON.stringify({message:"医院サイト更新：お知らせ・トップ画像・院内掲示物",tree:built.sha,parents:[head]})});
+    // No force: concurrent changes cause a rejection rather than being overwritten.
+    await github(`${apiRoot}/git/refs/heads/${branch}`,{method:"PATCH",body:JSON.stringify({sha:commit.sha,force:false})});
+    return {content:{sha:documentBlob.sha},commit:{sha:commit.sha}};
+  }
   async function publish() {
     if (publishing || connecting) return;
     if (!connected) { q("[data-connection]").open=true; setMessage("先にGitHubへ接続してください。","error"); return; }
-    let next;
-    try { next=JSON.parse(preparedJson()); }
+    let next,files;
+    try { const publication=ClinicEditorContent.publication(JSON.parse(preparedJson()));next=publication.data;files=publication.files; }
     catch(error) { setMessage(error.message,"error"); return; }
-    if (fingerprint(next)===fingerprint(baseDocument)) { dirty=false; removeStorage(draftKey); syncControls(); setMessage("公開元と同じ内容のため、更新は不要です。"); return; }
+    if (!files.length && fingerprint(next)===fingerprint(baseDocument)) { dirty=false; removeStorage(draftKey); syncControls(); setMessage("公開元と同じ内容のため、更新は不要です。"); return; }
     // Latest SHA is checked before the write; Contents API also checks SHA atomically.
     publishing=true; clearTimeout(draftTimer); setFormBusy(true);
     setMessage("公開元の変更有無を確認しています…");
@@ -237,7 +260,7 @@
       setMessage("GitHubへ送信しています…");
       let result;
       try {
-        result=await github(contentEndpoint,{method:"PUT",body:JSON.stringify({message:"医院サイト更新：お知らせ・休診・スタッフ募集",branch,sha:baseSha,content:encodeContent(JSON.stringify(next,null,2)+"\n")})});
+        result=files.length ? await commitMedia(next,files) : await github(contentEndpoint,{method:"PUT",body:JSON.stringify({message:"医院サイト更新：お知らせ・休診・トップ画像・院内掲示物",branch,sha:baseSha,content:encodeContent(JSON.stringify(next,null,2)+"\n")})});
       } catch(error) {
         if (error.uncertain) {
           // Never blindly retry an uncertain PUT: it might have succeeded.
@@ -264,7 +287,7 @@
         const current=await response.json();
         if (current.revision===revision) {
           q("[data-publish-status]").textContent="公開サイトへの反映を確認しました。";
-          if (!dirty) setMessage("公開が完了しました。お知らせとカレンダーに同じ更新内容が反映されています。","success");
+          if (!dirty) setMessage("公開が完了しました。変更した掲載内容が公開サイトに反映されています。","success");
           clearTimeout(verifyTimer); verification=0; removeStorage(pendingKey); return true;
         }
         if (current.updatedAt && pending.updatedAt && Date.parse(current.updatedAt)>Date.parse(pending.updatedAt)) {
@@ -315,3 +338,4 @@
   if (pending?.revision) {q("[data-publish-followup]").hidden=false;startVerification();}
   syncControls();
 })();
+

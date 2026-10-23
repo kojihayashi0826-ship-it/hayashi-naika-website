@@ -1,0 +1,18 @@
+.editor-tabs { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.editor-media-thumb { display: block; width: min(100%,420px); height: 190px; object-fit: contain; background: #edf2ee; border: 1px solid #d6dfd9; border-radius: 8px; }
+.document-thumb { max-height: 240px; }
+.content-row { min-width: 0; }
+.content-row input, .content-row select { min-width: 0; }
+.content-row .file-button { justify-self: start; }
+.content-row label { overflow-wrap: anywhere; }
+[data-media-status] { margin-top: 18px; }
+.preview-card .clinic-slideshow { max-width: 650px; margin-top: 15px; }
+.preview-card .document-card h2 { font-size: 16px; }
+.preview-card .document-card { grid-template-columns: 25px 1fr; }
+.preview-card .document-open { grid-column: 2; }
+.file-button:focus-within { outline: 3px solid #6e9a80; outline-offset: 3px; }
+@media(max-width:760px) {
+  .editor-tabs { display: flex; overflow-x: auto; padding: 5px; scrollbar-width: thin; }
+  .editor-tabs button { flex: 0 0 auto; white-space: nowrap; min-height: 42px; }
+  .editor-media-thumb { width: 100%; }
+}

@@ -5,16 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
   <meta name="theme-color" content="#244837">
   <title>林内科医院｜サイト更新アプリ</title>
   <link rel="icon" href="favicon.ico">
-  <link rel="stylesheet" href="site-editor.css?v=20261019-2">
-  <link rel="stylesheet" href="calendar-sync.css?v=20261019-2">
-  <link rel="stylesheet" href="editor-publish.css?v=20261019-2">
-  <script src="clinic-schedule.js?v=20261019-2" defer></script>
-  <script src="site-editor.js?v=20261019-2" defer></script>
-  <script src="github-publisher.js?v=20261019-2" defer></script>
+  <link rel="stylesheet" href="site-editor.css?v=20261024-1">
+  <link rel="stylesheet" href="calendar-sync.css?v=20261024-1">
+  <link rel="stylesheet" href="editor-publish.css?v=20261024-1">
+  <script src="clinic-schedule.js?v=20261024-1" defer></script>
+  <link rel="stylesheet" href="clinic-content.css?v=20261024-1">
+  <link rel="stylesheet" href="editor-content.css?v=20261024-1">
+  <script src="clinic-content.js?v=20261024-1" defer></script>
+  <script src="editor-content.js?v=20261024-1" defer></script>
+  <script src="site-editor.js?v=20261024-1" defer></script>
+  <script src="editor-drafts.js?v=20261024-1" defer></script>
+  <script src="github-publisher.js?v=20261024-1" defer></script>
 </head>
 <body>
   <header class="editor-header">
@@ -25,7 +30,7 @@
     <section class="editor-intro">
       <p class="editor-kicker">SITE CONTENT MANAGER</p>
       <h1>編集して、そのまま公開。</h1>
-      <p>お知らせ、臨時休診、スタッフ募集をこの画面から更新します。ファイルの入れ替えは不要です。</p>
+      <p>お知らせ、臨時休診、トップ画像、院内掲示物、スタッフ募集をこの画面から更新します。ファイルの入れ替えは不要です。</p>
       <ol class="editor-steps"><li><span>1</span>GitHubに接続</li><li><span>2</span>内容を編集・確認</li><li><span>3</span>「公開する」を押す</li></ol>
     </section>
     <details class="connection-card" data-connection open>
@@ -61,7 +66,9 @@
       <button type="button" role="tab" aria-selected="true" data-tab="news">お知らせ・流行情報</button>
       <button type="button" role="tab" aria-selected="false" data-tab="closures">臨時休診・カレンダー</button>
       <button type="button" role="tab" aria-selected="false" data-tab="recruitment">スタッフ募集</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="site">サイト案内</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="site">重要なお知らせ・案内</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="photos">トップ画像</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="documents">院内掲示物</button>
     </nav>
     <form data-editor-form novalidate>
       <div class="editor-panel" data-panel="news">
@@ -100,19 +107,37 @@
           <label>案内文<textarea rows="3" maxlength="300" data-field="siteStatus.body"></textarea></label>
         </section>
         <section class="editor-card">
-          <div class="card-heading"><div><p>IMPORTANT NOTICE</p><h2>重要なお知らせ</h2></div><label class="switch"><input type="checkbox" data-field="highlight.enabled"><span>表示する</span></label></div>
-          <p class="field-help">ページ上部で目立たせる案内です。<strong>ここに日付を文章で書くだけではカレンダーには反映されません。</strong>休診日は「臨時休診・カレンダー」で登録してください。</p>
-          <div class="two-columns"><label>表示方法<select data-field="highlight.mode"><option value="banner">画面上部の帯</option><option value="popup">ポップアップ</option></select></label><label>見出し<input type="text" maxlength="100" data-field="highlight.title"></label></div>
-          <label>本文<textarea rows="3" maxlength="500" data-field="highlight.body"></textarea></label>
-          <div class="two-columns"><label>リンクの文言<input type="text" maxlength="60" data-field="highlight.linkText"></label><label>リンク先<input type="text" maxlength="500" placeholder="#news または https://…" data-field="highlight.linkUrl"></label></div>
+          <div class="card-heading"><div><p>IMPORTANT NOTICES</p><h2>重要なお知らせ</h2></div><button type="button" class="primary compact" data-add-highlight>重要なお知らせを追加</button></div>
+          <p class="field-help">複数の案内を追加し、表示のON/OFFや順番を変更できます。ポップアップを選んだ案内もページ上部に残ります。<strong>休診日は「臨時休診・カレンダー」にも登録してください。</strong></p>
+          <div class="stack-list" data-highlights></div>
         </section>
       </div>
+      <div class="editor-panel" data-panel="photos" hidden>
+        <section class="editor-card">
+          <div class="card-heading"><div><p>TOP PHOTOS</p><h2>トップ画像</h2></div><label class="file-button">写真を追加<input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple data-add-photos></label></div>
+          <p class="field-help">複数選択できます。JPEG・PNG・WebP、1枚20MBまで。写真は長辺2400pxまで自動縮小します。iPhoneのHEIC写真はJPEGへ変換してから選んでください。変更は「公開する」で反映されます。</p>
+          <div class="stack-list" data-hero-settings></div>
+          <p class="field-help">例：静止6秒 ＋ フェード1.2秒なら、7.2秒ごとに次の写真へ移ります。写真が1枚の場合は静止表示です。端末の「視差効果を減らす」設定時は自動再生しません。</p>
+          <div class="stack-list" data-slides></div>
+        </section>
+      </div>
+      <div class="editor-panel" data-panel="documents" hidden>
+        <section class="editor-card">
+          <div class="card-heading"><div><p>CLINIC DOCUMENTS</p><h2>院内掲示物</h2></div><label class="file-button">PDF・画像を追加<input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" multiple data-add-documents></label></div>
+          <p class="field-help">表題とファイルを登録すると、ページ最下部の「院内掲示物」から見られます。PDF・JPEG・PNG・WebPに対応（1ファイル20MBまで）。掲示物の画像は読みやすさを保つため原寸で保存します。</p>
+          <p class="field-help">「非掲載」「削除」は一覧から外す操作です。公開済みファイルのURLと更新履歴は残ります。公開してよい資料のみ登録してください。</p>
+          <p><a href="clinic-documents.html" target="_blank" rel="noopener noreferrer">公開中の院内掲示物ページを開く ↗</a></p>
+          <div class="stack-list" data-documents></div>
+        </section>
+      </div>
+      <p class="field-help" data-media-status role="status" aria-live="polite"></p>
       <div class="save-bar"><div><p data-editor-message role="status" aria-live="polite">現在の内容を読み込んでいます。</p><p class="publish-status" data-publish-status aria-live="polite"></p></div><div class="save-actions"><button type="button" class="secondary" data-preview disabled>表示プレビュー</button><button type="submit" class="primary" data-publish disabled>公開する</button></div></div>
     </form>
     <div class="publish-followup" data-publish-followup hidden><button type="button" class="secondary compact" data-check-publish>公開サイトへの反映を確認</button><a href="./" target="_blank" rel="noopener noreferrer">公開サイトを開く ↗</a><a data-commit-link target="_blank" rel="noopener noreferrer" hidden>変更履歴 ↗</a></div>
     <details class="backup-tools"><summary>バックアップ・復元</summary><div class="backup-actions"><button type="button" class="secondary" data-download-json disabled>バックアップJSONを保存</button><label class="file-button">JSONから編集内容を復元<input type="file" accept="application/json,.json" data-file-input></label><button type="button" class="secondary" data-restore-previous disabled>1回前の公開内容を読み込む</button><button type="button" class="secondary" data-save-folder disabled>ローカルフォルダへ保存</button></div><p>復元・ローカル保存だけでは公開サイトは変わりません。内容を確認後、「公開する」を押してください。</p></details>
-    <p class="editor-footer">医院用の端末でご利用ください。公開先は data/site-updates.json に固定しています。<a href="START_HERE.html" target="_blank" rel="noopener noreferrer">操作ガイド</a></p>
+    <p class="editor-footer">医院用の端末でご利用ください。文章・写真・院内掲示物をまとめて公開します。<a href="START_HERE.html" target="_blank" rel="noopener noreferrer">操作ガイド</a></p>
   </main>
-  <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章と休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
+  <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章・写真の動作・資料・休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
 </body>
 </html>
+

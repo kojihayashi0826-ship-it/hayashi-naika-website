@@ -357,32 +357,6 @@ function initPageMotion() {
   }
 }
 
-function initHeroZoomLoop() {
-  const image = document.querySelector(".hero-visual img");
-  const badge = document.querySelector(".parking-badge");
-  if (!image) return;
-
-  // 医療サイトでは常時ループする動きより、初回だけの穏やかな表示を優先します。
-  image.style.animation = "none";
-  if (badge) badge.style.animation = "none";
-
-  const reducedMotion = typeof window.matchMedia === "function"
-    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reducedMotion || typeof image.animate !== "function") return;
-
-  image.animate([
-    { opacity: 0.78, transform: "scale(1.018)" },
-    { opacity: 1, transform: "scale(1)" }
-  ], { duration: 1100, easing: "cubic-bezier(.2,.75,.25,1)", fill: "both" });
-
-  if (badge && typeof badge.animate === "function") {
-    badge.animate([
-      { opacity: 0, transform: "translateY(10px)" },
-      { opacity: 1, transform: "translateY(0)" }
-    ], { duration: 650, delay: 420, easing: "ease-out", fill: "both" });
-  }
-}
-
 async function loadManagedContent() {
   if (window.location.protocol === "file:") return { ...defaultManagedContent, loadError: true };
 
@@ -392,6 +366,7 @@ async function loadManagedContent() {
     const content = await response.json();
     if (!content || !Array.isArray(content.closures) || !Array.isArray(content.news)) throw new Error("更新データの形式が不正です");
     return {
+      ...ClinicContent.normalize(content),
       closures: Array.isArray(content.closures) ? content.closures : [],
       news: Array.isArray(content.news) ? content.news : [],
       siteStatus: (content.siteStatus && typeof content.siteStatus === "object")
@@ -556,146 +531,14 @@ function renderRecruitment(recruitment) {
   }
 }
 
-function highlightKey(highlight) {
-  return `hayashi-highlight:${highlight.mode}:${highlight.title}:${highlight.body}`;
-}
-
 function isSafeLink(url) {
-  if (typeof url !== "string" || url === "") return false;
-  return /^(https?:\/\/|tel:|#)/.test(url);
-}
-
-let disposeHighlight = null;
-function renderHighlight(highlight) {
-  if (disposeHighlight) { disposeHighlight(); disposeHighlight = null; }
-  document.body.classList.remove("has-banner", "modal-open");
-  const banner = document.querySelector("[data-highlight-banner]");
-  const modal = document.querySelector("[data-highlight-modal]");
-  if (!banner || !modal) return;
-
-  banner.hidden = true;
-  modal.hidden = true;
-
-  if (!highlight || !highlight.enabled || !highlight.title) return;
-
-  const key = highlightKey(highlight);
-  const linkOk = isSafeLink(highlight.linkUrl) && highlight.linkText;
-
-  if (highlight.mode === "popup") {
-    let dismissed = false;
-    try {
-      dismissed = window.localStorage.getItem(key) === "closed";
-    } catch (error) {
-      dismissed = false;
-    }
-    if (dismissed) return;
-
-    modal.querySelector("[data-modal-title]").textContent = highlight.title;
-    modal.querySelector("[data-modal-body]").textContent = highlight.body || "";
-    const link = modal.querySelector("[data-modal-link]");
-    if (linkOk) {
-      link.textContent = highlight.linkText;
-      link.href = highlight.linkUrl;
-      if (highlight.linkUrl.startsWith("http")) {
-        link.target = "_blank";
-        link.rel = "noopener";
-      }
-      link.hidden = false;
-    } else {
-      link.hidden = true;
-      link.removeAttribute("href");
-    }
-
-    const closeButton = modal.querySelector(".highlight-modal-close");
-    const modalBox = modal.querySelector(".highlight-modal-box");
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const backgroundStates = [...document.body.children]
-      .filter((element) => element !== modal)
-      .map((element) => ({ element, inert: element.inert }));
-
-    const getFocusable = () => [...modal.querySelectorAll(
-      'a[href]:not([hidden]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )].filter((element) => !element.hidden && element.getClientRects().length > 0);
-
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        close();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusable = getFocusable();
-      if (focusable.length === 0) {
-        event.preventDefault();
-        modalBox?.focus();
-        return;
-      }
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    const close = (dismiss = true) => {
-      modal.hidden = true;
-      document.body.classList.remove("modal-open");
-      backgroundStates.forEach(({ element, inert }) => { element.inert = inert; });
-      document.removeEventListener("keydown", onKeyDown);
-      try {
-        if (dismiss) window.localStorage.setItem(key, "closed");
-      } catch (error) {
-        /* localStorage不可でも閉じる動作は継続 */
-      }
-      if (previousFocus && document.contains(previousFocus)) previousFocus.focus();
-    };
-
-    disposeHighlight = () => close(false);
-    modal.querySelectorAll("[data-modal-close]").forEach((element) => { element.onclick = () => close(true); });
-
-    backgroundStates.forEach(({ element }) => { element.inert = true; });
-    document.body.classList.add("modal-open");
-    document.addEventListener("keydown", onKeyDown);
-    modal.hidden = false;
-    window.requestAnimationFrame(() => (closeButton || modalBox)?.focus());
-    return;
-  }
-
-  // 既定は帯（バナー）表示
-  banner.querySelector("[data-banner-title]").textContent = highlight.title;
-  banner.querySelector("[data-banner-body]").textContent = highlight.body || "";
-  const bannerLink = banner.querySelector("[data-banner-link]");
-  if (linkOk) {
-    bannerLink.textContent = highlight.linkText;
-    bannerLink.href = highlight.linkUrl;
-    if (highlight.linkUrl.startsWith("http")) {
-      bannerLink.target = "_blank";
-      bannerLink.rel = "noopener";
-    }
-    bannerLink.hidden = false;
-  } else {
-    bannerLink.hidden = true;
-    bannerLink.removeAttribute("href");
-  }
-  const bannerClose = banner.querySelector("[data-banner-close]");
-  if (bannerClose) {
-    bannerClose.onclick = () => {
-      banner.hidden = true;
-      document.body.classList.remove("has-banner");
-    };
-  }
-  banner.hidden = false;
-  document.body.classList.add("has-banner");
+  return typeof url === "string" && /^(https?:\/\/|tel:|#)/.test(url);
 }
 
 const menuButton = document.querySelector(".menu-button");
 const globalNav = document.querySelector(".global-nav");
 
-initHeroZoomLoop();
+
 
 if (menuButton && globalNav) {
   const setMenuOpen = (open) => {
@@ -755,7 +598,7 @@ function applyManagedContent(content) {
   renderPreventionContent(content);
   renderSiteStatus(content.siteStatus);
   renderRecruitment(content.recruitment);
-  renderHighlight(content.highlight);
+  ClinicPublicContent.apply(content);
   protectJapanesePhrases();
   updateTodayStatus();
   renderMonthlyCalendar();
@@ -771,3 +614,4 @@ refreshManagedContent().then(initPageMotion);
 setInterval(updateTodayStatus, 60000);
 setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 120000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshManagedContent(); });
+

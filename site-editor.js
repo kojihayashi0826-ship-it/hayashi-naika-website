@@ -25,7 +25,7 @@ const defaultData = {
 };
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
-let data = clone(defaultData);
+let data = { ...clone(defaultData), ...ClinicContent.normalize(defaultData) };
 let loaded = false;
 let dirty = false;
 let baseDocument = null;
@@ -48,9 +48,9 @@ function localDateString() { return ClinicSchedule.japanNow().key; }
 function safeData(input) {
   if (!input || typeof input !== "object" || !Array.isArray(input.news) || !Array.isArray(input.closures)) throw new Error("お知らせ・休診情報を含むsite-updates.jsonを指定してください。");
   const source = input;
-  const merged = { ...clone(defaultData), ...source };
+  const merged = { ...clone(defaultData), ...source, ...ClinicContent.normalize(source) };
   merged.siteStatus = { ...defaultData.siteStatus, ...(source.siteStatus || {}) };
-  merged.highlight = { ...defaultData.highlight, ...(source.highlight || {}) };
+  merged.highlight = merged.highlights[0] ? { ...merged.highlights[0] } : { ...defaultData.highlight };
   merged.recruitment = { ...defaultData.recruitment, ...(source.recruitment || {}) };
   merged.recruitment.conditions = Array.isArray(source.recruitment?.conditions)
     ? source.recruitment.conditions.map((item) => ({
@@ -349,7 +349,7 @@ function collectConditions() {
 
 function render() {
   ["enabled", "title", "body"].forEach((key) => setValue(`siteStatus.${key}`, data.siteStatus[key]));
-  ["enabled", "mode", "title", "body", "linkText", "linkUrl"].forEach((key) => setValue(`highlight.${key}`, data.highlight[key]));
+  ClinicEditorContent.render();
   ["enabled", "title", "lead", "note", "buttonText", "buttonUrl"].forEach((key) => setValue(`recruitment.${key}`, data.recruitment[key]));
   renderNews();
   renderClosures();
@@ -362,14 +362,7 @@ function collect() {
     title: getValue("siteStatus.title"),
     body: getValue("siteStatus.body")
   };
-  data.highlight = {
-    enabled: getValue("highlight.enabled"),
-    mode: getValue("highlight.mode") || "banner",
-    title: getValue("highlight.title"),
-    body: getValue("highlight.body"),
-    linkText: getValue("highlight.linkText"),
-    linkUrl: getValue("highlight.linkUrl")
-  };
+  ClinicEditorContent.collect();
   collectNews();
   collectClosures();
   collectConditions();
@@ -394,12 +387,7 @@ function validate() {
   if (data.siteStatus.enabled && !data.siteStatus.title && !data.siteStatus.body) {
     errors.push("正式公開前の案内を表示する場合は、見出しか本文を入力してください。");
   }
-  if (data.highlight.enabled && !data.highlight.title) {
-    errors.push("重要なお知らせを表示する場合は、見出しを入力してください。");
-  }
-  if (!isSafeLink(data.highlight.linkUrl)) {
-    errors.push("重要なお知らせのリンク先は、https://、http://、tel:、# のいずれかで始めてください。");
-  }
+  errors.push(...ClinicEditorContent.validate());
   data.news.forEach((item, index) => {
     if (item.published && !ClinicSchedule.isDate(item.date)) {
       errors.push(`公開するお知らせ ${index + 1} の日付を入力してください。`);
@@ -477,7 +465,8 @@ function downloadJson(text) {
 
 async function saveToFolder() {
   try {
-    const text = preparedJson();
+    const publication = ClinicEditorContent.publication(JSON.parse(preparedJson()));
+    const text = JSON.stringify(publication.data,null,2)+"\n";
     if (!("showDirectoryPicker" in window)) throw new Error("この機能はChromeで利用してください。");
     const rootHandle = await window.showDirectoryPicker({ mode: "readwrite" });
     try {
@@ -485,6 +474,7 @@ async function saveToFolder() {
     } catch (error) {
       throw new Error("index.html があるサイト最上位フォルダを選択してください。");
     }
+    await ClinicEditorContent.saveFiles(rootHandle,publication.files);
     const dataHandle = await rootHandle.getDirectoryHandle("data", { create: true });
     const fileHandle = await dataHandle.getFileHandle("site-updates.json", { create: true });
     const writable = await fileHandle.createWritable();
@@ -590,7 +580,8 @@ function showPreview() {
   const root=document.querySelector("[data-preview-body]"); root.replaceChildren();
   const section=(title,body)=>{ const card=document.createElement("section"); card.className="preview-card"; const h=document.createElement("h3"); h.textContent=title; card.append(h); if (body) { const p=document.createElement("p"); p.textContent=body; card.append(p); } root.append(card); return card; };
   if (data.siteStatus.enabled) section(data.siteStatus.title,data.siteStatus.body);
-  if (data.highlight.enabled) section(data.highlight.title,data.highlight.body);
+  data.highlights.filter(h=>h.enabled).forEach(h=>section(h.title,h.body));
+  ClinicEditorContent.preview(root,section);
   const cal=section("診療カレンダー"); const widget=document.createElement("div"); cal.append(widget);
   const first=ClinicSchedule.active(data.closures).find(c=>c.end>=localDateString());
   ClinicSchedule.renderCalendar(widget,data.closures,{limit:false,month:first?.start.slice(0,7)});
@@ -619,3 +610,4 @@ window.addEventListener("beforeunload", (event) => {
 
 render();
 window.editorReady = loadCurrent();
+
