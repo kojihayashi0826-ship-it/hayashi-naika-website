@@ -1,10 +1,46 @@
 (() => {
   'use strict';
   let disposeHero=null,heroSignature='',disposeNotices=null;
+  const noticeSegmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter('ja', { granularity: 'word' }) : null;
+  function noticeText(element, text) {
+    // Preserve the editor's text/newlines while choosing sensible wrap points.
+    // Dates, medical terms and common endings stay together before segmentation.
+    const fixed = /(\d{1,4}年\d{1,2}月\d{1,2}日(?:[（(][月火水木金土日][）)])?|\d{1,2}月\d{1,2}日(?:[（(][月火水木金土日][）)])?|\d{1,2}日[（(][月火水木金土日][）)]|レントゲン(?:撮影|装置|検査)?|よろしくお願い申し上げます|させていただきます|おかけいたします|しております)/g;
+    const units = [];
+    text.split(fixed).filter(Boolean).forEach(part => {
+      fixed.lastIndex = 0;
+      if (fixed.test(part)) units.push(part);
+      else if (noticeSegmenter) units.push(...Array.from(noticeSegmenter.segment(part), item => item.segment));
+      else units.push(...(part.match(/\s+|[ァ-ヺー]+|[一-龯々]+[ぁ-ゖ]*|[ぁ-ゖ]+|[A-Za-z0-9]+|./gu) || []));
+    });
+    const phrases = [];
+    units.forEach(unit => {
+      const last = phrases.length - 1;
+      const previous = phrases[last] || '';
+      const join = previous && !/\s/.test(previous) && !/\s/.test(unit) && (
+        /^[、。，．！？!?）」』】・]+$/.test(unit) ||
+        /[（(「『【]$/.test(previous) ||
+        (/^(?:[ぁ-ゖ]+|様|伴う|伴)$/.test(unit) && !/[、。！？!?・]$/.test(previous) && previous.length + unit.length <= 18) ||
+        (previous === 'ご' || previous === 'お') ||
+        (/^[一-龯々]+$/.test(previous) && /^[一-龯々]+$/.test(unit) && previous.length + unit.length <= 12)
+      );
+      // ご／お starts the next phrase when it is a standalone prefix.
+      if (join && unit !== 'ご' && unit !== 'お') phrases[last] += unit;
+      else phrases.push(unit);
+    });
+    phrases.forEach(phrase => {
+      if (/\s/.test(phrase)) element.append(document.createTextNode(phrase));
+      else {
+        const span = document.createElement('span');
+        span.className = 'notice-phrase'; span.textContent = phrase;
+        element.append(span);
+      }
+    });
+  }
   function noticeContent(item,headingTag) {
     const fragment=document.createDocumentFragment();
-    const h=document.createElement(headingTag);h.textContent=item.title;fragment.append(h);
-    if(item.body){const p=document.createElement('p');p.textContent=item.body;fragment.append(p);}
+    const h=document.createElement(headingTag);noticeText(h,item.title);fragment.append(h);
+    if(item.body){const p=document.createElement('p');noticeText(p,item.body);fragment.append(p);}
     if(item.linkText && /^(https?:\/\/|tel:|#)/.test(item.linkUrl)){const a=document.createElement('a');a.href=item.linkUrl;a.textContent=item.linkText;if(/^https?:/.test(item.linkUrl)){a.target='_blank';a.rel='noopener noreferrer';}fragment.append(a);}
     return fragment;
   }

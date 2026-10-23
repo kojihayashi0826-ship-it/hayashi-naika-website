@@ -37,6 +37,10 @@
 .notice-dialog h3 { margin: 0 0 10px; font-size: 18px; }
 .notice-dialog p { white-space: pre-line; line-height: 1.85; }
 .notice-dialog a { color: #244837; text-decoration: underline; }
+/* Keep words and short phrases together, including on Safari. Long words can
+   still wrap when they exceed the entire available line width. */
+.important-notice :is(h2, p), .notice-dialog :is(h3, p) { line-break: strict; word-break: normal; text-wrap: pretty; }
+.notice-phrase { display: inline-block; max-width: 100%; vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
 .documents-main { min-height: 65vh; padding: 58px 0 80px; }
 .documents-breadcrumb { margin: 0 0 28px; color: #5b7062; font-size: 13px; }
 .documents-breadcrumb a { text-decoration: underline; }
