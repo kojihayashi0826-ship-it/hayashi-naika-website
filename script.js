@@ -468,13 +468,12 @@ function renderSiteStatus(siteStatus) {
 
 function renderRecruitment(recruitment) {
   const section = document.querySelector("[data-recruitment-section]");
-  if (!section) return;
-
   const enabled = !!(recruitment && recruitment.enabled);
-  section.hidden = !enabled;
   document.querySelectorAll("[data-recruitment-nav], [data-recruitment-footer]").forEach((link) => {
     link.hidden = !enabled;
   });
+  if (!section) return;
+  section.hidden = !enabled;
   if (!enabled) return;
 
   const title = section.querySelector("[data-recruitment-title]");
