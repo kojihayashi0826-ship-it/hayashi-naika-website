@@ -70,3 +70,10 @@
   .documents-main { padding: 30px 0 50px; }
   .slideshow-controls { gap: 8px; }
 }
+
+
+.faq-list p { white-space: pre-line; overflow-wrap: anywhere; }
+.faq-list summary { overflow-wrap: anywhere; }
+.care-intro, .care-links { line-height: 1.9; }
+.care-intro { margin: 0 0 24px; }
+.care-links { margin: 24px 0; }

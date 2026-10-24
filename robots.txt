@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /site-editor.html
 
 Sitemap: https://www.hayashinaika.clinic/sitemap.xml

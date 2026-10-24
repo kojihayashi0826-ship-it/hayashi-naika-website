@@ -23,6 +23,7 @@
     });
   }
   function collectExtra() {
+    data.faqs=collectRows(q('[data-faqs]'),data.faqs);
     data.highlights=collectRows(q('[data-highlights]'),data.highlights);
     data.hero.slides=collectRows(q('[data-slides]'),data.hero.slides);
     data.documents=collectRows(q('[data-documents]'),data.documents);
@@ -33,7 +34,7 @@
     const row=document.createElement('article');row.className='item-card content-row';row.dataset.contentRow=kind;row.dataset.id=item.id;
     const header=document.createElement('div');header.className='item-card-header';const h=document.createElement('strong');h.textContent=title;
     const actions=document.createElement('div');actions.className='item-actions';
-    const list=()=>kind==='highlights'?data.highlights:kind==='slides'?data.hero.slides:data.documents;
+    const list=()=>kind==='highlights'?data.highlights:kind==='slides'?data.hero.slides:kind==='faqs'?data.faqs:data.documents;
     const move=direction=>{collectExtra();const items=list();[items[index],items[index+direction]]=[items[index+direction],items[index]];renderExtra();markDirty();};
     const up=createButton('↑ 上へ','secondary compact',()=>move(-1));up.disabled=index===0;up.setAttribute('aria-label',title+'を上へ');
     const down=createButton('↓ 下へ','secondary compact',()=>move(1));down.disabled=index===list().length-1;down.setAttribute('aria-label',title+'を下へ');
@@ -41,6 +42,14 @@
     actions.append(up,down,remove);header.append(h,actions);row.append(header);root.append(row);return row;
   }
   function renderExtra() {
+    const faqs=q('[data-faqs]');faqs.replaceChildren();
+    if(!data.faqs.length)faqs.append(emptyState('質問は未登録です。「質問を追加」から作成できます。'));
+    data.faqs.forEach((item,i)=>{
+      const row=card(faqs,'faqs',item,i,`質問 ${i+1}`);
+      input(row,'published','サイトに表示する','checkbox',item.published);
+      input(row,'question','質問','text',item.question,{maxLength:200});
+      input(row,'answer','回答','textarea',item.answer,{maxLength:3000});
+    });
     const highlights=q('[data-highlights]');highlights.replaceChildren();
     if(!data.highlights.length)highlights.append(emptyState('重要なお知らせは未登録です。「追加」から作成できます。'));
     data.highlights.forEach((item,i)=>{
@@ -116,6 +125,10 @@
   }
   function validateExtra() {
     const errors=[];
+    data.faqs.forEach((f,i)=>{
+      if(f.published && (!f.question || !f.answer))errors.push(`質問 ${i+1} の質問と回答を両方入力してください。`);
+      if(f.question.length>200 || f.answer.length>3000)errors.push(`質問 ${i+1} は質問200文字、回答3000文字以内で入力してください。`);
+    });
     if(pendingReads)errors.push('ファイルの読み込み完了後に、もう一度操作してください。');
     data.highlights.forEach((h,i)=>{if(h.enabled && !h.title)errors.push(`重要なお知らせ ${i+1} の見出しを入力してください。`);if(!isSafeLink(h.linkUrl))errors.push(`重要なお知らせ ${i+1} のリンク先を確認してください。`);if(h.enabled && (!!h.linkUrl !== !!h.linkText))errors.push(`重要なお知らせ ${i+1} のリンク文言とリンク先を両方入力してください。`);});
     for(const [key,min,max] of [['hold',1,120],['fade',0,10]])if(data.hero[key]==='' || !Number.isFinite(data.hero[key]) || data.hero[key]<min || data.hero[key]>max)errors.push(`${key==='hold'?'静止表示':'フェード'}の秒数は${min}〜${max}で入力してください。`);
@@ -135,6 +148,7 @@
   }
   function preview(root,section) {
     disposePreview?.();
+    const faq=section('よくある質問');const faqList=document.createElement('div');faqList.className='faq-list';faq.append(faqList);ClinicContent.renderFaq(faqList,data.faqs);
     const card=section('トップ画像');const holder=document.createElement('div');card.append(holder);disposePreview=ClinicContent.slideshow(holder,data.hero,{preview:true});
     const docs=section('院内掲示物');const list=document.createElement('div');list.className='documents-list';docs.append(list);ClinicContent.documentList(list,data.documents,{preview:true});
   }
@@ -147,6 +161,7 @@
   async function saveFiles(root,files) {
     for(const file of files){const parts=file.path.split('/');let dir=root;for(const part of parts.slice(0,-1))dir=await dir.getDirectoryHandle(part,{create:true});const handle=await dir.getFileHandle(parts.at(-1),{create:true});const stream=await handle.createWritable();await stream.write(Uint8Array.from(atob(file.content),c=>c.charCodeAt(0)));await stream.close();}
   }
+  q('[data-add-faq]').addEventListener('click',()=>{collectExtra();data.faqs.push({id:makeId('faq'),published:true,question:'',answer:''});renderExtra();markDirty();q('[data-faqs]').lastElementChild.querySelector('[data-content-field="question"]').focus();});
   q('[data-add-highlight]').addEventListener('click',()=>{collectExtra();data.highlights.push({id:makeId('important'),enabled:true,mode:'banner',title:'',body:'',linkText:'',linkUrl:''});renderExtra();markDirty();q('[data-highlights]').lastElementChild.querySelector('[data-content-field="title"]').focus();});
   q('[data-add-photos]').addEventListener('change',e=>runFiles(e.target,async files=>{
     for(const file of files){const result=await prepareFile(file,true);collectExtra();data.hero.slides.push({id:makeId('slide'),enabled:true,fit:'cover',x:50,y:50,alt:file.name.replace(/\.[^.]+$/,''),...result});renderExtra();markDirty();}
@@ -157,3 +172,4 @@
   q('[data-preview-dialog]').addEventListener('close',()=>{disposePreview?.();disposePreview=null;});
   window.ClinicEditorContent={render:renderExtra,collect:collectExtra,validate:validateExtra,preview,publication,saveFiles,isBusy:()=>pendingReads>0};
 })();
+

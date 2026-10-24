@@ -475,7 +475,11 @@ async function saveToFolder() {
     } catch (error) {
       throw new Error("index.html があるサイト最上位フォルダを選択してください。");
     }
+    const indexHandle=await rootHandle.getFileHandle('index.html');
+    const indexHTML=ClinicContent.updateFaqHTML(await (await indexHandle.getFile()).text(),publication.data.faqs);
     await ClinicEditorContent.saveFiles(rootHandle,publication.files);
+    const indexWriter=await indexHandle.createWritable();
+    await indexWriter.write(indexHTML);await indexWriter.close();
     const dataHandle = await rootHandle.getDirectoryHandle("data", { create: true });
     const fileHandle = await dataHandle.getFileHandle("site-updates.json", { create: true });
     const writable = await fileHandle.createWritable();
@@ -617,4 +621,5 @@ const requestedTab = new URLSearchParams(window.location.search).get("tab");
 tabButtons.find(button => button.dataset.tab === requestedTab)?.click();
 render();
 window.editorReady = loadCurrent();
+
 

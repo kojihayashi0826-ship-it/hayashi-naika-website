@@ -221,7 +221,7 @@
     if (sha && /^[a-f0-9]{40}$/.test(sha)) { q("[data-commit-link]").href=`https://github.com/${owner}/${repo}/commit/${sha}`; q("[data-commit-link]").hidden=false; }
     syncControls(); startVerification();
   }
-  async function commitMedia(next, files) {
+  async function commitMedia(next, files, faqChanged=false) {
     const ref=await github(`${apiRoot}/git/ref/heads/${branch}`);
     const head=ref.object?.sha;
     if(!head)throw new Error("公開元の識別情報を取得できませんでした。");
@@ -229,6 +229,12 @@
     if(current.sha!==baseSha)throw new Error("別の更新を検出しました。最新の内容を読み込んでから編集し直してください。");
     const parent=await github(`${apiRoot}/git/commits/${head}`);
     const tree=[];
+    if(faqChanged){
+      const page=await github(`${apiRoot}/contents/index.html?ref=${encodeURIComponent(head)}`);
+      const html=ClinicContent.updateFaqHTML(decodeContent(page),next.faqs);
+      const blob=await github(`${apiRoot}/git/blobs`,{method:'POST',body:JSON.stringify({encoding:'utf-8',content:html})});
+      tree.push({path:'index.html',mode:'100644',type:'blob',sha:blob.sha});
+    }
     for(let i=0;i<files.length;i++){
       setMessage(`写真・資料を送信中… ${i+1} / ${files.length}`);
       const blob=await github(`${apiRoot}/git/blobs`,{method:"POST",body:JSON.stringify({encoding:"base64",content:files[i].content})});
@@ -237,7 +243,7 @@
     const documentBlob=await github(`${apiRoot}/git/blobs`,{method:"POST",body:JSON.stringify({encoding:"utf-8",content:JSON.stringify(next,null,2)+"\n"})});
     tree.push({path,mode:"100644",type:"blob",sha:documentBlob.sha});
     const built=await github(`${apiRoot}/git/trees`,{method:"POST",body:JSON.stringify({base_tree:parent.tree.sha,tree})});
-    const commit=await github(`${apiRoot}/git/commits`,{method:"POST",body:JSON.stringify({message:"医院サイト更新：お知らせ・トップ画像・院内掲示物",tree:built.sha,parents:[head]})});
+    const commit=await github(`${apiRoot}/git/commits`,{method:"POST",body:JSON.stringify({message:"医院サイト更新：お知らせ・よくある質問・トップ画像・院内掲示物",tree:built.sha,parents:[head]})});
     // No force: concurrent changes cause a rejection rather than being overwritten.
     await github(`${apiRoot}/git/refs/heads/${branch}`,{method:"PATCH",body:JSON.stringify({sha:commit.sha,force:false})});
     return {content:{sha:documentBlob.sha},commit:{sha:commit.sha}};
@@ -260,7 +266,8 @@
       setMessage("GitHubへ送信しています…");
       let result;
       try {
-        result=files.length ? await commitMedia(next,files) : await github(contentEndpoint,{method:"PUT",body:JSON.stringify({message:"医院サイト更新：お知らせ・休診・トップ画像・院内掲示物",branch,sha:baseSha,content:encodeContent(JSON.stringify(next,null,2)+"\n")})});
+        const faqChanged=JSON.stringify(next.faqs)!==JSON.stringify(baseDocument.faqs);
+        result=files.length || faqChanged ? await commitMedia(next,files,faqChanged) : await github(contentEndpoint,{method:"PUT",body:JSON.stringify({message:"医院サイト更新：お知らせ・休診・トップ画像・院内掲示物",branch,sha:baseSha,content:encodeContent(JSON.stringify(next,null,2)+"\n")})});
       } catch(error) {
         if (error.uncertain) {
           // Never blindly retry an uncertain PUT: it might have succeeded.
@@ -338,4 +345,5 @@
   if (pending?.revision) {q("[data-publish-followup]").hidden=false;startVerification();}
   syncControls();
 })();
+
 

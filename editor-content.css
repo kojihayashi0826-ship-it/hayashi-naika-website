@@ -2,6 +2,10 @@
 .editor-media-thumb { display: block; width: min(100%,420px); height: 190px; object-fit: contain; background: #edf2ee; border: 1px solid #d6dfd9; border-radius: 8px; }
 .document-thumb { max-height: 240px; }
 .content-row { min-width: 0; }
+.google-facts { margin: 0; overflow-wrap: anywhere; }
+.google-facts dt { font-weight: 700; margin-top: 12px; }
+.google-facts dd { margin: 4px 0 0; }
+[data-panel="google"] { overflow-wrap: anywhere; }
 .content-row input, .content-row select { min-width: 0; }
 .content-row .file-button { justify-self: start; }
 .content-row label { overflow-wrap: anywhere; }
@@ -16,3 +20,4 @@
   .editor-tabs button { flex: 0 0 auto; white-space: nowrap; min-height: 42px; }
   .editor-media-thumb { width: 100%; }
 }
+

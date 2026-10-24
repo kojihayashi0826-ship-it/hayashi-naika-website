@@ -3,6 +3,7 @@
   'use strict';
   const defaultSlide = {id:'original-illustration',src:'assets/clinic-illustration-new-building-v4.webp',alt:'林内科医院の外観イメージ（イラスト）',enabled:true,fit:'cover',x:50,y:50};
   const defaults = {autoplay:true,hold:6,fade:1.2,easing:'ease-in-out',pauseOnHover:true,slides:[defaultSlide]};
+  const defaultFaqs = [{"id":"faq-1","published":true,"question":"初診はどのように受診すればよいですか？","answer":"通常診療は事前のお申し込み不要です。受付時間内に直接ご来院ください。ワクチンと健康診断は準備が必要なため、事前にお電話ください。"},{"id":"faq-2","published":true,"question":"発熱や咳、のどの痛みがある場合はどうすればよいですか？","answer":"来院前にお電話ください。感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。"},{"id":"faq-3","published":true,"question":"胃カメラ・大腸カメラは受けられますか？","answer":"上部内視鏡検査と下部内視鏡検査に対応しています。検査の必要性、前処置、鎮静薬の使用可否は診察時にご説明します。"},{"id":"faq-4","published":true,"question":"健康診断や予防接種はできますか？","answer":"特定健康診査、後期高齢者健康診査、雇入時・定期健康診断、大腸がん検診（便潜血検査）に対応しています。また、子宮頸がん予防（HPV）、二種混合（DT）、日本脳炎などの小児用ワクチンも事前の電話相談により対応します。種類・対象年齢・在庫状況によってはご用意できない場合があります。"},{"id":"faq-5","published":true,"question":"駐車場はありますか？","answer":"医院前に13台分の駐車場があります。小松空港、小松駅、小松IC方面からお車で来院しやすい立地です。"}];
   const number = (v,fallback,min,max) => v !== '' && v != null && Number.isFinite(Number(v)) ? Math.min(max,Math.max(min,Number(v))) : fallback;
   const text = v => typeof v === 'string' ? v : '';
   function safeAsset(path) { return typeof path === 'string' && /^assets\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(?:pdf|jpe?g|png|webp)$/i.test(path); }
@@ -10,6 +11,7 @@
     const h = Array.isArray(source.highlights) ? source.highlights : source.highlight && (source.highlight.title || source.highlight.body) ? [{...source.highlight,id:'legacy-highlight'}] : [];
     const hero = source.hero || {};
     return {
+      faqs: normalizeFaqs(source.faqs),
       theme: ClinicTheme.normalize(source.theme),
       design: ClinicDesign.normalize(source.design),
       highlights:h.filter(Boolean).map((v,i)=>({id:v.id || `highlight-${i}`,enabled:v.enabled !== false,mode:v.mode === 'popup' ? 'popup' : 'banner',title:text(v.title),body:text(v.body),linkText:text(v.linkText),linkUrl:text(v.linkUrl)})),
@@ -17,6 +19,29 @@
         slides:(Array.isArray(hero.slides)?hero.slides:[defaultSlide]).filter(Boolean).map((v,i)=>({...v,id:v.id || `slide-${i}`,src:text(v.src),alt:text(v.alt),enabled:v.enabled !== false,fit:v.fit === 'contain'?'contain':'cover',x:number(v.x,50,0,100),y:number(v.y,50,0,100)}))},
       documents:(Array.isArray(source.documents)?source.documents:[]).filter(Boolean).map((v,i)=>({...v,id:v.id || `document-${i}`,title:text(v.title),description:text(v.description),src:text(v.src),name:text(v.name),published:v.published !== false}))
     };
+  }
+  function normalizeFaqs(items) {
+    const seen=new Set();
+    return (Array.isArray(items)?items:defaultFaqs).filter(v=>v && typeof v==='object').map((v,i)=>{
+      let id=text(v.id) || `faq-${i+1}`;
+      while(seen.has(id))id+='-copy';
+      seen.add(id);
+      return {id,published:v.published!==false,question:text(v.question).trim(),answer:text(v.answer).trim()};
+    });
+  }
+  const escapeHTML=value=>value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function faqHTML(items) {
+    const visible=normalizeFaqs(items).filter(v=>v.published && v.question && v.answer);
+    return visible.length?visible.map(v=>`<details><summary>${escapeHTML(v.question)}</summary><p>${escapeHTML(v.answer)}</p></details>`).join('\n'):'<p class="faq-empty">受診についてのご質問は、診療時間内にお電話でお問い合わせください。</p>';
+  }
+  function renderFaq(root,items) {
+    if(root)root.innerHTML=faqHTML(items); // All user text is escaped above.
+  }
+  function updateFaqHTML(html,items) {
+    const start='<!-- clinic-faq:start -->',end='<!-- clinic-faq:end -->';
+    const a=html.indexOf(start),b=html.indexOf(end);
+    if(a<0 || b<a || html.indexOf(start,a+start.length)>=0 || html.indexOf(end,b+end.length)>=0)throw Error('トップページのFAQ更新欄が見つかりません。最新のサイト一式を使用してください。');
+    return html.slice(0,a+start.length)+'\n'+faqHTML(items)+'\n'+html.slice(b);
   }
   function assetURL(item,preview=false) {
     if(preview && /^data:(?:image\/(?:jpeg|png|webp)|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(item.fileData || '')) return item.fileData;
@@ -91,5 +116,6 @@
       article.append(num,body,hint);root.append(article);
     });
   }
-  window.ClinicContent=Object.freeze({defaults,defaultSlide,normalize,safeAsset,assetURL,slideshow,documentList});
+  window.ClinicContent=Object.freeze({defaults,defaultSlide,normalize,safeAsset,assetURL,slideshow,documentList,normalizeFaqs,faqHTML,renderFaq,updateFaqHTML});
 })();
+

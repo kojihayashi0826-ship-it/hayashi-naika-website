@@ -5,7 +5,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function load(name){return fs.readFileSync(path.join(ROOT,name),'utf8');}
 function setup(name='site-editor.html',options={}){
  const dom=new JSDOM(load(name).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,''),{url:'https://www.hayashinaika.clinic/'+name,runScripts:'dangerously',pretendToBeVisual:true});
- const w=dom.window;let remote=structuredClone(options.source||source),sha='initialsha',calls=[],blobs=new Map(),tree=[],commit='',errors=[];
+ const w=dom.window;let remote=structuredClone(options.source||source),remoteHTML=options.html??load('index.html'),sha='initialsha',calls=[],blobs=new Map(),tree=[],commit='',errors=[];
  w.addEventListener('error',e=>errors.push(e.message));w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.AbortSignal=AbortSignal;w.structuredClone=structuredClone;w.indexedDB=new IDBFactory();w.confirm=()=>true;w.matchMedia=()=>({matches:!!options.reduced,addEventListener(){},removeEventListener(){}});w.IntersectionObserver=class{observe(){}disconnect(){}};w.scrollTo=()=>{};
  w.ResizeObserver=class{observe(){}disconnect(){}};
  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
@@ -18,6 +18,7 @@ function setup(name='site-editor.html',options={}){
   url=String(url);const method=opts.method||'GET';let body=opts.body?JSON.parse(opts.body):null;calls.push({url,method,body});
   if(!url.startsWith('https://api.github.com/'))return response(remote);
   if(url==='https://api.github.com/user')return response({login:'test-user'});
+  if(url.includes('/contents/index.html'))return response({encoding:'base64',content:Buffer.from(remoteHTML).toString('base64')});
   if(url.includes('/contents/data/site-updates.json')){
    if(method==='GET')return response({sha,encoding:'base64',content:Buffer.from(JSON.stringify(remote)).toString('base64')});
    assert.equal(body.sha,sha);remote=JSON.parse(Buffer.from(body.content,'base64'));sha='updatedsha';return response({content:{sha},commit:{sha:'b'.repeat(40)}});
@@ -29,7 +30,9 @@ function setup(name='site-editor.html',options={}){
   if(url.endsWith('/git/commits')){assert.deepEqual(body.parents,['a'.repeat(40)]);commit='c'.repeat(40);return response({sha:commit});}
   if(url.endsWith('/git/refs/heads/main')){
    assert.equal(body.force,false);if(options.conflict)return response({},422);
-   const json=blobs.get(tree.find(e=>e.path==='data/site-updates.json').sha);remote=JSON.parse(json.content);sha=tree.find(e=>e.path==='data/site-updates.json').sha;if(options.uncertain)throw Error('lost response');return response({object:{sha:commit}});
+   const json=blobs.get(tree.find(e=>e.path==='data/site-updates.json').sha);remote=JSON.parse(json.content);sha=tree.find(e=>e.path==='data/site-updates.json').sha;
+   const page=tree.find(e=>e.path==='index.html');if(page)remoteHTML=blobs.get(page.sha).content;
+   if(options.uncertain)throw Error('lost response');return response({object:{sha:commit}});
   }
   throw Error('Unexpected request: '+url);
  };
@@ -39,7 +42,7 @@ function setup(name='site-editor.html',options={}){
  else scripts=['clinic-theme.js','clinic-design.js','clinic-content.js','clinic-documents.js'];
  const expose=name==='site-editor.html'?`\nwindow.qa={get:()=>JSON.parse(JSON.stringify(data)),set:v=>{data=safeData(v);render();},prepare:()=>JSON.parse(preparedJson()),validate:()=>{collect();return validate();},dirty:()=>dirty,mark:markDirty};`:'';
  w.eval(scripts.map(load).join('\n')+expose);
- return {dom,w,calls,errors,getRemote:()=>remote,setConflict:()=>{sha='other'},getTree:()=>tree};
+ return {dom,w,calls,errors,getRemote:()=>remote,getRemoteHTML:()=>remoteHTML,setConflict:()=>{sha='other'},getTree:()=>tree};
 }
 const field=(w,selector,value)=>{const el=w.document.querySelector(selector);assert.ok(el,selector);if(el.type==='checkbox')el.checked=value;else el.value=value;el.dispatchEvent(new w.Event('input',{bubbles:true}));return el;};
 async function connect(t){t.w.document.querySelector('[data-token]').value='github_pat_TESTONLY';t.w.document.querySelector('[data-connect]').click();await sleep(15);assert.equal(t.w.ClinicPublisher.isConnected(),true);}
@@ -174,4 +177,71 @@ async function visualTests(){
  assert.equal(t.errors.length,0,JSON.stringify(t.errors));await sleep(50);t.dom.window.close();pub.dom.window.close();console.log('PASS visual: touch pointer reorder/resize, keyboard, cancel, undo/redo, type resize, validation, draft, backup, publish, public styles');
 }
 
-(async()=>{await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+async function faqTests(){
+ const t=setup(),w=t.w;await w.editorReady;
+ const baseline=w.qa.get(),q=s=>w.document.querySelector(s);
+ assert.equal(baseline.faqs.length,5); // old backups receive the existing questions
+ assert.equal(w.ClinicContent.normalize({faqs:[]}).faqs.length,0); // empty does not restore defaults
+ const normalized=w.ClinicContent.normalize({faqs:[null,{id:'same',question:' Q ',answer:' A '},{id:'same',question:'B',answer:'C'}]}).faqs;
+ assert.equal(normalized.length,2);assert.notEqual(normalized[0].id,normalized[1].id);assert.equal(normalized[0].question,'Q');
+ q('[data-tab="faq"]').click();assert.equal(q('[data-panel="faq"]').hidden,false);
+ q('[data-add-faq]').click();assert.ok(w.qa.validate().some(e=>e.includes('質問 6')));
+ const row='[data-faqs] article:last-child ';
+ field(w,row+'[data-content-field="question"]','質問 <img src=x onerror=alert(1)>');
+ field(w,row+'[data-content-field="answer"]','1行目 & <script>alert(1)</script>\n2行目 $&');
+ assert.equal(w.qa.validate().length,0);
+ q(row+'button').click();assert.equal(w.qa.get().faqs[4].question,'質問 <img src=x onerror=alert(1)>');
+ field(w,'[data-faqs] article:first-child [data-content-field="published"]',false);
+ const backup=w.qa.prepare();w.qa.set(backup);assert.deepEqual(w.qa.prepare().faqs,backup.faqs);
+ assert.deepEqual(w.qa.prepare().closures,baseline.closures);assert.deepEqual(w.qa.prepare().news,baseline.news);
+ await sleep(550);assert.equal(JSON.stringify((await w.ClinicDrafts.read()).data.faqs),JSON.stringify(backup.faqs));
+ q('[data-preview]').click();assert.equal(q('[data-preview-dialog] .faq-list').querySelectorAll('details').length,5);assert.equal(q('[data-preview-dialog] .faq-list').querySelector('img'),null);q('[data-preview-dialog]').close();
+ const html=w.ClinicContent.updateFaqHTML(load('index.html'),backup.faqs);
+ const marker=/<\!-- clinic-faq:start -->[\s\S]*?<\!-- clinic-faq:end -->/;
+ assert.equal(html.replace(marker,''),load('index.html').replace(marker,''));
+ assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));assert.ok(html.includes('2行目 $&amp;'));
+ assert.throws(()=>w.ClinicContent.updateFaqHTML('<html></html>',backup.faqs));
+ await connect(t);await w.ClinicPublisher.publish();assert.equal(w.qa.dirty(),false);
+ assert.deepEqual(t.getTree().map(e=>e.path).sort(),['data/site-updates.json','index.html']);
+ const snapshot=new JSDOM(t.getRemoteHTML());assert.equal(snapshot.window.document.querySelectorAll('.faq-list details').length,5);
+ assert.equal(snapshot.window.document.querySelector('.faq-list img'),null);assert.equal(snapshot.window.document.querySelector('.faq-list script'),null);snapshot.window.close();
+ const pub=setup('index.html',{source:t.getRemote()});await sleep(40);
+ assert.equal(pub.w.document.querySelectorAll('.faq-list details').length,5);assert.equal(pub.w.document.querySelector('.faq-list img'),null);
+ const publishedFaqText=pub.w.document.querySelector('.faq-list').textContent;
+ pub.w.ClinicPublicContent.apply({loadError:true});
+ assert.equal(pub.w.document.querySelector('.faq-list').textContent,publishedFaqText);
+ // All questions removed stays empty through normalization, rendering and static publication.
+ while(q('[data-faqs] .danger-button'))q('[data-faqs] .danger-button').click();
+ assert.equal(w.qa.prepare().faqs.length,0);await w.ClinicPublisher.publish();
+ assert.equal(t.getRemote().faqs.length,0);assert.equal(new JSDOM(t.getRemoteHTML()).window.document.querySelectorAll('.faq-list details').length,0);
+ const empty=setup('index.html',{source:t.getRemote()});await sleep(30);assert.equal(empty.w.document.querySelectorAll('.faq-list details').length,0);
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));await sleep(50);t.dom.window.close();pub.dom.window.close();empty.dom.window.close();
+ for(const option of [{conflict:true},{failBlob:true},{html:'<html>missing marker</html>'}]){
+  const fail=setup('site-editor.html',option);await fail.w.editorReady;await connect(fail);
+  field(fail.w,'[data-faqs] article:first-child [data-content-field="answer"]','変更した回答');
+  const before=JSON.stringify(fail.getRemote());await fail.w.ClinicPublisher.publish();
+  assert.equal(JSON.stringify(fail.getRemote()),before);assert.equal(fail.w.qa.dirty(),true);await sleep(50);fail.dom.window.close();
+ }
+ console.log('PASS FAQ: legacy/empty data, CRUD/reorder/visibility, validation, draft/backup/preview, safe text, atomic HTML+JSON, concurrent edits and failed writes');
+}
+function seoTests(){
+ const pages=['index.html','care.html','tests.html','doctor.html','first-visit.html','vaccines.html','checkups.html'];const titles=new Set();
+ for(const file of pages){
+  const dom=new JSDOM(load(file)),d=dom.window.document;const title=d.title;assert.ok(title.includes('小松市'));assert.ok(title.includes('林内科医院'));assert.ok(!titles.has(title));titles.add(title);
+  assert.equal(d.querySelectorAll('h1').length,1);assert.equal(d.querySelector('meta[property="og:title"]').content,title);
+  const graph=JSON.parse(d.querySelector('script[type="application/ld+json"]').textContent)['@graph'];
+  const web=graph.find(n=>n['@type']==='WebPage');assert.equal(web.name,title);assert.equal(web.description,d.querySelector('meta[name="description"]').content);assert.equal(web.url,d.querySelector('link[rel="canonical"]').href);
+  if(file==='index.html'){
+   assert.equal(d.querySelector('.hero-hours-note,.saturday-hours'),null);assert.equal(d.querySelector('#faq').textContent.includes('土曜'),false);
+   assert.equal(graph.some(n=>n['@type']==='FAQPage'),false);
+   assert.equal(graph.find(n=>n['@type']==='MedicalClinic').openingHoursSpecification[1].closes,'18:30');
+   const faqs=JSON.parse(load('data/site-updates.json')).faqs;assert.equal(d.querySelectorAll('.faq-list details').length,faqs.length);
+   [...d.querySelectorAll('.faq-list details')].forEach((el,i)=>{assert.equal(el.querySelector('summary').textContent,faqs[i].question);assert.equal(el.querySelector('p').textContent,faqs[i].answer);});
+  }
+  dom.window.close();
+ }
+ assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
+ console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
+}
+(async()=>{seoTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+
