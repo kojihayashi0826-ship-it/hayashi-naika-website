@@ -8,7 +8,7 @@
       const source=await response.json();
       if(!source || !Array.isArray(source.news) || !Array.isArray(source.closures))throw Error('invalid data');
       const content=ClinicContent.normalize(source);
-      ClinicTheme.apply(content.theme);
+      ClinicDesign.apply(content.design,content.theme);
       ClinicContent.documentList(root,content.documents);
     }catch{
       root.replaceChildren();const p=document.createElement('p');p.className='documents-empty';p.textContent='資料を読み込めませんでした。';const retry=document.createElement('button');retry.type='button';retry.textContent='もう一度読み込む';retry.addEventListener('click',refresh);root.append(p,retry);

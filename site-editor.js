@@ -180,13 +180,12 @@ function renderNews() {
     select.dataset.newsField = "category";
     [
       ["notice", "お知らせ"],
-      ["trend", "流行情報"],
       ["vaccine", "予防接種"]
     ].forEach(([value, label]) => {
       const option = document.createElement("option");
       option.value = value;
       option.textContent = label;
-      option.selected = item.category === value;
+      option.selected = (item.category === "trend" ? "notice" : item.category) === value;
       select.appendChild(option);
     });
     categoryLabel.appendChild(select);

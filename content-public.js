@@ -62,7 +62,7 @@
     document.body.append(dialog);dialog.showModal();disposeNotices=()=>dialog.remove();
   }
   window.ClinicPublicContent={apply(source){
-    const content=ClinicContent.normalize(source);ClinicTheme.apply(content.theme);notices(content.highlights);
+    const content=ClinicContent.normalize(source);ClinicDesign.apply(content.design,content.theme);notices(content.highlights);
     const signature=JSON.stringify(content.hero);
     if(signature!==heroSignature){heroSignature=signature;disposeHero?.();disposeHero=ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),content.hero);}
   }};

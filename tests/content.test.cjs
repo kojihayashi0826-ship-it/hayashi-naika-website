@@ -33,9 +33,9 @@ function setup(name='site-editor.html',options={}){
   throw Error('Unexpected request: '+url);
  };
  let scripts;
- if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-content.js','editor-content.js','editor-theme.js','site-editor.js','editor-drafts.js','github-publisher.js'];
- else if(name==='index.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-content.js','content-public.js','script.js'];
- else scripts=['clinic-theme.js','clinic-content.js','clinic-documents.js'];
+ if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','editor-content.js','editor-theme.js','site-editor.js','editor-drafts.js','github-publisher.js'];
+ else if(name==='index.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','content-public.js','script.js'];
+ else scripts=['clinic-theme.js','clinic-design.js','clinic-content.js','clinic-documents.js'];
  const expose=name==='site-editor.html'?`\nwindow.qa={get:()=>JSON.parse(JSON.stringify(data)),set:v=>{data=safeData(v);render();},prepare:()=>JSON.parse(preparedJson()),validate:()=>{collect();return validate();},dirty:()=>dirty,mark:markDirty};`:'';
  w.eval(scripts.map(load).join('\n')+expose);
  return {dom,w,calls,errors,getRemote:()=>remote,setConflict:()=>{sha='other'},getTree:()=>tree};
@@ -118,4 +118,33 @@ async function themeTests(){
  console.log('PASS theme: legacy defaults, presets, custom colors, reset, readable extreme colors, draft/backup, publication, public and documents pages');
 }
 
-(async()=>{await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+
+async function designTests(){
+ const t=setup(),w=t.w;await w.editorReady;
+ assert.deepEqual(Array.from(w.qa.get().design.order),['news','visit','links','access','recruitment','faq','contact']);
+ const bad=w.ClinicDesign.normalize({fontScale:500,spacing:-1,heroLayout:'invalid',order:['access','access','__proto__'],sectionColors:{news:'url(x)',access:'#AABBCC'}});
+ assert.equal(bad.fontScale,130);assert.equal(bad.spacing,24);assert.equal(bad.heroLayout,'overlay');assert.equal(bad.order[0],'access');assert.equal(bad.order.length,7);assert.equal(bad.sectionColors.news,null);assert.equal(bad.sectionColors.access,'#aabbcc');
+ assert.equal(w.ClinicTheme.normalize({accent:['#ffffff']}).accent,'#8fc9aa');
+ const custom={background:'#112233',surface:'#333333',card:'#ffffff',heading:'#ffff00',text:'#ff0000',button:'#000000',notice:'#fff100'};
+ const colors=w.ClinicTheme.colors({custom});
+ for(const role of ['page','surface','card','notice'])for(const part of ['ink','heading','muted'])assert.ok(w.ClinicTheme.contrast(colors[`--theme-${role}-${part}`],colors[`--theme-${role}`])>=4.5,role+part);
+ w.document.querySelector('[data-design-section="news"] [data-move="1"]').click();
+ field(w,'[data-design-field="fontScale"]','125');field(w,'[data-design-field="heroLayout"]','split');field(w,'[data-design-field="guideColumns"]','2');
+ field(w,'[data-custom-colors] [data-custom-enabled="background"]',true);field(w,'[data-custom-colors] [data-custom-color="background"]','#112233');
+ field(w,'[data-design-order] [data-custom-enabled="access"]',true);field(w,'[data-design-order] [data-custom-color="access"]','#fbeedf');
+ const backup=w.qa.prepare();assert.equal(backup.design.order[0],'visit');assert.equal(backup.design.fontScale,125);assert.equal(backup.design.heroLayout,'split');assert.equal(backup.design.guideColumns,2);assert.equal(backup.theme.custom.background,'#112233');assert.equal(backup.design.sectionColors.access,'#fbeedf');
+ w.qa.set(backup);assert.deepEqual(w.qa.prepare(),backup);
+ await sleep(550);assert.equal((await w.ClinicDrafts.read()).data.design.fontScale,125);
+ await connect(t);await w.ClinicPublisher.publish();assert.equal(t.getRemote().design.heroLayout,'split');assert.equal(t.getRemote().theme.custom.background,'#112233');
+ const publicPage=setup('index.html',{source:JSON.parse(JSON.stringify(t.getRemote()))}),pub=publicPage.w;await sleep(35);
+ assert.equal(pub.document.documentElement.dataset.heroLayout,'split');assert.equal(pub.document.documentElement.style.getPropertyValue('--design-font'),'1.25');
+ assert.equal(pub.document.querySelector('[data-home-layout] [data-design-section]').dataset.designSection,'visit');
+ assert.equal(pub.document.querySelector('#access').style.backgroundColor,'rgb(251, 238, 223)');
+ assert.equal(pub.document.querySelectorAll('.access-caution').length,0);assert.equal(pub.document.querySelector('.fever-card .card-label').textContent,'発熱のある方へ');assert.equal(pub.document.querySelector('.fever-card').textContent.includes('徒歩'),false);assert.equal(pub.document.querySelector('#news h2').textContent,'お知らせ');
+ const standard=setup('index.html');await sleep(35);assert.equal(standard.w.document.querySelector('#top').nextElementSibling.id,'news');assert.equal(standard.w.document.querySelector('#top .today-panel'),null);
+ w.document.querySelector('[data-design-reset]').click();assert.equal(w.qa.prepare().design.order[0],'news');assert.equal(w.qa.prepare().design.fontScale,100);assert.equal(w.qa.prepare().theme.custom.background,'#112233');
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));await sleep(50);t.dom.window.close();publicPage.dom.window.close();standard.dom.window.close();
+ console.log('PASS design: normalization, per-surface contrast, reorder, sizes, color overrides, backup/draft/publication, DOM reading order, content edits, independent reset');
+}
+
+(async()=>{await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'self'">
   <meta name="theme-color" content="#244837">
   <title>林内科医院｜サイト更新アプリ</title>
   <link rel="icon" href="favicon.ico">
@@ -15,12 +15,13 @@
   <script src="clinic-schedule.js?v=20261024-1" defer></script>
   <link rel="stylesheet" href="clinic-content.css?v=20261024-1">
   <link rel="stylesheet" href="editor-content.css?v=20261024-1">
-  <script src="clinic-theme.js?v=20261024-6" defer></script>
-  <script src="clinic-content.js?v=20261024-6" defer></script>
+  <script src="clinic-theme.js?v=20261024-7" defer></script>
+  <script src="clinic-design.js?v=20261024-7" defer></script>
+  <script src="clinic-content.js?v=20261024-7" defer></script>
   <script src="editor-content.js?v=20261024-1" defer></script>
-  <link rel="stylesheet" href="editor-theme.css?v=20261024-6">
-  <script src="editor-theme.js?v=20261024-6" defer></script>
-  <script src="site-editor.js?v=20261024-6" defer></script>
+  <link rel="stylesheet" href="editor-theme.css?v=20261024-7">
+  <script src="editor-theme.js?v=20261024-7" defer></script>
+  <script src="site-editor.js?v=20261024-7" defer></script>
   <script src="editor-drafts.js?v=20261024-1" defer></script>
   <script src="github-publisher.js?v=20261024-1" defer></script>
 </head>
@@ -66,18 +67,18 @@
     </div>
     <div class="draft-recovery" data-draft-recovery hidden><span>このChromeに未公開の編集内容が残っています。</span><button type="button" class="secondary compact" data-restore-draft>編集を再開</button><button type="button" class="text-button" data-discard-draft>破棄</button></div>
     <nav class="editor-tabs" role="tablist" aria-label="編集項目">
-      <button type="button" role="tab" aria-selected="true" data-tab="news">お知らせ・流行情報</button>
+      <button type="button" role="tab" aria-selected="true" data-tab="news">お知らせ</button>
       <button type="button" role="tab" aria-selected="false" data-tab="closures">臨時休診・カレンダー</button>
       <button type="button" role="tab" aria-selected="false" data-tab="recruitment">スタッフ募集</button>
       <button type="button" role="tab" aria-selected="false" data-tab="site">重要なお知らせ・案内</button>
       <button type="button" role="tab" aria-selected="false" data-tab="photos">トップ画像</button>
       <button type="button" role="tab" aria-selected="false" data-tab="documents">院内掲示物</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="design">デザイン・色</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="design">デザイン・配置</button>
     </nav>
     <form data-editor-form novalidate>
       <div class="editor-panel" data-panel="news">
         <section class="editor-card">
-          <div class="card-heading"><div><p>NEWS &amp; HEALTH INFO</p><h2>お知らせ・流行情報</h2></div><button type="button" class="primary compact" data-add-news>新規追加</button></div>
+          <div class="card-heading"><div><p>NEWS</p><h2>お知らせ</h2></div><button type="button" class="primary compact" data-add-news>新規追加</button></div>
           <p class="field-help">「掲載する」をONにした記事が、「公開する」を押した後にサイトへ反映されます。表示用の日付を将来にしても予約投稿にはなりません。</p>
           <button type="button" class="secondary compact" data-new-closure-notice>休診のお知らせを作成 →</button>
           <p class="privacy-note">「非掲載」はサイト画面に出さない設定です。公開リポジトリ・JSONには残るため、患者情報・応募者情報・機密事項は入力しないでください。</p>
@@ -137,17 +138,32 @@
       <p class="field-help" data-media-status role="status" aria-live="polite"></p>
       <div class="editor-panel" data-panel="design" hidden>
         <section class="editor-card">
-          <div class="card-heading"><div><p>DESIGN &amp; COLORS</p><h2>デザイン・色</h2></div><button type="button" class="secondary compact" data-theme-reset>おすすめに戻す</button></div>
-          <p class="field-help">配色を選ぶだけで、トップページや各案内ページの色がそろいます。下の色見本はすぐに変わります。「公開する」を押すまで、公開サイトは変わりません。</p>
+          <div class="card-heading"><div><p>COLORS</p><h2>色を変える</h2></div><button type="button" class="secondary compact" data-theme-reset>配色をおすすめに戻す</button></div>
+          <p class="field-help">配色候補を選ぶか、背景・文字・ボタンなどの色を個別に指定できます。「公開する」を押すまで、公開サイトは変わりません。</p>
           <div class="theme-presets" data-theme-presets role="group" aria-label="おすすめの配色"></div>
           <div class="theme-controls">
-            <label>アクセント色を自分で選ぶ<span class="theme-color-row"><input type="color" data-theme-accent aria-label="アクセント色"><output data-theme-accent-value></output></span></label>
-            <label>背景の色づき <output data-theme-tint-value></output><input type="range" min="0" max="100" step="5" data-theme-tint aria-label="背景の色づき"><span class="theme-range-labels"><span>白に近く</span><span>ほんのり色づく</span></span></label>
+            <label>アクセント色<span class="theme-color-row"><input type="color" data-theme-accent aria-label="アクセント色"><output data-theme-accent-value></output></span></label>
+            <label>自動配色の色づき <output data-theme-tint-value></output><input type="range" min="0" max="100" step="5" data-theme-tint aria-label="背景の色づき"><span class="theme-range-labels"><span>白に近く</span><span>ほんのり色づく</span></span></label>
           </div>
-          <p class="field-help">文字は読みやすい濃さに自動調整します。ロゴ・写真と、休診日や注意事項を示す色はそのままです。</p>
+          <h3 class="design-subheading">部分ごとに色を指定</h3>
+          <div class="design-custom-colors" data-custom-colors></div>
+          <p class="field-help">「自分で指定」をOFFにすると自動配色に戻ります。背景と近すぎる文字色は、読みやすい濃さに自動補正します。ロゴ・写真・休診表示の色は変わりません。</p>
           <p class="theme-summary" data-theme-summary role="status" aria-live="polite"></p>
-          <div class="theme-preview" data-theme-preview aria-label="配色プレビュー"></div>
-          <p class="field-help">配色の見本です。公開サイトの文章・配置とは異なります。</p>
+          <details><summary>小さな色見本を表示</summary><div class="theme-preview" data-theme-preview aria-label="配色プレビュー"></div></details>
+        </section>
+        <section class="editor-card">
+          <div class="card-heading"><div><p>LAYOUT &amp; SIZE</p><h2>配置・大きさを変える</h2></div><button type="button" class="secondary compact" data-design-reset>配置・サイズを戻す</button></div>
+          <div class="design-controls" data-design-controls></div>
+          <p class="field-help">文字・余白・カードの設定は各案内ページにも反映します。カード列数はPC用です。スマホでは縦並びになり、はみ出しを抑えます。</p>
+          <h3 class="design-subheading">トップページの並び順・各項目の背景色</h3>
+          <p class="field-help">上から表示される順です。「↑」「↓」で入れ替えます。トップ画像は先頭に固定されます。スタッフ募集は、掲載をONにしている場合に表示されます。</p>
+          <div class="design-order" data-design-order></div>
+          <p class="theme-summary" data-design-message role="status" aria-live="polite"></p>
+        </section>
+        <section class="editor-card">
+          <div class="card-heading"><div><p>LIVE PREVIEW · 未公開</p><h2>実際のページで確認</h2></div><div class="design-preview-switch" role="group" aria-label="プレビューの画面幅"><button type="button" class="secondary compact" data-design-width="desktop" aria-pressed="true">PC</button><button type="button" class="secondary compact" data-design-width="mobile" aria-pressed="false">スマホ</button></div></div>
+          <p class="field-help">色・配置・大きさの変更をすぐに確認できます。枠内をスクロールできます。文章・写真・診療情報は現在公開中の内容です。リンク先への移動は無効です。</p>
+          <div class="design-frame-wrap" data-design-frame-wrap><iframe data-design-frame title="未公開のデザインを確認するプレビュー" sandbox="allow-scripts allow-same-origin" referrerpolicy="same-origin"></iframe></div>
         </section>
       </div>
       <div class="save-bar"><div><p data-editor-message role="status" aria-live="polite">現在の内容を読み込んでいます。</p><p class="publish-status" data-publish-status aria-live="polite"></p></div><div class="save-actions"><button type="button" class="secondary" data-preview disabled>表示プレビュー</button><button type="submit" class="primary" data-publish disabled>公開する</button></div></div>

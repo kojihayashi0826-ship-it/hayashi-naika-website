@@ -11,6 +11,7 @@
     const hero = source.hero || {};
     return {
       theme: ClinicTheme.normalize(source.theme),
+      design: ClinicDesign.normalize(source.design),
       highlights:h.filter(Boolean).map((v,i)=>({id:v.id || `highlight-${i}`,enabled:v.enabled !== false,mode:v.mode === 'popup' ? 'popup' : 'banner',title:text(v.title),body:text(v.body),linkText:text(v.linkText),linkUrl:text(v.linkUrl)})),
       hero:{autoplay:hero.autoplay !== false,hold:number(hero.hold,6,1,120),fade:number(hero.fade,1.2,0,10),easing:['linear','ease','ease-in','ease-out','ease-in-out'].includes(hero.easing)?hero.easing:'ease-in-out',pauseOnHover:hero.pauseOnHover !== false,
         slides:(Array.isArray(hero.slides)?hero.slides:[defaultSlide]).filter(Boolean).map((v,i)=>({...v,id:v.id || `slide-${i}`,src:text(v.src),alt:text(v.alt),enabled:v.enabled !== false,fit:v.fit === 'contain'?'contain':'cover',x:number(v.x,50,0,100),y:number(v.y,50,0,100)}))},

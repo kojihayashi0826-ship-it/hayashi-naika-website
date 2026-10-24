@@ -227,7 +227,7 @@ function renderNews(items, loadError = false) {
 
   const categoryLabels = {
     notice: "お知らせ",
-    trend: "流行情報",
+    trend: "お知らせ",
     vaccine: "予防接種",
     closure: "臨時休診"
   };

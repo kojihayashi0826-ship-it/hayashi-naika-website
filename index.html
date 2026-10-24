@@ -37,10 +37,11 @@
   <link rel="stylesheet" href="calendar-sync.css?v=20261024-1">
   <script src="clinic-schedule.js?v=20261024-1" defer></script>
   <link rel="stylesheet" href="clinic-content.css?v=20261024-5">
-  <script src="clinic-theme.js?v=20261024-6" defer></script>
-  <script src="clinic-content.js?v=20261024-6" defer></script>
-  <script src="content-public.js?v=20261024-6" defer></script>
-  <script src="script.js?v=20261024-2" defer></script>
+  <script src="clinic-theme.js?v=20261024-7" defer></script>
+  <script src="clinic-design.js?v=20261024-7" defer></script>
+  <script src="clinic-content.js?v=20261024-7" defer></script>
+  <script src="content-public.js?v=20261024-7" defer></script>
+  <script src="script.js?v=20261024-7" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -230,7 +231,8 @@
   }
   </script>
   <script src="page-navigation.js?v=20261024-5" defer></script>
-  <link rel="stylesheet" href="clinic-theme.css?v=20261024-6">
+  <link rel="stylesheet" href="clinic-theme.css?v=20261024-7">
+  <link rel="stylesheet" href="clinic-design.css?v=20261024-7">
 </head>
 <body id="page-top" class="has-mobile-actions">
   <a class="skip-link" href="#main">本文へ移動</a>
@@ -276,7 +278,7 @@
 
   <div class="important-notices" data-important-notices role="region" aria-label="医院からの重要なお知らせ"></div>
 
-  <main id="main">
+  <main id="main" data-home-layout>
     <section id="top" class="hero" aria-labelledby="hero-title">
       <div class="container">
         <div class="hero-grid">
@@ -311,7 +313,26 @@
           </div>
         </div>
 
-        <div class="today-panel">
+      </div>
+    </section>
+
+    <section id="news" data-design-section="news" class="section news-section">
+      <div class="container">
+        <div class="section-heading heading-row">
+          <div>
+            <p class="eyebrow">NEWS</p>
+            <h2>お知らせ</h2>
+          </div>
+          <button class="plain-button" type="button" data-show-all>すべて見る <span>→</span></button>
+        </div>
+        <div class="news-list" data-news-list>
+          <p class="news-empty">現在、新しいお知らせはありません。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-guide" data-design-section="visit" aria-label="受診前のご案内">
+        <div class="container today-panel">
           <div class="today-status">
             <div class="status-icon" aria-hidden="true"><span></span></div>
             <div>
@@ -324,10 +345,7 @@
             <a class="text-link" href="#hours">診療時間を見る <span>↓</span></a>
           </div>
         </div>
-      </div>
-    </section>
 
-    <section class="quick-guide" aria-label="受診前のご案内">
       <div id="walk-in" class="container walkin-bar">
         <div class="walkin-copy">
           <span class="walkin-icon" aria-hidden="true">
@@ -347,9 +365,9 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 14.8V5a4 4 0 0 0-8 0v9.8a6 6 0 1 0 8 0ZM10 5v11"/></svg>
           </div>
           <div>
-            <p class="card-label">発熱・せき・のどの痛みがある方</p>
+            <p class="card-label">発熱のある方へ</p>
             <h3>来院前にお電話ください</h3>
-            <p>感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。お車でお待ちいただくことがあります。徒歩・自転車等で来院される方も、来院前にお電話でご相談ください。</p>
+            <p>感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。お車でお待ちいただくことがあります。</p>
             <a href="tel:0761246288">0761-24-6288 <span>電話をかける →</span></a>
           </div>
         </article>
@@ -402,22 +420,9 @@
       </div>
     </section>
 
-    <section id="news" class="section news-section">
-      <div class="container">
-        <div class="section-heading heading-row">
-          <div>
-            <p class="eyebrow">NEWS &amp; HEALTH INFO</p>
-            <h2>お知らせ・流行情報</h2>
-          </div>
-          <button class="plain-button" type="button" data-show-all>すべて見る <span>→</span></button>
-        </div>
-        <div class="news-list" data-news-list>
-          <p class="news-empty">現在、新しいお知らせはありません。</p>
-        </div>
-      </div>
-    </section>
 
-    <section class="section page-links-section" aria-labelledby="page-links-title">
+
+    <section class="section page-links-section" data-design-section="links" aria-labelledby="page-links-title">
       <div class="container">
         <div class="section-heading"><p class="eyebrow">OUR CLINIC</p><h2 id="page-links-title">医院のご案内</h2></div>
         <div class="page-links-grid">
@@ -449,7 +454,7 @@
       </div>
     </section>
 
-    <section id="access" class="section access-section">
+    <section id="access" data-design-section="access" class="section access-section">
       <div class="container">
         <div class="section-heading heading-row access-heading">
           <div>
@@ -486,13 +491,12 @@
               <div><dt>小松ICから</dt><dd>車で約5分（約3.0km）</dd></div>
             </dl>
             <p class="access-note">※所要時間は通常時の目安です。道路状況により異なります。</p>
-            <div class="access-caution"><strong>発熱症状のある方へ</strong><p>到着後は院内に入らず、お車からお電話ください。スタッフがご案内します。徒歩・自転車等で来院される方は、来院前にお電話でご相談ください。</p></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="recruitment" class="section recruitment-section" aria-labelledby="recruitment-title" data-recruitment-section hidden>
+    <section id="recruitment" data-design-section="recruitment" class="section recruitment-section" aria-labelledby="recruitment-title" data-recruitment-section hidden>
       <div class="container">
         <div class="section-heading heading-row recruitment-heading">
           <div>
@@ -512,7 +516,7 @@
       </div>
     </section>
 
-    <section id="faq" class="section faq-section" aria-labelledby="faq-title">
+    <section id="faq" data-design-section="faq" class="section faq-section" aria-labelledby="faq-title">
       <div class="container faq-layout">
         <div class="section-heading">
           <p class="eyebrow">FAQ</p>
@@ -544,7 +548,7 @@
       </div>
     </section>
 
-    <section class="contact-section">
+    <section class="contact-section" data-design-section="contact">
       <div class="container contact-inner">
         <div>
           <p class="eyebrow">CONTACT</p>
