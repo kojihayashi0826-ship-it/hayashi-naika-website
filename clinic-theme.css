@@ -1,0 +1,70 @@
+/* Last stylesheet on public pages. White base with light, configurable accents. */
+:root {
+  --theme-accent: #8fc9aa;
+  --theme-surface: #fcfdfc;
+  --theme-pale: #eff7f3;
+  --theme-button: #d0e8db;
+  --theme-button-hover: #c3e2d1;
+  --theme-link: #386449;
+  --theme-heading: #2e533e;
+  --theme-border: #dbeee4;
+  --green: var(--theme-link);
+  --green-dark: var(--theme-heading);
+  --green-light: var(--theme-pale);
+  --sage: var(--theme-link);
+  --cream: var(--theme-surface);
+  --beige: var(--theme-surface);
+  --paper: #fff;
+  --line: var(--theme-border);
+  --ink: #293b34;
+  --text: #293b34;
+  --muted: #52645b;
+  --shadow: 0 8px 26px rgba(40,65,52,.045);
+}
+body, .hero, .quick-guide, .care-section, .tests-section, .vaccine-section,
+.access-section, .news-section, .faq-section, .recruitment-section, .documents-main { background: #fff; }
+.site-header { background: rgba(255,255,255,.98); border-color: var(--line); }
+.site-header.is-scrolled { box-shadow: 0 4px 18px rgba(40,65,52,.045); }
+.hero { border-color: var(--line); }
+.first-visit-section, .doctor-section, .contact-section, .site-footer,
+.subpage-heading, .page-links-section { background: var(--theme-surface); }
+.guide-card, .calendar-card, .prevention-grid article, .today-panel, .faq-list details,
+.recruitment-card, .bring-note, .document-card { background: #fff; border-color: var(--line); box-shadow: var(--shadow); }
+.walkin-bar, .recruitment-contact, .prevention-grid article .prevention-title,
+.clinic-calendar .calendar-weekday, .slideshow-controls, .page-link-icon,
+.tag-list span, .document-type { background: var(--theme-pale); color: var(--theme-heading); border-color: var(--line); }
+.care-card .care-icon, .care-card:nth-child(n) .care-icon,
+.prevention-title span, .walkin-icon { background: var(--theme-pale); color: var(--theme-link); border-color: var(--line); }
+.fever-card { background: #fffafb; border-color: #f0dfe2; }
+.emergency-note { background: #fffafb; }
+.hero-copy h1, .hero-lead strong, .contact-inner h2, .contact-phone strong,
+.documents-heading h1, .document-card h2 a, .document-open, .documents-header .home-link,
+.hero-facts dt, .section-heading .eyebrow, .contact-section .eyebrow,
+.test-list article > span { color: var(--theme-heading); }
+.hero-lead, .hero-facts dd, .header-phone small, .footer-main address, .footer-links a,
+.footer-bottom, .contact-phone small, .contact-details p, .documents-heading p,
+.documents-breadcrumb, .document-card p { color: var(--muted); }
+.button-primary, .button-primary:hover, .back-to-top, .mobile-actions a:first-child {
+  background: var(--theme-button); color: var(--theme-heading); border-color: var(--theme-border); box-shadow: none;
+}
+.button-primary:hover, .back-to-top:hover { background: var(--theme-button-hover); color: var(--theme-heading); }
+.button-outline { color: var(--theme-heading); background: #fff; border-color: var(--theme-link); }
+.mobile-actions, .mobile-actions a { background: #fff; color: var(--theme-heading); border-color: var(--line); }
+.mobile-actions { border-top: 1px solid var(--line); box-shadow: 0 -4px 18px rgba(40,65,52,.04); }
+.important-notices, .site-banner { background: var(--theme-pale); color: var(--theme-heading); border-block: 1px solid var(--line); }
+.important-notice + .important-notice { border-color: var(--line); }
+.important-notice button, .site-banner-close { background: #fff; color: var(--theme-heading); border: 1px solid var(--line); }
+.important-notice h2 { color: var(--theme-heading); }
+.notice-dialog a, .notice-dialog > button { color: var(--theme-heading); }
+.notice-dialog > button { background: var(--theme-pale); }
+.clinic-slideshow { background: #fff; }
+.clinic-calendar .calendar-controls button, .slideshow-controls button { color: var(--theme-heading); border-color: var(--line); }
+.clinic-calendar .calendar-day:not(.is-empty):not(.is-closed):not(.is-special):not(.is-partial):not(.is-unknown) { color: var(--theme-heading); border-color: var(--line); }
+.clinic-calendar .calendar-day.is-empty { border-color: transparent; }
+.news-list, .news-list article, .care-grid, .care-card, .test-list article,
+.contact-details, .footer-links a, .footer-bottom, .hero-facts { border-color: var(--line); }
+.document-card:has(a:hover) { background: var(--theme-surface); border-color: var(--theme-link); }
+:where(a, button, summary, input, textarea, select, [tabindex]):focus-visible { outline-color: var(--theme-link); }
+@media (min-width: 821px) {
+  .hero-grid::before { background: linear-gradient(90deg,rgba(255,255,255,.99) 0%,rgba(255,255,255,.95) 31%,rgba(255,255,255,.6) 48%,rgba(255,255,255,0) 72%); }
+}

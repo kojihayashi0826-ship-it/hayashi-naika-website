@@ -15,9 +15,12 @@
   <script src="clinic-schedule.js?v=20261024-1" defer></script>
   <link rel="stylesheet" href="clinic-content.css?v=20261024-1">
   <link rel="stylesheet" href="editor-content.css?v=20261024-1">
-  <script src="clinic-content.js?v=20261024-1" defer></script>
+  <script src="clinic-theme.js?v=20261024-6" defer></script>
+  <script src="clinic-content.js?v=20261024-6" defer></script>
   <script src="editor-content.js?v=20261024-1" defer></script>
-  <script src="site-editor.js?v=20261024-1" defer></script>
+  <link rel="stylesheet" href="editor-theme.css?v=20261024-6">
+  <script src="editor-theme.js?v=20261024-6" defer></script>
+  <script src="site-editor.js?v=20261024-6" defer></script>
   <script src="editor-drafts.js?v=20261024-1" defer></script>
   <script src="github-publisher.js?v=20261024-1" defer></script>
 </head>
@@ -30,7 +33,7 @@
     <section class="editor-intro">
       <p class="editor-kicker">SITE CONTENT MANAGER</p>
       <h1>編集して、そのまま公開。</h1>
-      <p>お知らせ、臨時休診、トップ画像、院内掲示物、スタッフ募集をこの画面から更新します。ファイルの入れ替えは不要です。</p>
+      <p>お知らせ、臨時休診、トップ画像、院内掲示物、スタッフ募集、デザインの色をこの画面から更新します。ファイルの入れ替えは不要です。</p>
       <ol class="editor-steps"><li><span>1</span>GitHubに接続</li><li><span>2</span>内容を編集・確認</li><li><span>3</span>「公開する」を押す</li></ol>
     </section>
     <details class="connection-card" data-connection open>
@@ -69,6 +72,7 @@
       <button type="button" role="tab" aria-selected="false" data-tab="site">重要なお知らせ・案内</button>
       <button type="button" role="tab" aria-selected="false" data-tab="photos">トップ画像</button>
       <button type="button" role="tab" aria-selected="false" data-tab="documents">院内掲示物</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="design">デザイン・色</button>
     </nav>
     <form data-editor-form novalidate>
       <div class="editor-panel" data-panel="news">
@@ -131,6 +135,21 @@
         </section>
       </div>
       <p class="field-help" data-media-status role="status" aria-live="polite"></p>
+      <div class="editor-panel" data-panel="design" hidden>
+        <section class="editor-card">
+          <div class="card-heading"><div><p>DESIGN &amp; COLORS</p><h2>デザイン・色</h2></div><button type="button" class="secondary compact" data-theme-reset>おすすめに戻す</button></div>
+          <p class="field-help">配色を選ぶだけで、トップページや各案内ページの色がそろいます。下の色見本はすぐに変わります。「公開する」を押すまで、公開サイトは変わりません。</p>
+          <div class="theme-presets" data-theme-presets role="group" aria-label="おすすめの配色"></div>
+          <div class="theme-controls">
+            <label>アクセント色を自分で選ぶ<span class="theme-color-row"><input type="color" data-theme-accent aria-label="アクセント色"><output data-theme-accent-value></output></span></label>
+            <label>背景の色づき <output data-theme-tint-value></output><input type="range" min="0" max="100" step="5" data-theme-tint aria-label="背景の色づき"><span class="theme-range-labels"><span>白に近く</span><span>ほんのり色づく</span></span></label>
+          </div>
+          <p class="field-help">文字は読みやすい濃さに自動調整します。ロゴ・写真と、休診日や注意事項を示す色はそのままです。</p>
+          <p class="theme-summary" data-theme-summary role="status" aria-live="polite"></p>
+          <div class="theme-preview" data-theme-preview aria-label="配色プレビュー"></div>
+          <p class="field-help">配色の見本です。公開サイトの文章・配置とは異なります。</p>
+        </section>
+      </div>
       <div class="save-bar"><div><p data-editor-message role="status" aria-live="polite">現在の内容を読み込んでいます。</p><p class="publish-status" data-publish-status aria-live="polite"></p></div><div class="save-actions"><button type="button" class="secondary" data-preview disabled>表示プレビュー</button><button type="submit" class="primary" data-publish disabled>公開する</button></div></div>
     </form>
     <div class="publish-followup" data-publish-followup hidden><button type="button" class="secondary compact" data-check-publish>公開サイトへの反映を確認</button><a href="./" target="_blank" rel="noopener noreferrer">公開サイトを開く ↗</a><a data-commit-link target="_blank" rel="noopener noreferrer" hidden>変更履歴 ↗</a></div>

@@ -33,9 +33,9 @@ function setup(name='site-editor.html',options={}){
   throw Error('Unexpected request: '+url);
  };
  let scripts;
- if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-content.js','editor-content.js','site-editor.js','editor-drafts.js','github-publisher.js'];
- else if(name==='index.html')scripts=['clinic-schedule.js','clinic-content.js','content-public.js','script.js'];
- else scripts=['clinic-content.js','clinic-documents.js'];
+ if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-content.js','editor-content.js','editor-theme.js','site-editor.js','editor-drafts.js','github-publisher.js'];
+ else if(name==='index.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-content.js','content-public.js','script.js'];
+ else scripts=['clinic-theme.js','clinic-content.js','clinic-documents.js'];
  const expose=name==='site-editor.html'?`\nwindow.qa={get:()=>JSON.parse(JSON.stringify(data)),set:v=>{data=safeData(v);render();},prepare:()=>JSON.parse(preparedJson()),validate:()=>{collect();return validate();},dirty:()=>dirty,mark:markDirty};`:'';
  w.eval(scripts.map(load).join('\n')+expose);
  return {dom,w,calls,errors,getRemote:()=>remote,setConflict:()=>{sha='other'},getTree:()=>tree};
@@ -75,4 +75,47 @@ async function publicTests(){
  const board=setup('clinic-documents.html',{source:fixture});await sleep(20);assert.equal(board.w.document.querySelectorAll('.document-card').length,1);assert.equal(board.w.document.querySelector('.document-card a').textContent,'施設基準');assert.equal(board.errors.length,0);board.dom.window.close();
  console.log('PASS public: two notices, safe text, popup, slideshow auto/manual/pause/reduced-motion, document list and hidden documents');
 }
-(async()=>{await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+
+async function themeTests(){
+ const t=setup(),w=t.w;await w.editorReady;
+ assert.equal(w.qa.get().theme.preset,'mint');
+ assert.equal(w.qa.get().theme.accent,'#8fc9aa');
+ const baseline=w.qa.get();
+ w.document.querySelector('[data-tab="design"]').click();
+ assert.equal(w.document.querySelector('[data-panel="design"]').hidden,false);
+ w.document.querySelector('[data-theme-preset="sky"]').click();
+ assert.equal(w.qa.prepare().theme.accent,'#91bfd9');
+ assert.equal(w.document.querySelector('[data-theme-preset="sky"]').getAttribute('aria-pressed'),'true');
+ field(w,'[data-theme-accent]','#ffff00');field(w,'[data-theme-tint]','100');
+ assert.equal(w.qa.prepare().theme.accent,'#ffff00');
+ assert.equal(w.qa.prepare().theme.tint,100);
+ assert.equal(w.document.querySelector('[data-theme-preset="sky"]').getAttribute('aria-pressed'),'false');
+ assert.equal(w.document.querySelector('[data-theme-preview]').style.getPropertyValue('--theme-accent'),'#ffff00');
+ assert.equal(w.document.documentElement.style.getPropertyValue('--theme-accent'),''); // preview never changes the editor shell
+ const backup=w.qa.prepare();w.qa.set(backup);assert.deepEqual(w.qa.prepare().theme,backup.theme);
+ assert.deepEqual(w.qa.prepare().closures,baseline.closures);assert.deepEqual(w.qa.prepare().news,baseline.news);
+ await sleep(550);assert.equal((await w.ClinicDrafts.read()).data.theme.accent,'#ffff00');
+ const normalized=w.ClinicTheme.normalize({preset:'__proto__',accent:'url(https://invalid/)',tint:Infinity});
+ assert.equal(normalized.preset,'mint');assert.equal(normalized.accent,'#8fc9aa');assert.equal(normalized.tint,25);
+ assert.equal(w.ClinicTheme.normalize({tint:-10}).tint,0);assert.equal(w.ClinicTheme.normalize({tint:150}).tint,100);
+ const accents=['#000000','#ffffff','#ffff00','#00ff00','#ff0000','#0000ff',...Object.values(w.ClinicTheme.presets).map(p=>p.accent)];
+ for(const accent of accents)for(const tint of [0,25,100]){
+  const c=w.ClinicTheme.colors({accent,tint});
+  for(const fg of ['--theme-link','--theme-heading'])for(const bg of ['--paper','--theme-surface','--theme-pale','--theme-button','--theme-button-hover'])
+   assert.ok(w.ClinicTheme.contrast(c[fg],c[bg])>=4.5,`${accent} ${tint}: ${fg}/${bg}`);
+ }
+ w.document.querySelector('[data-theme-reset]').click();assert.equal(w.qa.prepare().theme.accent,'#8fc9aa');assert.equal(w.qa.prepare().theme.tint,25);
+ w.document.querySelector('[data-theme-preset="peach"]').click();
+ await connect(t);await w.ClinicPublisher.publish();
+ assert.equal(t.getRemote().theme.preset,'peach');assert.equal(w.qa.dirty(),false);
+ const published=JSON.parse(JSON.stringify(t.getRemote()));
+ const publicPage=setup('index.html',{source:published});await sleep(35);
+ assert.equal(publicPage.w.document.documentElement.style.getPropertyValue('--theme-accent'),'#d4b58d');
+ const docs=setup('clinic-documents.html',{source:published});await sleep(20);
+ assert.equal(docs.w.document.documentElement.style.getPropertyValue('--theme-accent'),'#d4b58d');
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));
+ await sleep(50);t.dom.window.close();publicPage.dom.window.close();docs.dom.window.close();
+ console.log('PASS theme: legacy defaults, presets, custom colors, reset, readable extreme colors, draft/backup, publication, public and documents pages');
+}
+
+(async()=>{await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});

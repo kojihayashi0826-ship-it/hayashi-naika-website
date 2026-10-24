@@ -350,6 +350,7 @@ function collectConditions() {
 function render() {
   ["enabled", "title", "body"].forEach((key) => setValue(`siteStatus.${key}`, data.siteStatus[key]));
   ClinicEditorContent.render();
+  ClinicEditorTheme.render();
   ["enabled", "title", "lead", "note", "buttonText", "buttonUrl"].forEach((key) => setValue(`recruitment.${key}`, data.recruitment[key]));
   renderNews();
   renderClosures();
@@ -363,6 +364,7 @@ function collect() {
     body: getValue("siteStatus.body")
   };
   ClinicEditorContent.collect();
+  ClinicEditorTheme.collect();
   collectNews();
   collectClosures();
   collectConditions();
@@ -495,6 +497,7 @@ tabButtons.forEach((button) => {
     const target = button.dataset.tab;
     tabButtons.forEach((item) => item.setAttribute("aria-selected", String(item === button)));
     panels.forEach((panel) => { panel.hidden = panel.dataset.panel !== target; });
+    if (button.parentElement.scrollWidth > button.parentElement.clientWidth) button.parentElement.scrollLeft = Math.max(0, button.offsetLeft - 12);
   });
 });
 
@@ -579,6 +582,9 @@ function showPreview() {
   catch(error) { setMessage(error.message,"error"); return; }
   const root=document.querySelector("[data-preview-body]"); root.replaceChildren();
   const section=(title,body)=>{ const card=document.createElement("section"); card.className="preview-card"; const h=document.createElement("h3"); h.textContent=title; card.append(h); if (body) { const p=document.createElement("p"); p.textContent=body; card.append(p); } root.append(card); return card; };
+  const themeCard=section("配色プレビュー");
+  const themeSample=document.createElement("div");themeSample.className="theme-preview";themeCard.append(themeSample);
+  ClinicEditorTheme.preview(themeSample,data.theme);
   if (data.siteStatus.enabled) section(data.siteStatus.title,data.siteStatus.body);
   data.highlights.filter(h=>h.enabled).forEach(h=>section(h.title,h.body));
   ClinicEditorContent.preview(root,section);
@@ -608,6 +614,8 @@ window.addEventListener("beforeunload", (event) => {
   event.returnValue = "";
 });
 
+const requestedTab = new URLSearchParams(window.location.search).get("tab");
+tabButtons.find(button => button.dataset.tab === requestedTab)?.click();
 render();
 window.editorReady = loadCurrent();
 
