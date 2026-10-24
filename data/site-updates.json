@@ -1,15 +1,16 @@
 {
-  "updatedAt": "2026-10-24T05:11:35.586Z",
+  "updatedAt": "2026-10-24T05:26:27.461Z",
   "siteStatus": {
     "enabled": true,
     "title": "正式公開前・ウェブサイト調整中",
     "body": "新医院の開院に向けて、掲載内容を最終調整しています。内容は変更になる場合があります。"
   },
   "highlight": {
+    "id": "legacy-highlight",
     "enabled": true,
     "mode": "banner",
     "title": "新医院移転に伴う休診・レントゲン撮影休止のお知らせ",
-    "body": "新医院への移転に伴い、10月30日（金）・31日（土）は休診とさせていただきます。\n\nまた、レントゲン装置の移設作業に伴い、10月23日（金）よりレントゲン撮影を一時休止しております。\n\n患者様にはご不便をおかけいたしますが、何卒ご理解のほどよろしくお願い申し上げます。",
+    "body": "新医院への移転に伴い、10月30日（金）・31日（土）は休診とさせていただきます。\nまた、レントゲン装置の移設作業に伴い、10月23日（金）よりレントゲン撮影を一時休止しております。\n患者様にはご不便をおかけいたしますが、何卒ご理解のほどよろしくお願い申し上げます。",
     "linkText": "",
     "linkUrl": ""
   },
@@ -180,11 +181,20 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "03db3562-a758-4b79-bee0-79198cc72c8f",
+  "revision": "de3a914b-378b-43cd-8f02-3f996bd13680",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
-    "tint": 25
+    "tint": 25,
+    "custom": {
+      "background": null,
+      "surface": null,
+      "card": null,
+      "heading": null,
+      "text": null,
+      "button": null,
+      "notice": null
+    }
   },
   "design": {
     "fontScale": 100,
@@ -205,6 +215,44 @@
       "faq",
       "contact"
     ],
-    "sectionColors": {}
-  }
+    "sectionColors": {
+      "news": null,
+      "visit": null,
+      "links": null,
+      "access": null,
+      "recruitment": null,
+      "faq": null,
+      "contact": null
+    }
+  },
+  "highlights": [
+    {
+      "id": "legacy-highlight",
+      "enabled": true,
+      "mode": "banner",
+      "title": "新医院移転に伴う休診・レントゲン撮影休止のお知らせ",
+      "body": "新医院への移転に伴い、10月30日（金）・31日（土）は休診とさせていただきます。\nまた、レントゲン装置の移設作業に伴い、10月23日（金）よりレントゲン撮影を一時休止しております。\n患者様にはご不便をおかけいたしますが、何卒ご理解のほどよろしくお願い申し上げます。",
+      "linkText": "",
+      "linkUrl": ""
+    }
+  ],
+  "hero": {
+    "autoplay": true,
+    "hold": 6,
+    "fade": 1.2,
+    "easing": "ease-in-out",
+    "pauseOnHover": true,
+    "slides": [
+      {
+        "id": "original-illustration",
+        "src": "assets/clinic-illustration-new-building-v4.webp",
+        "alt": "林内科医院の外観イメージ（イラスト）",
+        "enabled": true,
+        "fit": "cover",
+        "x": 50,
+        "y": 50
+      }
+    ]
+  },
+  "documents": []
 }
