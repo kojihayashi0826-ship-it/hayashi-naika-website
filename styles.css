@@ -1348,4 +1348,13 @@ button,
   .prelaunch-inner { align-items: flex-start; flex-direction: column; gap: 4px; padding-top: 9px; padding-bottom: 10px; }
   .prelaunch-notice p { font-size: 12px; }
 }
+/* A quiet, readable note about regular Saturday afternoon consultations. */
+.hero-hours-note { margin:16px 0 0; font-size:calc(14px * var(--design-font,1)); line-height:1.8; color:var(--green-dark); }
+.hero-hours-note a { display:inline-flex; flex-wrap:wrap; gap:0 12px; align-items:baseline; text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:4px; }
+.hero-hours-note a:hover { text-decoration-color:currentColor; }
+.hero-hours-note a:focus-visible { outline:2px solid currentColor; outline-offset:4px; border-radius:2px; }
+.hero-hours-note .hours-time { font-size:.92em; }
+.hours-time { display:inline-block; white-space:nowrap; }
+.hours-card .saturday-hours { margin:12px 0 0; font-size:calc(14px * var(--design-font,1)); line-height:1.8; color:var(--green-dark); }
+
 
