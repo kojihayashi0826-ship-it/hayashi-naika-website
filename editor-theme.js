@@ -35,6 +35,7 @@
     q('[data-theme-summary]').textContent='現在の配色：'+(!Object.values(theme.custom).some(Boolean) && theme.accent===ClinicTheme.presets[theme.preset].accent && theme.tint===ClinicTheme.presets[theme.preset].tint?ClinicTheme.presets[theme.preset].label:'カスタム');
     Object.entries(specs).forEach(([key,[,unit]])=>{q(`[data-design-output="${key}"]`).textContent=data.design[key]+unit;});
     preview(q('[data-theme-preview]'),theme);sendPreview();
+    window.dispatchEvent(new CustomEvent('clinic-editor-design-change'));
   }
   function colorControl(key,label,value,onChange){
     const row=document.createElement('div');row.className='design-color-control';
@@ -97,5 +98,9 @@
   [accent,tint].forEach(input=>input.addEventListener('input',()=>{collect();renderColors();refresh();markDirty();}));
   q('[data-theme-reset]').addEventListener('click',()=>{collect();data.theme=ClinicTheme.normalize(null);render();markDirty();});
   q('[data-design-reset]').addEventListener('click',()=>{collect();data.design=ClinicDesign.normalize(null);render();markDirty();q('[data-design-message]').textContent='配置・大きさを標準に戻しました。';});
-  window.ClinicEditorTheme={render,collect,preview};
+  window.ClinicEditorTheme={render,collect,preview,getDesign:()=>ClinicDesign.normalize(data.design),setDesign:(value,commit=true)=>{
+    data.design=ClinicDesign.normalize(value);
+    document.querySelectorAll('[data-design-field]').forEach(input=>input.value=String(data.design[input.dataset.designField]));
+    if(commit)renderOrder();refresh();if(commit)markDirty();
+  }};
 })();

@@ -16,11 +16,13 @@
   <link rel="stylesheet" href="clinic-content.css?v=20261024-1">
   <link rel="stylesheet" href="editor-content.css?v=20261024-1">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
-  <script src="clinic-design.js?v=20261024-7" defer></script>
+  <script src="clinic-design.js?v=20261024-gui1" defer></script>
   <script src="clinic-content.js?v=20261024-7" defer></script>
   <script src="editor-content.js?v=20261024-1" defer></script>
-  <link rel="stylesheet" href="editor-theme.css?v=20261024-7">
-  <script src="editor-theme.js?v=20261024-7" defer></script>
+  <link rel="stylesheet" href="editor-theme.css?v=20261024-gui1">
+  <script src="editor-theme.js?v=20261024-gui1" defer></script>
+  <link rel="stylesheet" href="editor-canvas.css?v=20261024-gui1">
+  <script src="editor-canvas.js?v=20261024-gui1" defer></script>
   <script src="site-editor.js?v=20261024-7" defer></script>
   <script src="editor-drafts.js?v=20261024-1" defer></script>
   <script src="github-publisher.js?v=20261024-1" defer></script>
@@ -137,7 +139,26 @@
       </div>
       <p class="field-help" data-media-status role="status" aria-live="polite"></p>
       <div class="editor-panel" data-panel="design" hidden>
-        <section class="editor-card">
+        <section class="editor-card visual-editor">
+          <div class="card-heading"><div><p>VISUAL EDITOR · 未公開</p><h2>ページを直接触って編集</h2></div><div class="design-preview-switch" role="group" aria-label="プレビューの画面幅"><button type="button" class="secondary compact" data-design-width="desktop" aria-pressed="true">PC</button><button type="button" class="secondary compact" data-design-width="mobile" aria-pressed="false">スマホ</button></div></div>
+          <p class="field-help">項目を選び、<strong>⠿ をドラッグして移動</strong>。ページ内の青い<strong>↔・↕・↘ を引っ張ってサイズ変更</strong>。スマホではつまみを指で動かせます。</p>
+          <div class="visual-toolbar"><button type="button" class="secondary compact" data-visual-undo disabled>↶ 元に戻す</button><button type="button" class="secondary compact" data-visual-redo disabled>↷ やり直す</button><span data-visual-status role="status" aria-live="polite">編集する項目を選んでください</span></div>
+          <div class="visual-workspace">
+            <aside class="visual-sidebar" aria-label="ページの構成">
+              <strong>ページの並び順</strong><p class="field-help">⠿ をつかんで入れ替え</p>
+              <div data-visual-outline></div>
+              <div class="visual-inspector">
+                <strong data-visual-selection>トップ画像</strong>
+                <p class="field-help" data-visual-help></p>
+                <div data-visual-options></div>
+                <button type="button" class="secondary compact" data-visual-reset>この部分のサイズを戻す</button>
+              </div>
+            </aside>
+            <div class="design-frame-wrap" data-design-frame-wrap><iframe data-design-frame title="ドラッグで編集するページ" sandbox="allow-scripts allow-same-origin" referrerpolicy="same-origin"></iframe></div>
+          </div>
+          <p class="field-help">変更は「公開する」で反映されます。移動は項目単位です。本文・見出しのサイズ変更は同じ種類の文字に共通反映します。写真・文章は現在公開中の内容です。</p>
+        </section>
+        <details class="editor-card"><summary>配色・背景色を変える</summary>
           <div class="card-heading"><div><p>COLORS</p><h2>色を変える</h2></div><button type="button" class="secondary compact" data-theme-reset>配色をおすすめに戻す</button></div>
           <p class="field-help">配色候補を選ぶか、背景・文字・ボタンなどの色を個別に指定できます。「公開する」を押すまで、公開サイトは変わりません。</p>
           <div class="theme-presets" data-theme-presets role="group" aria-label="おすすめの配色"></div>
@@ -150,8 +171,8 @@
           <p class="field-help">「自分で指定」をOFFにすると自動配色に戻ります。背景と近すぎる文字色は、読みやすい濃さに自動補正します。ロゴ・写真・休診表示の色は変わりません。</p>
           <p class="theme-summary" data-theme-summary role="status" aria-live="polite"></p>
           <details><summary>小さな色見本を表示</summary><div class="theme-preview" data-theme-preview aria-label="配色プレビュー"></div></details>
-        </section>
-        <section class="editor-card">
+        </details>
+        <details class="editor-card" data-design-advanced><summary>詳細設定・数値で微調整</summary>
           <div class="card-heading"><div><p>LAYOUT &amp; SIZE</p><h2>配置・大きさを変える</h2></div><button type="button" class="secondary compact" data-design-reset>配置・サイズを戻す</button></div>
           <div class="design-controls" data-design-controls></div>
           <p class="field-help">文字・余白・カードの設定は各案内ページにも反映します。カード列数はPC用です。スマホでは縦並びになり、はみ出しを抑えます。</p>
@@ -159,12 +180,7 @@
           <p class="field-help">上から表示される順です。「↑」「↓」で入れ替えます。トップ画像は先頭に固定されます。スタッフ募集は、掲載をONにしている場合に表示されます。</p>
           <div class="design-order" data-design-order></div>
           <p class="theme-summary" data-design-message role="status" aria-live="polite"></p>
-        </section>
-        <section class="editor-card">
-          <div class="card-heading"><div><p>LIVE PREVIEW · 未公開</p><h2>実際のページで確認</h2></div><div class="design-preview-switch" role="group" aria-label="プレビューの画面幅"><button type="button" class="secondary compact" data-design-width="desktop" aria-pressed="true">PC</button><button type="button" class="secondary compact" data-design-width="mobile" aria-pressed="false">スマホ</button></div></div>
-          <p class="field-help">色・配置・大きさの変更をすぐに確認できます。枠内をスクロールできます。文章・写真・診療情報は現在公開中の内容です。リンク先への移動は無効です。</p>
-          <div class="design-frame-wrap" data-design-frame-wrap><iframe data-design-frame title="未公開のデザインを確認するプレビュー" sandbox="allow-scripts allow-same-origin" referrerpolicy="same-origin"></iframe></div>
-        </section>
+        </details>
       </div>
       <div class="save-bar"><div><p data-editor-message role="status" aria-live="polite">現在の内容を読み込んでいます。</p><p class="publish-status" data-publish-status aria-live="polite"></p></div><div class="save-actions"><button type="button" class="secondary" data-preview disabled>表示プレビュー</button><button type="submit" class="primary" data-publish disabled>公開する</button></div></div>
     </form>

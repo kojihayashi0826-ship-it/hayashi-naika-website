@@ -15,6 +15,16 @@
     result.order=[...new Set([...(Array.isArray(input.order)?input.order.filter(id=>typeof id==='string' && Object.hasOwn(sections,id)):[]),...order])];
     result.sectionColors={};
     order.forEach(id=>{result.sectionColors[id]=ClinicTheme.isColor(input.sectionColors?.[id])?input.sectionColors[id].toLowerCase():null;});
+    result.sectionSizes={};
+    order.forEach(id=>{
+      const size=input.sectionSizes?.[id];
+      if(!size || typeof size!=='object')return;
+      const safe={};
+      Object.entries({width:[640,1360],padding:[16,160]}).forEach(([key,[min,max]])=>{
+        if(typeof size[key]==='number' && Number.isFinite(size[key]))safe[key]=Math.round(Math.max(min,Math.min(max,size[key])));
+      });
+      if(Object.keys(safe).length)result.sectionSizes[id]=safe;
+    });
     return result;
   }
   let preview=null;
@@ -31,6 +41,10 @@
     const current=[...nodes.keys()];
     if(current.join(',')!==design.order.filter(id=>nodes.has(id)).join(','))design.order.forEach(id=>{if(nodes.has(id))main.append(nodes.get(id));});
     nodes.forEach((node,id)=>{
+      ['width','padding'].forEach(key=>{
+        const token='--design-section-'+key,value=design.sectionSizes[id]?.[key];
+        if(value!==undefined)node.style.setProperty(token,value+'px');else node.style.removeProperty(token);
+      });
       node.style.removeProperty('background-color');
       ['--ink','--text','--muted','--theme-heading','--theme-link','--green','--green-dark','--line'].forEach(key=>node.style.removeProperty(key));
       const bg=design.sectionColors[id];

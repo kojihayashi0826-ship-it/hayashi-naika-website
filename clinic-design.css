@@ -72,8 +72,16 @@ body { background:var(--theme-page,#fff); }
   .hero-visual .clinic-slideshow { border-radius:var(--design-radius); }
 }
 /* In the editor preview, avoid animations hiding content outside the viewport. */
+[data-design-section] .container, [data-design-section].container { width:min(var(--design-section-width,var(--design-width)),calc(100% - 48px)); }
+[data-design-section][style*="--design-section-padding"] { padding-block:var(--design-section-padding); }
+@media(max-width:820px) {
+  [data-design-section] .container, [data-design-section].container { width:min(var(--design-section-width,var(--design-width)),calc(100% - 32px)); }
+  [data-design-section][style*="--design-section-padding"] { padding-block:calc(var(--design-section-padding) * .65); }
+}
 [data-design-preview] .reveal { opacity:1!important; transform:none!important; transition:none!important; }
 /* Long protected phrases and grid children must fit even at the largest type size. */
 .faq-layout > *, .faq-list, .faq-list details, .hero-copy, .contact-details { min-width:0; }
 .no-break { display:inline-block; max-width:100%; white-space:normal; overflow-wrap:anywhere; vertical-align:top; }
 @media(max-width:820px) { .faq-layout { grid-template-columns:minmax(0,1fr); } }
+
+.news-content h3 { font-size:calc(14px * var(--design-heading)); }

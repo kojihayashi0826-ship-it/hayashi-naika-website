@@ -7,6 +7,7 @@ function setup(name='site-editor.html',options={}){
  const dom=new JSDOM(load(name).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,''),{url:'https://www.hayashinaika.clinic/'+name,runScripts:'dangerously',pretendToBeVisual:true});
  const w=dom.window;let remote=structuredClone(options.source||source),sha='initialsha',calls=[],blobs=new Map(),tree=[],commit='',errors=[];
  w.addEventListener('error',e=>errors.push(e.message));w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.AbortSignal=AbortSignal;w.structuredClone=structuredClone;w.indexedDB=new IDBFactory();w.confirm=()=>true;w.matchMedia=()=>({matches:!!options.reduced,addEventListener(){},removeEventListener(){}});w.IntersectionObserver=class{observe(){}disconnect(){}};w.scrollTo=()=>{};
+ w.ResizeObserver=class{observe(){}disconnect(){}};
  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
  w.Blob.prototype.arrayBuffer=function(){return new Promise((resolve,reject)=>{const reader=new w.FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsArrayBuffer(this);});};
  w.URL.createObjectURL=()=> 'blob:https://test/photo';w.URL.revokeObjectURL=()=>{};
@@ -33,7 +34,7 @@ function setup(name='site-editor.html',options={}){
   throw Error('Unexpected request: '+url);
  };
  let scripts;
- if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','editor-content.js','editor-theme.js','site-editor.js','editor-drafts.js','github-publisher.js'];
+ if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','editor-content.js','editor-theme.js','editor-canvas.js','site-editor.js','editor-drafts.js','github-publisher.js'];
  else if(name==='index.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','content-public.js','script.js'];
  else scripts=['clinic-theme.js','clinic-design.js','clinic-content.js','clinic-documents.js'];
  const expose=name==='site-editor.html'?`\nwindow.qa={get:()=>JSON.parse(JSON.stringify(data)),set:v=>{data=safeData(v);render();},prepare:()=>JSON.parse(preparedJson()),validate:()=>{collect();return validate();},dirty:()=>dirty,mark:markDirty};`:'';
@@ -147,4 +148,30 @@ async function designTests(){
  console.log('PASS design: normalization, per-surface contrast, reorder, sizes, color overrides, backup/draft/publication, DOM reading order, content edits, independent reset');
 }
 
-(async()=>{await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+async function visualTests(){
+ const t=setup(),w=t.w;await w.editorReady;
+ const q=s=>w.document.querySelector(s),before=w.qa.get();
+ const pointer=(node,type,x,y)=>{const e=new w.MouseEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:y,button:0});Object.defineProperty(e,'pointerId',{value:7});Object.defineProperty(e,'pointerType',{value:'touch'});node.dispatchEvent(e);};
+ const outlineRects=()=>q('[data-visual-outline]').querySelectorAll('[data-visual-id]').forEach((el,i)=>{el.getBoundingClientRect=()=>({top:i*50,height:50,bottom:(i+1)*50});});
+ outlineRects();pointer(q('[data-visual-drag="news"]'),'pointerdown',20,75);pointer(w.document,'pointermove',20,220);pointer(w.document,'pointerup',20,220);
+ assert.deepEqual(Array.from(w.qa.get().design.order.slice(0,4)),['visit','links','news','access']);
+ q('[data-visual-undo]').click();assert.deepEqual(w.qa.get().design.order,before.design.order);assert.equal(q('[data-visual-undo]').disabled,true);
+ q('[data-visual-redo]').click();assert.equal(w.qa.get().design.order[2],'news');q('[data-visual-undo]').click();
+ outlineRects();pointer(q('[data-visual-drag="news"]'),'pointerdown',20,75);pointer(w.document,'pointermove',20,260);pointer(w.document,'pointercancel',20,260);assert.deepEqual(w.qa.get().design.order,before.design.order);
+ q('[data-visual-drag="news"]').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));assert.equal(w.qa.get().design.order[1],'news');q('[data-visual-undo]').click();
+ const f=q('[data-design-frame]'),d=f.contentDocument;d.body.innerHTML='<main data-home-layout><section id="top"><div class="hero-grid"></div></section><section data-design-section="news" style="padding:40px"><div class="container"><div class="section-heading"><h2>お知らせ</h2></div></div></section></main>';
+ f.contentWindow.ResizeObserver=class{observe(){}};f.contentWindow.scrollTo=()=>{};f.dispatchEvent(new w.Event('load'));
+ q('[data-visual-select="news"]').click();const section=d.querySelector('[data-design-section]');section.getBoundingClientRect=()=>({left:0,top:0,bottom:300,height:300,width:1000});section.querySelector('.container').getBoundingClientRect=section.getBoundingClientRect;
+ pointer(d.querySelector('[data-canvas-action="width"]'),'pointerdown',1000,150);pointer(d,'pointermove',900,150);pointer(d,'pointerup',900,150);assert.equal(w.qa.get().design.sectionSizes.news.width,800);
+ q('[data-visual-undo]').click();assert.equal(w.qa.get().design.sectionSizes.news,undefined);q('[data-visual-redo]').click();assert.equal(w.qa.get().design.sectionSizes.news.width,800);
+ pointer(d.querySelector('[data-canvas-action="height"]'),'pointerdown',500,300);pointer(d,'pointermove',500,380);pointer(d,'pointerup',500,380);assert.equal(w.qa.get().design.sectionSizes.news.padding,80);
+ pointer(d.querySelector('[data-canvas-action="height"]'),'pointerdown',500,300);pointer(d,'pointermove',500,420);d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(w.qa.get().design.sectionSizes.news.padding,80);
+ d.querySelector('h2').click();pointer(d.querySelector('[data-canvas-action="type"]'),'pointerdown',100,100);pointer(d,'pointermove',140,140);pointer(d,'pointerup',140,140);assert.equal(w.qa.get().design.headingScale,120);
+ const saved=w.qa.prepare();w.qa.set(saved);assert.deepEqual(w.qa.prepare().design,saved.design);await sleep(550);assert.equal((await w.ClinicDrafts.read()).data.design.sectionSizes.news.width,800);
+ await connect(t);await w.ClinicPublisher.publish();assert.deepEqual(t.getRemote().design.sectionSizes,JSON.parse(JSON.stringify(saved.design.sectionSizes)));
+ const pub=setup('index.html',{source:t.getRemote()});await sleep(35);assert.equal(pub.w.document.querySelector('#news').style.getPropertyValue('--design-section-width'),'800px');
+ const invalid=w.ClinicDesign.normalize({sectionSizes:{news:{width:1,padding:999},access:{width:'url(x)',padding:NaN},unknown:{width:1000}}});assert.equal(invalid.sectionSizes.news.width,640);assert.equal(invalid.sectionSizes.news.padding,160);assert.equal(invalid.sectionSizes.access,undefined);assert.equal(invalid.sectionSizes.unknown,undefined);
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));await sleep(50);t.dom.window.close();pub.dom.window.close();console.log('PASS visual: touch pointer reorder/resize, keyboard, cancel, undo/redo, type resize, validation, draft, backup, publish, public styles');
+}
+
+(async()=>{await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
