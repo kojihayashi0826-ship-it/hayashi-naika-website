@@ -201,7 +201,7 @@ function updateTodayStatus() {
     detail.textContent = `${state.reason}。${nextText}`;
   } else if (active) {
     label.textContent = state.partial ? `診療中（本日は${state.status}）` : "本日は診療しています";
-    detail.textContent = `${active[1]}まで（受付時間はお問い合わせください）`;
+    detail.textContent = `${active[1]}まで診療しています`;
   } else if (upcoming) {
     label.textContent = state.partial ? `本日は${state.status}です` : "本日は診療日です";
     detail.textContent = `次の診療は${upcoming[0]}からです`;
@@ -614,3 +614,11 @@ setInterval(updateTodayStatus, 60000);
 setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 120000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshManagedContent(); });
 
+
+/* Show the compact status only after the full today panel leaves view. */
+(() => {
+  const panel=document.querySelector('.today-panel'), floating=document.querySelector('.today-floating');
+  if(!panel||!floating)return;
+  const sync=()=>{const r=panel.getBoundingClientRect();floating.classList.toggle('visible',r.bottom<0);const label=document.querySelector('#today-label');const target=document.querySelector('#floating-today-label');if(label&&target)target.textContent=label.textContent;};
+  window.addEventListener('scroll',sync,{passive:true});window.addEventListener('resize',sync);sync();
+})();
