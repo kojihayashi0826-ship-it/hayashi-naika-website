@@ -201,6 +201,9 @@
 .today-floating.visible{display:flex}.today-floating strong{white-space:nowrap}.today-floating span:nth-child(2){font-size:11px}
 @media(min-width:800px){.today-floating{bottom:20px;right:105px}}
 @media(max-width:450px){.today-floating{left:10px;right:10px;justify-content:space-between;font-size:11px;padding:10px}.today-floating span:nth-child(2){font-size:10px}}
+.today-reception{margin-top:12px!important;padding-top:8px;border-top:1px solid #edf2ee}
+.today-floating{gap:16px}.floating-status{display:flex;flex-direction:column;gap:2px}.floating-status small{font-size:11px;color:#61756a;font-weight:400}.floating-reception{padding-left:12px;border-left:1px solid #dce9df;white-space:nowrap}
+@media(max-width:450px){.today-floating{gap:8px}.floating-reception{white-space:normal;padding-left:8px}}
 </style>
 </head>
 <body id="page-top" class="has-mobile-actions">
@@ -307,8 +310,8 @@
             <div>
               <p id="today-date">本日の診療</p>
               <h2 id="today-label">診療時間は下記の表をご確認ください</h2>
-              <p class="today-reception">受付：午前 12:00まで ／ 午後 18:30まで</p>
               <p id="today-detail">休診：木曜・日曜・祝日</p>
+              <p class="today-reception">受付時間：午前 12:00まで　／　午後 18:30まで</p>
             </div>
           </div>
           <div class="today-actions">
@@ -542,7 +545,7 @@
       <p>© 2026 Hayashi Internal Medicine.</p>
     </div>
   </footer>
-  <a class="today-floating" href="#hours" aria-label="本日の診療と受付時間を確認"><strong id="floating-today-label">本日の診療</strong><span>午前 12:00まで ／ 午後 18:30まで受付</span><span aria-hidden="true">⌃</span></a>
+  <a class="today-floating" href="#hours" aria-label="本日の診療と受付時間を確認"><span class="floating-status"><strong id="floating-today-label">本日の診療</strong><small id="floating-today-detail"></small></span><span class="floating-reception">受付時間：午前 12:00まで　／　午後 18:30まで</span><span aria-hidden="true">⌃</span></a>
 
   <div class="mobile-actions" aria-label="クイックメニュー">
     <a href="tel:0761246288"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 2.8 9.4 8l-2 1.8a15 15 0 0 0 6.8 6.8l1.8-2 5.2 2.8-.8 3.8c-.2.8-.9 1.4-1.8 1.4A17.3 17.3 0 0 1 1.4 5.4c0-.9.6-1.6 1.4-1.8l3.8-.8Z"/></svg><span>電話する</span></a>
