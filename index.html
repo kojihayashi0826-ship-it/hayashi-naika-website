@@ -195,6 +195,13 @@
   <script src="page-navigation.js?v=20261024-5" defer></script>
   <link rel="stylesheet" href="clinic-theme.css?v=20261024-7">
   <link rel="stylesheet" href="clinic-design.css?v=20261024-gui1">
+  <style>
+.today-reception{font-size:12px!important;color:#536a5c!important;font-weight:600;margin:4px 0!important}
+.today-floating{position:fixed;right:18px;bottom:84px;z-index:80;display:none;align-items:center;gap:9px;max-width:calc(100vw - 36px);padding:10px 14px;background:#fff;border:1px solid #c9ddd0;border-radius:12px;box-shadow:0 4px 18px #244b3522;color:#284c39;text-decoration:none;font-size:12px;line-height:1.4}
+.today-floating.visible{display:flex}.today-floating strong{white-space:nowrap}.today-floating span:nth-child(2){font-size:11px}
+@media(min-width:800px){.today-floating{bottom:20px;right:105px}}
+@media(max-width:450px){.today-floating{left:10px;right:10px;justify-content:space-between;font-size:11px;padding:10px}.today-floating span:nth-child(2){font-size:10px}}
+</style>
 </head>
 <body id="page-top" class="has-mobile-actions">
   <a class="skip-link" href="#main">本文へ移動</a>
@@ -300,6 +307,7 @@
             <div>
               <p id="today-date">本日の診療</p>
               <h2 id="today-label">診療時間は下記の表をご確認ください</h2>
+              <p class="today-reception">受付：午前 12:00まで ／ 午後 18:30まで</p>
               <p id="today-detail">休診：木曜・日曜・祝日</p>
             </div>
           </div>
@@ -488,10 +496,11 @@
         <div class="faq-list">
           <!-- clinic-faq:start -->
           <details><summary>初診はどのように受診すればよいですか？</summary><p>通常診療は事前のお申し込み不要です。受付時間内に直接ご来院ください。ワクチンと健康診断は準備が必要なため、事前にお電話ください。</p></details>
-          <details><summary>発熱や咳、のどの痛みがある場合はどうすればよいですか？</summary><p>来院前にお電話ください。感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。</p></details>
+          <details><summary>発熱がある場合はどうすればよいですか？</summary><p>発熱のある方は来院前にお電話ください。発熱がなければ、咳やのどの痛みだけで事前電話は必要ありません。</p></details>
           <details><summary>胃カメラ・大腸カメラは受けられますか？</summary><p>上部内視鏡検査と下部内視鏡検査に対応しています。検査の必要性、前処置、鎮静薬の使用可否は診察時にご説明します。</p></details>
           <details><summary>健康診断や予防接種はできますか？</summary><p>特定健康診査、後期高齢者健康診査、雇入時・定期健康診断、大腸がん検診（便潜血検査）に対応しています。また、子宮頸がん予防（HPV）、二種混合（DT）、日本脳炎などの小児用ワクチンも事前の電話相談により対応します。種類・対象年齢・在庫状況によってはご用意できない場合があります。</p></details>
           <details><summary>駐車場はありますか？</summary><p>医院前に13台分の駐車場があります。小松空港、小松駅、小松IC方面からお車で来院しやすい立地です。</p></details>
+          <details><summary>受付時間はいつまでですか？</summary><p>午前は12時まで、午後は18時30分まで受け付けています。</p></details>
           <!-- clinic-faq:end -->
         </div>
       </div>
@@ -533,6 +542,7 @@
       <p>© 2026 Hayashi Internal Medicine.</p>
     </div>
   </footer>
+  <a class="today-floating" href="#hours" aria-label="本日の診療と受付時間を確認"><strong id="floating-today-label">本日の診療</strong><span>午前 12:00まで ／ 午後 18:30まで受付</span><span aria-hidden="true">⌃</span></a>
 
   <div class="mobile-actions" aria-label="クイックメニュー">
     <a href="tel:0761246288"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 2.8 9.4 8l-2 1.8a15 15 0 0 0 6.8 6.8l1.8-2 5.2 2.8-.8 3.8c-.2.8-.9 1.4-1.8 1.4A17.3 17.3 0 0 1 1.4 5.4c0-.9.6-1.6 1.4-1.8l3.8-.8Z"/></svg><span>電話する</span></a>
