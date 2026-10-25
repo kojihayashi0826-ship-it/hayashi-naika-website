@@ -1,0 +1,22 @@
+/* Keep the next session beside the status and the reception hours separate. */
+.today-status > div:last-child { min-width: 0; }
+.today-status #today-detail { margin-top: 3px; line-height: 1.6; }
+.today-status #today-reception-current { margin-top: 4px; font-size: 12px; }
+.today-status .today-reception { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 12px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 12px; }
+.today-reception span, .floating-reception span { display: inline-block; }
+.today-floating { position: fixed; right: max(110px, env(safe-area-inset-right)); bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 40; display: none; align-items: center; gap: 18px; max-width: min(620px, calc(100vw - 134px)); padding: 12px 16px; border: 1px solid #c9ddd0; border-radius: 12px; background: #fff; color: #284c39; box-shadow: 0 4px 18px #244b3522; text-decoration: none; font-size: 12px; line-height: 1.6; }
+.today-floating.visible { display: flex; }
+.floating-status { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.floating-status strong { font-size: 14px; }
+.floating-status small { color: #536a5c; font-size: 12px; }
+.floating-reception { display: flex; flex-direction: column; flex-shrink: 0; padding-left: 16px; border-left: 1px solid #dce9df; font-size: 12px; }
+.today-floating.closed { border-color: #dfd7d1; color: #66564b; }
+.today-floating:focus-visible { outline: 3px solid var(--green-dark); outline-offset: 3px; }
+@media (max-width: 820px) {
+  .today-floating { left: max(12px, env(safe-area-inset-left)); right: max(88px, env(safe-area-inset-right)); bottom: calc(80px + env(safe-area-inset-bottom)); max-width: none; flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; }
+  .floating-reception { flex-direction: row; flex-wrap: wrap; gap: 0 8px; padding: 7px 0 0; border-left: 0; border-top: 1px solid #dce9df; }
+  .floating-reception [data-reception-heading] { width: 100%; }
+  .floating-status strong { font-size: 13px; }
+  .floating-status small, .floating-reception { font-size: 11px; }
+}
+@media print { .today-floating { display: none !important; } }

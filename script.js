@@ -180,14 +180,24 @@ function updateTodayStatus() {
   const date = document.querySelector("#today-date");
   const label = document.querySelector("#today-label");
   const detail = document.querySelector("#today-detail");
+  const reception = document.querySelector("#today-reception-current");
   if (!panel || !date || !label || !detail) return;
   const now = new Date();
   const clock = ClinicSchedule.japanNow(now);
   date.textContent = ClinicSchedule.pretty(clock.key) + "の診療";
   panel.classList.remove("closed");
+  if (reception) { reception.textContent = ""; reception.hidden = true; }
+  const setHours = (heading, am, pm) => {
+    for (const [key, text] of Object.entries({ heading, am, pm })) {
+      document.querySelectorAll(`[data-reception-${key}]`).forEach(el => { el.textContent = text; });
+    }
+  };
+  setHours("受付時間：", "午前 12:00まで", "午後 18:30まで");
   if (managedContentUnavailable) {
     label.textContent = "診療状況はお電話でご確認ください";
     detail.textContent = "臨時休診情報を取得できません（0761-24-6288）";
+    setHours("通常の受付時間：", "午前 12:00まで", "午後 18:30まで");
+    syncTodayFloating();
     return;
   }
   const state = ClinicSchedule.dayState(clock.key, specialClosureRanges);
@@ -195,13 +205,15 @@ function updateTodayStatus() {
   const active = state.sessions.find(([a,b]) => clock.minute >= minutes(a) && clock.minute < minutes(b));
   const upcoming = state.sessions.find(([a]) => clock.minute < minutes(a));
   const next = ClinicSchedule.nextOpening(now, specialClosureRanges);
-  const nextText = next ? `次回は${ClinicSchedule.pretty(next.key)} ${next.time}からです` : "次回診療日はお電話でご確認ください";
+  const nextText = next ? `次の診療は${next.key === clock.key ? "" : ClinicSchedule.pretty(next.key) + " "}${next.time}からです` : "次回診療日はお電話でご確認ください";
+  if (state.closed) setHours("通常の受付時間：", "午前 12:00まで", "午後 18:30まで");
+  else if (state.partial) setHours("本日の受付時間：", state.sessions.some(([a]) => minutes(a) < 720) ? "午前 12:00まで" : "午前 休診", state.sessions.some(([a]) => minutes(a) >= 720) ? "午後 18:30まで" : "午後 休診");
   if (state.closed) {
     panel.classList.add("closed"); label.textContent = "本日は休診日です";
     detail.textContent = `${state.reason}。${nextText}`;
   } else if (active) {
     label.textContent = state.partial ? `診療中（本日は${state.status}）` : "本日は診療しています";
-    detail.textContent = `${active[1]}まで診療しています`;
+    detail.textContent = nextText;
   } else if (upcoming) {
     label.textContent = state.partial ? `本日は${state.status}です` : "本日は診療日です";
     detail.textContent = `次の診療は${upcoming[0]}からです`;
@@ -210,6 +222,14 @@ function updateTodayStatus() {
     label.textContent = state.partial ? `本日は${state.status}です` : "本日の診療は終了しました";
     detail.textContent = nextText;
   }
+  if (reception && !state.closed) {
+    const session = active || upcoming;
+    if (session) {
+      reception.textContent = minutes(session[0]) < 720 ? "午前は12時まで受付" : "午後は18時30分まで受付";
+      reception.hidden = false;
+    }
+  }
+  syncTodayFloating();
 }
 
 function renderMonthlyCalendar() {
@@ -615,10 +635,21 @@ setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 120000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshManagedContent(); });
 
 
-/* Show the compact status only after the full today panel leaves view. */
-(() => {
-  const panel=document.querySelector('.today-panel'), floating=document.querySelector('.today-floating');
-  if(!panel||!floating)return;
-  const sync=()=>{const r=panel.getBoundingClientRect();floating.classList.toggle('visible',r.bottom<0);const label=document.querySelector('#today-label');const target=document.querySelector('#floating-today-label');if(label&&target)target.textContent=label.textContent;const detail=document.querySelector('#today-detail'),mini=document.querySelector('#floating-today-detail');if(detail&&mini)mini.textContent=detail.textContent;};
-  window.addEventListener('scroll',sync,{passive:true});window.addEventListener('resize',sync);sync();
-})();
+/* Keep the compact panel current even without a scroll or resize. */
+function syncTodayFloating() {
+  const panel = document.querySelector('.today-panel');
+  const floating = document.querySelector('.today-floating');
+  if (!panel || !floating) return;
+  const rect = panel.getBoundingClientRect();
+  const headerBottom = document.querySelector('.site-header')?.getBoundingClientRect().bottom || 0;
+  floating.classList.toggle('visible', rect.bottom <= headerBottom || rect.top >= window.innerHeight);
+  floating.classList.toggle('closed', panel.classList.contains('closed'));
+  for (const id of ['today-label', 'today-detail', 'today-reception-current']) {
+    const source = document.getElementById(id), target = document.getElementById('floating-' + id);
+    if (source && target) { target.textContent = source.textContent; target.hidden = source.hidden; }
+  }
+}
+window.addEventListener('scroll', syncTodayFloating, { passive: true });
+window.addEventListener('resize', syncTodayFloating);
+window.addEventListener('load', syncTodayFloating);
+

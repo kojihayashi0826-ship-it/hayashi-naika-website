@@ -39,9 +39,9 @@
   <link rel="stylesheet" href="clinic-content.css?v=20261024-faq-seo1">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
   <script src="clinic-design.js?v=20261024-gui1" defer></script>
-  <script src="clinic-content.js?v=20261024-faq-seo1" defer></script>
+  <script src="clinic-content.js?v=20261026-reception1" defer></script>
   <script src="content-public.js?v=20261024-faq-seo1" defer></script>
-  <script src="script.js?v=20261024-7" defer></script>
+  <script src="script.js?v=20261026-reception1" defer></script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -195,16 +195,7 @@
   <script src="page-navigation.js?v=20261024-5" defer></script>
   <link rel="stylesheet" href="clinic-theme.css?v=20261024-7">
   <link rel="stylesheet" href="clinic-design.css?v=20261024-gui1">
-  <style>
-.today-reception{font-size:12px!important;color:#536a5c!important;font-weight:600;margin:4px 0!important}
-.today-floating{position:fixed;right:18px;bottom:84px;z-index:80;display:none;align-items:center;gap:9px;max-width:calc(100vw - 36px);padding:10px 14px;background:#fff;border:1px solid #c9ddd0;border-radius:12px;box-shadow:0 4px 18px #244b3522;color:#284c39;text-decoration:none;font-size:12px;line-height:1.4}
-.today-floating.visible{display:flex}.today-floating strong{white-space:nowrap}.today-floating span:nth-child(2){font-size:11px}
-@media(min-width:800px){.today-floating{bottom:20px;right:105px}}
-@media(max-width:450px){.today-floating{left:10px;right:10px;justify-content:space-between;font-size:11px;padding:10px}.today-floating span:nth-child(2){font-size:10px}}
-.today-reception{margin-top:12px!important;padding-top:8px;border-top:1px solid #edf2ee}
-.today-floating{gap:16px}.floating-status{display:flex;flex-direction:column;gap:2px}.floating-status small{font-size:11px;color:#61756a;font-weight:400}.floating-reception{padding-left:12px;border-left:1px solid #dce9df;white-space:nowrap}
-@media(max-width:450px){.today-floating{gap:8px}.floating-reception{white-space:normal;padding-left:8px}}
-</style>
+  <link rel="stylesheet" href="today-status.css?v=20261026-reception1">
 </head>
 <body id="page-top" class="has-mobile-actions">
   <a class="skip-link" href="#main">本文へ移動</a>
@@ -304,14 +295,15 @@
     </section>
 
     <section class="quick-guide" data-design-section="visit" aria-label="受診前のご案内">
-        <div class="container today-panel">
+        <div class="container today-panel" id="today-status">
           <div class="today-status">
             <div class="status-icon" aria-hidden="true"><span></span></div>
             <div>
               <p id="today-date">本日の診療</p>
               <h2 id="today-label">診療時間は下記の表をご確認ください</h2>
               <p id="today-detail">休診：木曜・日曜・祝日</p>
-              <p class="today-reception">受付時間：午前 12:00まで　／　午後 18:30まで</p>
+              <p id="today-reception-current" hidden></p>
+              <p class="today-reception"><span data-reception-heading>受付時間：</span><span data-reception-am>午前 12:00まで</span><span data-reception-pm>午後 18:30まで</span></p>
             </div>
           </div>
           <div class="today-actions">
@@ -499,7 +491,7 @@
         <div class="faq-list">
           <!-- clinic-faq:start -->
           <details><summary>初診はどのように受診すればよいですか？</summary><p>通常診療は事前のお申し込み不要です。受付時間内に直接ご来院ください。ワクチンと健康診断は準備が必要なため、事前にお電話ください。</p></details>
-          <details><summary>発熱がある場合はどうすればよいですか？</summary><p>発熱のある方は来院前にお電話ください。発熱がなければ、咳やのどの痛みだけで事前電話は必要ありません。</p></details>
+          <details><summary>発熱がある場合はどうすればよいですか？</summary><p>発熱のある方は来院前にお電話ください。発熱がなければ、咳やのどの痛みだけで事前電話は必要ありません。感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。</p></details>
           <details><summary>胃カメラ・大腸カメラは受けられますか？</summary><p>上部内視鏡検査と下部内視鏡検査に対応しています。検査の必要性、前処置、鎮静薬の使用可否は診察時にご説明します。</p></details>
           <details><summary>健康診断や予防接種はできますか？</summary><p>特定健康診査、後期高齢者健康診査、雇入時・定期健康診断、大腸がん検診（便潜血検査）に対応しています。また、子宮頸がん予防（HPV）、二種混合（DT）、日本脳炎などの小児用ワクチンも事前の電話相談により対応します。種類・対象年齢・在庫状況によってはご用意できない場合があります。</p></details>
           <details><summary>駐車場はありますか？</summary><p>医院前に13台分の駐車場があります。小松空港、小松駅、小松IC方面からお車で来院しやすい立地です。</p></details>
@@ -517,7 +509,7 @@
         </div>
         <div class="contact-details">
           <a class="contact-phone" href="tel:0761246288"><small>電話でのお問い合わせ</small><strong>0761-24-6288</strong></a>
-          <p>電話受付：診療時間内<br>発熱症状のある方は来院前にご連絡ください。</p>
+          <p>電話受付：診療時間内<br>発熱のある方は来院前にお電話ください。</p>
         </div>
       </div>
     </section>
@@ -545,7 +537,7 @@
       <p>© 2026 Hayashi Internal Medicine.</p>
     </div>
   </footer>
-  <a class="today-floating" href="#hours" aria-label="本日の診療と受付時間を確認"><span class="floating-status"><strong id="floating-today-label">本日の診療</strong><small id="floating-today-detail"></small></span><span class="floating-reception">受付時間：午前 12:00まで　／　午後 18:30まで</span><span aria-hidden="true">⌃</span></a>
+  <a class="today-floating" href="#today-status" aria-label="本日の診療と受付時間を確認"><span class="floating-status"><strong id="floating-today-label">本日の診療</strong><small id="floating-today-detail"></small><small id="floating-today-reception-current" hidden></small></span><span class="floating-reception"><span data-reception-heading>受付時間：</span><span data-reception-am>午前 12:00まで</span><span data-reception-pm>午後 18:30まで</span></span></a>
 
   <div class="mobile-actions" aria-label="クイックメニュー">
     <a href="tel:0761246288"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 2.8 9.4 8l-2 1.8a15 15 0 0 0 6.8 6.8l1.8-2 5.2 2.8-.8 3.8c-.2.8-.9 1.4-1.8 1.4A17.3 17.3 0 0 1 1.4 5.4c0-.9.6-1.6 1.4-1.8l3.8-.8Z"/></svg><span>電話する</span></a>
@@ -558,6 +550,7 @@
   </a>
 </body>
 </html>
+
 
 
 

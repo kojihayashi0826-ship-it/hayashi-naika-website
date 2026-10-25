@@ -180,22 +180,22 @@ async function visualTests(){
 async function faqTests(){
  const t=setup(),w=t.w;await w.editorReady;
  const baseline=w.qa.get(),q=s=>w.document.querySelector(s);
- assert.equal(baseline.faqs.length,5); // old backups receive the existing questions
+ assert.equal(baseline.faqs.length,6); // old backups receive the existing questions
  assert.equal(w.ClinicContent.normalize({faqs:[]}).faqs.length,0); // empty does not restore defaults
  const normalized=w.ClinicContent.normalize({faqs:[null,{id:'same',question:' Q ',answer:' A '},{id:'same',question:'B',answer:'C'}]}).faqs;
  assert.equal(normalized.length,2);assert.notEqual(normalized[0].id,normalized[1].id);assert.equal(normalized[0].question,'Q');
  q('[data-tab="faq"]').click();assert.equal(q('[data-panel="faq"]').hidden,false);
- q('[data-add-faq]').click();assert.ok(w.qa.validate().some(e=>e.includes('質問 6')));
+ q('[data-add-faq]').click();assert.ok(w.qa.validate().some(e=>e.includes('質問 7')));
  const row='[data-faqs] article:last-child ';
  field(w,row+'[data-content-field="question"]','質問 <img src=x onerror=alert(1)>');
  field(w,row+'[data-content-field="answer"]','1行目 & <script>alert(1)</script>\n2行目 $&');
  assert.equal(w.qa.validate().length,0);
- q(row+'button').click();assert.equal(w.qa.get().faqs[4].question,'質問 <img src=x onerror=alert(1)>');
+ q(row+'button').click();assert.equal(w.qa.get().faqs[5].question,'質問 <img src=x onerror=alert(1)>');
  field(w,'[data-faqs] article:first-child [data-content-field="published"]',false);
  const backup=w.qa.prepare();w.qa.set(backup);assert.deepEqual(w.qa.prepare().faqs,backup.faqs);
  assert.deepEqual(w.qa.prepare().closures,baseline.closures);assert.deepEqual(w.qa.prepare().news,baseline.news);
  await sleep(550);assert.equal(JSON.stringify((await w.ClinicDrafts.read()).data.faqs),JSON.stringify(backup.faqs));
- q('[data-preview]').click();assert.equal(q('[data-preview-dialog] .faq-list').querySelectorAll('details').length,5);assert.equal(q('[data-preview-dialog] .faq-list').querySelector('img'),null);q('[data-preview-dialog]').close();
+ q('[data-preview]').click();assert.equal(q('[data-preview-dialog] .faq-list').querySelectorAll('details').length,6);assert.equal(q('[data-preview-dialog] .faq-list').querySelector('img'),null);q('[data-preview-dialog]').close();
  const html=w.ClinicContent.updateFaqHTML(load('index.html'),backup.faqs);
  const marker=/<\!-- clinic-faq:start -->[\s\S]*?<\!-- clinic-faq:end -->/;
  assert.equal(html.replace(marker,''),load('index.html').replace(marker,''));
@@ -203,10 +203,10 @@ async function faqTests(){
  assert.throws(()=>w.ClinicContent.updateFaqHTML('<html></html>',backup.faqs));
  await connect(t);await w.ClinicPublisher.publish();assert.equal(w.qa.dirty(),false);
  assert.deepEqual(t.getTree().map(e=>e.path).sort(),['data/site-updates.json','index.html']);
- const snapshot=new JSDOM(t.getRemoteHTML());assert.equal(snapshot.window.document.querySelectorAll('.faq-list details').length,5);
+ const snapshot=new JSDOM(t.getRemoteHTML());assert.equal(snapshot.window.document.querySelectorAll('.faq-list details').length,6);
  assert.equal(snapshot.window.document.querySelector('.faq-list img'),null);assert.equal(snapshot.window.document.querySelector('.faq-list script'),null);snapshot.window.close();
  const pub=setup('index.html',{source:t.getRemote()});await sleep(40);
- assert.equal(pub.w.document.querySelectorAll('.faq-list details').length,5);assert.equal(pub.w.document.querySelector('.faq-list img'),null);
+ assert.equal(pub.w.document.querySelectorAll('.faq-list details').length,6);assert.equal(pub.w.document.querySelector('.faq-list img'),null);
  const publishedFaqText=pub.w.document.querySelector('.faq-list').textContent;
  pub.w.ClinicPublicContent.apply({loadError:true});
  assert.equal(pub.w.document.querySelector('.faq-list').textContent,publishedFaqText);
@@ -223,6 +223,46 @@ async function faqTests(){
   assert.equal(JSON.stringify(fail.getRemote()),before);assert.equal(fail.w.qa.dirty(),true);await sleep(50);fail.dom.window.close();
  }
  console.log('PASS FAQ: legacy/empty data, CRUD/reorder/visibility, validation, draft/backup/preview, safe text, atomic HTML+JSON, concurrent edits and failed writes');
+}
+async function todayStatusTests(){
+ const published=JSON.parse(load('data/site-updates.json'));
+ const t=setup('index.html',{source:published}),w=t.w;await sleep(40);
+ const RealDate=w.Date;let instant;
+ w.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[instant]));}static now(){return new RealDate(instant).getTime();}};
+ const q=s=>w.document.querySelector(s),text=s=>q(s).textContent;
+ q('.today-panel').getBoundingClientRect=()=>({top:-400,bottom:-100});
+ function at(time,closures=[]){instant=time;w.applyManagedContent({...published,closures});}
+ at('2026-10-26T08:59:00+09:00');
+ assert.equal(text('#today-label'),'本日は診療日です');assert.equal(text('#today-detail'),'次の診療は09:00からです');
+ at('2026-10-26T09:00:00+09:00');
+ assert.equal(text('#today-label'),'本日は診療しています');assert.equal(text('#today-reception-current'),'午前は12時まで受付');assert.equal(text('#today-detail'),'次の診療は13:30からです');
+ at('2026-10-26T12:00:00+09:00');
+ assert.equal(text('#today-label'),'本日は診療日です');assert.equal(text('#today-detail'),'次の診療は13:30からです');assert.equal(text('#today-reception-current'),'午後は18時30分まで受付');
+ at('2026-10-26T13:30:00+09:00');
+ assert.equal(text('#today-label'),'本日は診療しています');assert.equal(text('#floating-today-reception-current'),'午後は18時30分まで受付');
+ assert.ok(text('#today-detail').includes('10月27日（火） 09:00'));
+ at('2026-10-26T18:30:00+09:00');
+ assert.equal(text('#floating-today-label'),'本日の診療は終了しました');assert.equal(q('#floating-today-reception-current').hidden,true);
+ at('2026-10-29T10:00:00+09:00',published.closures);
+ assert.equal(text('#today-label'),'本日は休診日です');assert.ok(text('#today-detail').includes('11月2日（月） 09:00'));
+ at('2026-10-30T10:00:00+09:00',published.closures);
+ assert.equal(text('#today-label'),'本日は休診日です');assert.ok(text('#today-detail').includes('11月2日（月） 09:00'));
+ at('2026-11-03T10:00:00+09:00');assert.equal(text('#today-label'),'本日は休診日です');
+ at('2026-10-26T10:00:00+09:00',[{start:'2026-10-26',period:'am'}]);
+ assert.equal(text('#today-label'),'本日は午前休診です');assert.equal(text('[data-reception-am]'),'午前 休診');assert.ok(text('#today-detail').includes('13:30'));
+ at('2026-10-26T12:00:00+09:00',[{start:'2026-10-26',period:'pm'}]);
+ assert.equal(q('#today-reception-current').hidden,true);assert.equal(text('[data-reception-pm]'),'午後 休診');assert.ok(text('#today-detail').includes('10月27日'));
+ // Loading failures and subsequent recoveries must immediately reach the fixed panel.
+ w.applyManagedContent({...published,loadError:true});
+ assert.equal(text('#floating-today-label'),'診療状況はお電話でご確認ください');assert.equal(q('#floating-today-reception-current').hidden,true);
+ at('2026-10-26T10:00:00+09:00');assert.equal(text('#floating-today-label'),'本日は診療しています');
+ assert.equal(q('.today-floating').classList.contains('visible'),true);
+ q('.today-panel').getBoundingClientRect=()=>({top:200,bottom:400});w.syncTodayFloating();assert.equal(q('.today-floating').classList.contains('visible'),false);
+ q('.today-panel').getBoundingClientRect=()=>({top:2000,bottom:2200});w.syncTodayFloating();assert.equal(q('.today-floating').classList.contains('visible'),true);
+ assert.equal(q('#faq').textContent.includes('発熱や咳、のどの痛みがある場合'),false);
+ assert.ok(q('#faq').textContent.includes('受付時間はいつまでですか？'));
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));t.dom.window.close();
+ console.log('PASS today: JST opening/lunch/closing boundaries, weekends/holidays/closures, half days, fixed-panel sync, errors/recovery and published FAQ');
 }
 function seoTests(){
  const pages=['index.html','care.html','tests.html','doctor.html','first-visit.html','vaccines.html','checkups.html'];const titles=new Set();
@@ -243,5 +283,6 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+(async()=>{seoTests();await todayStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+
 
