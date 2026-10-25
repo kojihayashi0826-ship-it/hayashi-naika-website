@@ -175,14 +175,53 @@ function formatShortDate(date) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
+function updateMobileClinicStatus(now) {
+  const badge = document.querySelector(".mobile-clinic-status");
+  if (!badge) return;
+  const label = badge.querySelector("[data-mobile-status-label]");
+  const detail = badge.querySelector("[data-mobile-status-detail]");
+  const render = (state, title, description) => {
+    badge.dataset.state = state;
+    // Avoid repeating live-region announcements when the text has not changed.
+    if (label.textContent !== title) label.textContent = title;
+    if (detail.textContent !== description) detail.textContent = description;
+  };
+  if (managedContentUnavailable) {
+    render("unknown", "診療状況を確認", "お電話でご確認ください");
+    return;
+  }
+  const clock = ClinicSchedule.japanNow(now);
+  const day = ClinicSchedule.dayState(clock.key, specialClosureRanges);
+  const minutes = time => { const [h, m] = time.split(":").map(Number); return h * 60 + m; };
+  const active = day.sessions.find(([start, end]) => clock.minute >= minutes(start) && clock.minute < minutes(end));
+  const timeLabel = time => time.replace(/^0/, "");
+  if (active) {
+    render("open", "現在診療中", timeLabel(active[1]) + "まで受付");
+    return;
+  }
+  const next = ClinicSchedule.nextOpening(now, specialClosureRanges);
+  let nextLabel = "お電話でご確認ください";
+  if (next) {
+    if (next.key === clock.key) nextLabel = "本日 " + timeLabel(next.time) + "〜";
+    else {
+      const date = new Date(next.key + "T00:00:00Z");
+      nextLabel = "次回 " + (date.getUTCMonth() + 1) + "/" + date.getUTCDate() + "(" + "日月火水木金土"[date.getUTCDay()] + ") " + timeLabel(next.time) + "〜";
+    }
+  }
+  if (day.closed) render("closed", "本日休診日", nextLabel);
+  else if (next?.key === clock.key) render("next", "次回受付", nextLabel);
+  else render("ended", "本日の受付終了", nextLabel);
+}
+
 function updateTodayStatus() {
+  const now = new Date();
+  updateMobileClinicStatus(now);
   const panel = document.querySelector(".today-panel");
   const date = document.querySelector("#today-date");
   const label = document.querySelector("#today-label");
   const detail = document.querySelector("#today-detail");
   const reception = document.querySelector("#today-reception-current");
   if (!panel || !date || !label || !detail) return;
-  const now = new Date();
   const clock = ClinicSchedule.japanNow(now);
   date.textContent = ClinicSchedule.pretty(clock.key) + "の診療";
   panel.classList.remove("closed");

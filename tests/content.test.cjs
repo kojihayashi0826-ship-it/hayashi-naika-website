@@ -38,7 +38,7 @@ function setup(name='site-editor.html',options={}){
  };
  let scripts;
  if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','editor-content.js','editor-theme.js','editor-canvas.js','site-editor.js','editor-drafts.js','github-publisher.js'];
- else if(name==='index.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','content-public.js','script.js'];
+ else if(['index.html','care.html','tests.html','doctor.html','first-visit.html','vaccines.html','checkups.html'].includes(name))scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','content-public.js','script.js'];
  else scripts=['clinic-theme.js','clinic-design.js','clinic-content.js','clinic-documents.js'];
  const expose=name==='site-editor.html'?`\nwindow.qa={get:()=>JSON.parse(JSON.stringify(data)),set:v=>{data=safeData(v);render();},prepare:()=>JSON.parse(preparedJson()),validate:()=>{collect();return validate();},dirty:()=>dirty,mark:markDirty};`:'';
  w.eval(scripts.map(load).join('\n')+expose);
@@ -264,6 +264,49 @@ async function todayStatusTests(){
  assert.equal(t.errors.length,0,JSON.stringify(t.errors));t.dom.window.close();
  console.log('PASS today: JST opening/lunch/closing boundaries, weekends/holidays/closures, half days, fixed-panel sync, errors/recovery and published FAQ');
 }
+async function mobileStatusTests(){
+ const published=JSON.parse(load('data/site-updates.json'));
+ const t=setup('index.html',{source:published}),w=t.w;await sleep(40);
+ const RealDate=w.Date;let instant='2026-10-26T08:59:00+09:00';
+ w.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[instant]));}static now(){return new RealDate(instant).getTime();}};
+ const badge=w.document.querySelector('.mobile-clinic-status');
+ const label=()=>badge.querySelector('strong').textContent,detail=()=>badge.querySelector('small').textContent;
+ const cases=[
+  ['2026-10-26T08:59:00+09:00','next','次回受付','本日 9:00〜'],
+  ['2026-10-26T09:00:00+09:00','open','現在診療中','12:00まで受付'],
+  ['2026-10-26T11:59:00+09:00','open','現在診療中','12:00まで受付'],
+  ['2026-10-26T12:00:00+09:00','next','次回受付','本日 13:30〜'],
+  ['2026-10-26T13:29:00+09:00','next','次回受付','本日 13:30〜'],
+  ['2026-10-26T13:30:00+09:00','open','現在診療中','18:30まで受付'],
+  ['2026-10-26T18:30:00+09:00','ended','本日の受付終了','次回 10/27(火) 9:00〜'],
+  ['2026-10-29T10:00:00+09:00','closed','本日休診日','次回 11/2(月) 9:00〜'],
+  ['2026-10-30T10:00:00+09:00','closed','本日休診日','次回 11/2(月) 9:00〜'],
+  ['2026-10-31T10:00:00+09:00','closed','本日休診日','次回 11/2(月) 9:00〜'],
+  ['2026-11-01T10:00:00+09:00','closed','本日休診日','次回 11/2(月) 9:00〜'],
+  ['2026-11-03T10:00:00+09:00','closed','本日休診日','次回 11/4(水) 9:00〜']
+ ];
+ for(const [time,state,title,description] of cases){
+  instant=time;w.applyManagedContent(published);
+  assert.equal(badge.dataset.state,state,time);assert.equal(label(),title,time);assert.equal(detail(),description,time);
+ }
+ instant='2026-10-26T10:00:00+09:00';
+ w.applyManagedContent({...published,closures:[{start:'2026-10-26',period:'am'}]});
+ assert.equal(label(),'次回受付');assert.equal(detail(),'本日 13:30〜');
+ instant='2026-10-26T12:00:00+09:00';
+ w.applyManagedContent({...published,closures:[{start:'2026-10-26',period:'pm'}]});
+ assert.equal(label(),'本日の受付終了');assert.equal(detail(),'次回 10/27(火) 9:00〜');
+ w.applyManagedContent({...published,loadError:true});
+ assert.equal(badge.dataset.state,'unknown');assert.equal(detail(),'お電話でご確認ください');
+ w.applyManagedContent(published);assert.equal(label(),'次回受付');
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));t.dom.window.close();
+ for(const name of ['care.html','tests.html','doctor.html','first-visit.html','vaccines.html','checkups.html']){
+  const page=setup(name,{source:published});await sleep(30);
+  assert.notEqual(page.w.document.querySelector('.mobile-clinic-status').dataset.state,'loading',name);
+  assert.equal(page.w.document.querySelector('.today-panel'),null,name);
+  assert.equal(page.errors.length,0,JSON.stringify(page.errors));page.dom.window.close();
+ }
+ console.log('PASS mobile header: opening/lunch/closing boundaries, holiday/temporary/half-day closures, error recovery, all seven patient pages');
+}
 function seoTests(){
  const pages=['index.html','care.html','tests.html','doctor.html','first-visit.html','vaccines.html','checkups.html'];const titles=new Set();
  for(const file of pages){
@@ -283,6 +326,6 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await todayStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+(async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
 
 
