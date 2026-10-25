@@ -619,6 +619,6 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) refr
 (() => {
   const panel=document.querySelector('.today-panel'), floating=document.querySelector('.today-floating');
   if(!panel||!floating)return;
-  const sync=()=>{const r=panel.getBoundingClientRect();floating.classList.toggle('visible',r.bottom<0);const label=document.querySelector('#today-label');const target=document.querySelector('#floating-today-label');if(label&&target)target.textContent=label.textContent;};
+  const sync=()=>{const r=panel.getBoundingClientRect();floating.classList.toggle('visible',r.bottom<0);const label=document.querySelector('#today-label');const target=document.querySelector('#floating-today-label');if(label&&target)target.textContent=label.textContent;const detail=document.querySelector('#today-detail'),mini=document.querySelector('#floating-today-detail');if(detail&&mini)mini.textContent=detail.textContent;};
   window.addEventListener('scroll',sync,{passive:true});window.addEventListener('resize',sync);sync();
 })();
