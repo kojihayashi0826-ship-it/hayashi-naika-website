@@ -140,7 +140,7 @@
     const grid = query("[data-calendar-grid]");
     const note = query("[data-calendar-note]");
     const legend = query(".calendar-legend");
-    if (legend) legend.innerHTML = '<span><i class="legend-open"></i>診療日</span><span><i class="legend-closed"></i>定期休診・祝日</span><span><i class="legend-special"></i>臨時休診（終日）</span><span><i class="legend-partial"></i>午前・午後休診</span>';
+    if (legend) legend.innerHTML = '<span><i class="legend-open" aria-hidden="true"></i>診療日</span><span><i class="legend-closed" aria-hidden="true"></i>休診</span><span><i class="legend-special" aria-hidden="true"></i>臨時休診</span>';
     const [year,m] = month.split("-").map(Number);
     title.textContent = `${year}年${m}月`;
     grid.replaceChildren();
@@ -159,18 +159,29 @@
       const e = document.createElement("div"); e.className="calendar-day"; e.dataset.date=key;
       const num = document.createElement("span"); num.className="day-number"; num.textContent=i; e.append(num);
       const label = document.createElement("span"); label.className="day-status";
-      label.textContent = options.loadError ? (s.regularReason ? "定期休診" : "要確認") : s.status;
+      const visibleStatus = options.loadError ? (s.regularReason ? "休診" : "要確認") :
+        s.partial ? s.status : s.special ? "臨時休診" : s.closed ? (holidays[key] ? "祝日休診" : "休診") : "";
+      // Keep words intact when a narrow screen needs a second label line.
+      for (const part of visibleStatus.match(/.{1,2}/gu) || []) {
+        const word = document.createElement("span"); word.textContent = part; label.append(word);
+      }
       e.append(label);
       if (s.closed) e.classList.add("is-closed");
       if (s.special && !options.loadError) e.classList.add(s.partial ? "is-partial" : "is-special");
-      if (key === now) e.classList.add("is-today");
+      if (key === now) { e.classList.add("is-today"); e.setAttribute("aria-current","date"); }
       if (options.loadError && !s.regularReason) e.classList.add("is-unknown");
       const explanation = options.loadError ? "臨時休診情報を取得できません。お電話でご確認ください。" : s.reason || "診療日";
       e.title = `${pretty(key,true)} ${explanation}`;
-      e.setAttribute("aria-label",`${pretty(key,true)} ${label.textContent} ${explanation}`);
+      e.setAttribute("aria-label",`${pretty(key,true)} ${visibleStatus || s.status} ${explanation}`);
       grid.append(e);
       if (s.regularReason && holidays[key]) notes.push(`${m}/${i} ${holidays[key]}`);
     }
+    // Complete the last week so the horizontal rule runs across all seven days.
+    for (let i = (7 - (startWeek + count) % 7) % 7; i > 0; i--) {
+      const e = document.createElement("div"); e.className="calendar-day is-empty"; e.setAttribute("aria-hidden","true"); grid.append(e);
+    }
+    if (legend && grid.querySelector(".is-partial")) legend.insertAdjacentHTML("beforeend", '<span><i class="legend-partial" aria-hidden="true"></i>午前・午後休診</span>');
+    if (legend && options.loadError) legend.insertAdjacentHTML("beforeend", '<span><i class="legend-unknown" aria-hidden="true"></i>要確認</span>');
     const inMonth = active(closures).filter(c => c.start <= month+"-"+count && c.end >= month+"-01");
     for (const c of inMonth) notes.push(`${rangeLabel(c)} ${c.label}（${periods[c.period]}）`);
     note.textContent = options.loadError ? "休診情報を取得できません。臨時休診はお電話（0761-24-6288）でご確認ください。" :
