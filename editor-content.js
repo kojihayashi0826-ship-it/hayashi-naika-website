@@ -1,7 +1,7 @@
 /* Additional editor panels. Upload bytes stay in the draft until Publish. */
 (() => {
   'use strict';
-  let pendingReads=0,disposePreview=null;
+  let pendingReads=0,disposePreview=null,disposeEffects=null,effectsTimer=null;
   const q=s=>document.querySelector(s);
   const mediaAccept='image/jpeg,image/png,image/webp,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.mp4,.webm';
   function input(root,key,label,type,value,options={}) {
@@ -22,6 +22,20 @@
       row.querySelectorAll('[data-content-field]').forEach(el=>{item[el.dataset.contentField]=el.type==='checkbox'?el.checked:el.type==='number'?(el.value===''?'':Number(el.value)):el.value.trim();});
       return item;
     });
+  }
+  function effectChoices(root,key,label,value,options,choices) {
+    const group=document.createElement('div');group.className='hero-effect-control';root.append(group);
+    const field=input(group,key,label,'number',value,options);
+    const buttons=document.createElement('div');buttons.className='hero-effect-choices';buttons.setAttribute('role','group');buttons.setAttribute('aria-label',label);
+    const sync=()=>buttons.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.value)===Number(field.value))));
+    choices.forEach(([name,n])=>{const b=createButton(name,'secondary compact',()=>{field.value=n;field.dispatchEvent(new Event('input',{bubbles:true}));});b.dataset.value=n;buttons.append(b);});
+    field.addEventListener('input',sync);group.append(buttons);sync();
+  }
+  function refreshEffects(){
+    clearTimeout(effectsTimer);disposeEffects?.();disposeEffects=null;
+    const panel=q('[data-panel="photos"]'),holder=q('[data-hero-effects-preview]');
+    if(!holder || panel.hidden || q('[data-preview-dialog]').open)return;
+    collectExtra();disposeEffects=ClinicContent.slideshow(holder,data.hero,{preview:true});
   }
   function collectExtra() {
     data.faqs=collectRows(q('[data-faqs]'),data.faqs);
@@ -66,8 +80,9 @@
     input(settings,'pauseOnHover','マウスを重ねたら切り替え・動画を一時停止','checkbox',data.hero.pauseOnHover);
     const times=document.createElement('div');times.className='two-columns';settings.append(times);
     input(times,'hold','写真1枚を表示する秒数（1〜120）','number',data.hero.hold,{min:1,max:120,step:.1});
-    input(times,'fade','フェードにかける秒数（0〜10）','number',data.hero.fade,{min:0,max:10,step:.1});
+    effectChoices(times,'fade','フェードにかける秒数（0〜10）',data.hero.fade,{min:0,max:10,step:.1},[['なし',0],['速め',.6],['標準',1.2],['ゆっくり',2.4]]);
     input(settings,'easing','フェードの変化','select',data.hero.easing,{choices:{'ease-in-out':'なめらか（標準）',linear:'一定の速さ',ease:'自然にゆっくり止まる','ease-in':'ゆっくり始まる','ease-out':'ゆっくり終わる'}});
+    effectChoices(settings,'edgeSoftness','写真・動画の縁のぼかし（0〜20：0でなし）',data.hero.edgeSoftness,{min:0,max:20,step:.5},[['なし',0],['控えめ',3],['標準',6],['ふんわり',12]]);
     const slides=q('[data-slides]');slides.querySelectorAll('video').forEach(v=>{v.pause();v.removeAttribute('src');v.load();});slides.replaceChildren();
     if(!data.hero.slides.length)slides.append(emptyState('写真・動画を追加してください。掲載するものがない間は、元の外観イラストを表示します。'));
     data.hero.slides.forEach((item,i)=>{
@@ -97,6 +112,7 @@
         const result=await prepareFile(files[0],false);collectExtra();const current=data.documents.find(v=>v.id===item.id);if(current)Object.assign(current,result);renderExtra();markDirty();
       }));
     });
+    refreshEffects();
   }
   function filePicker(label,accept,multiple,action) {
     const wrap=document.createElement('label');wrap.className='file-button';wrap.append(document.createTextNode(label));
@@ -159,6 +175,7 @@
     if(pendingReads)errors.push('ファイルの読み込み完了後に、もう一度操作してください。');
     data.highlights.forEach((h,i)=>{if(h.enabled && !h.title)errors.push(`重要なお知らせ ${i+1} の見出しを入力してください。`);if(!isSafeLink(h.linkUrl))errors.push(`重要なお知らせ ${i+1} のリンク先を確認してください。`);if(h.enabled && (!!h.linkUrl !== !!h.linkText))errors.push(`重要なお知らせ ${i+1} のリンク文言とリンク先を両方入力してください。`);});
     for(const [key,min,max] of [['hold',1,120],['fade',0,10]])if(data.hero[key]==='' || !Number.isFinite(data.hero[key]) || data.hero[key]<min || data.hero[key]>max)errors.push(`${key==='hold'?'静止表示':'フェード'}の秒数は${min}〜${max}で入力してください。`);
+    if(data.hero.edgeSoftness==='' || !Number.isFinite(data.hero.edgeSoftness) || data.hero.edgeSoftness<0 || data.hero.edgeSoftness>20)errors.push('縁のぼかしは0〜20で入力してください。');
     const assets=[...data.hero.slides,...data.documents,...data.hero.slides.filter(s=>s.poster || s.posterData).map(s=>({src:s.poster,fileData:s.posterData}))];let total=0;
     for(const item of assets){
       if(!ClinicContent.safeAsset(item.src) && !ClinicContent.videoAsset(item.src))errors.push('写真・動画・掲示物のファイルが不正です。追加し直してください。');
@@ -176,6 +193,7 @@
   }
   function preview(root,section) {
     disposePreview?.();
+    disposeEffects?.();disposeEffects=null;
     const faq=section('よくある質問');const faqList=document.createElement('div');faqList.className='faq-list';faq.append(faqList);ClinicContent.renderFaq(faqList,data.faqs);
     const card=section('トップ画像・動画');const holder=document.createElement('div');card.append(holder);disposePreview=ClinicContent.slideshow(holder,data.hero,{preview:true});
     const docs=section('院内掲示物');const list=document.createElement('div');list.className='documents-list';docs.append(list);ClinicContent.documentList(list,data.documents,{preview:true});
@@ -201,8 +219,18 @@
   q('[data-add-documents]').addEventListener('change',e=>runFiles(e.target,async files=>{
     for(const file of files){const result=await prepareFile(file,false);collectExtra();data.documents.push({id:makeId('document'),published:true,title:file.name.replace(/\.[^.]+$/,''),description:'',...result});renderExtra();markDirty();}
   }));
-  q('[data-preview-dialog]').addEventListener('close',()=>{disposePreview?.();disposePreview=null;});
+  q('[data-preview-dialog]').addEventListener('close',()=>{disposePreview?.();disposePreview=null;refreshEffects();});
+  q('[data-panel="photos"]').addEventListener('input',e=>{
+    if(!e.target.matches('[data-content-field]'))return;
+    clearTimeout(effectsTimer);effectsTimer=setTimeout(refreshEffects,180);
+  });
+  q('[data-replay-hero-effects]').addEventListener('click',refreshEffects);
+  document.querySelectorAll('[data-tab]').forEach(tab=>tab.addEventListener('click',()=>{
+    // The base editor switches panels in its click handler.
+    clearTimeout(effectsTimer);effectsTimer=setTimeout(refreshEffects,0);
+  }));
   window.ClinicEditorContent={render:renderExtra,collect:collectExtra,validate:validateExtra,preview,publication,saveFiles,isBusy:()=>pendingReads>0};
 })();
+
 
 

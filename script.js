@@ -352,6 +352,7 @@ function renderNews(items, loadError = false) {
   }
 }
 
+let refreshPageMotion = () => {};
 function initPageMotion() {
   const reducedMotion = typeof window.matchMedia === "function"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -363,7 +364,7 @@ function initPageMotion() {
   updateHeader();
   window.addEventListener("scroll", updateHeader, { passive: true });
 
-  const revealTargets = document.querySelectorAll([
+  const revealSelector = [
     ".quick-guide .walkin-bar",
     ".quick-guide .guide-card",
     ".section-heading",
@@ -378,25 +379,37 @@ function initPageMotion() {
     ".recruitment-card",
     ".faq-list details",
     ".contact-inner"
-  ].join(","));
+  ].join(",");
+  const revealTargets = document.querySelectorAll(revealSelector);
 
   if (reducedMotion || !("IntersectionObserver" in window)) {
     revealTargets.forEach((target) => target.classList.add("is-visible"));
   } else {
     document.documentElement.classList.add("motion-ready");
-    const revealObserver = new IntersectionObserver((entries, observer) => {
+    const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add("is-visible");
-        observer.unobserve(entry.target);
+        // Re-arm only after the whole element has left the viewport.
+        // Expanded FAQ answers stay readable while any part is still visible.
+        entry.target.classList.toggle("is-visible", entry.isIntersecting);
       });
-    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+    }, { threshold: 0, rootMargin: "0px" });
 
-    revealTargets.forEach((target, index) => {
-      target.classList.add("reveal");
-      target.style.setProperty("--reveal-delay", `${(index % 3) * 70}ms`);
-      revealObserver.observe(target);
-    });
+    const observed = new Set();
+    refreshPageMotion = () => {
+      observed.forEach(target => { if (!target.isConnected) { revealObserver.unobserve(target); observed.delete(target); } });
+      document.querySelectorAll(revealSelector).forEach((target, index) => {
+        if (observed.has(target)) return;
+        target.classList.add("reveal");
+        target.style.setProperty("--reveal-delay", `${(index % 3) * 70}ms`);
+        revealObserver.observe(target); observed.add(target);
+      });
+    };
+    refreshPageMotion();
+
+    const entranceObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => entry.target.classList.toggle("motion-offscreen", !entry.isIntersecting));
+    }, { threshold: 0 });
+    document.querySelectorAll('.hero-copy, .today-panel').forEach(target => entranceObserver.observe(target));
   }
 
   const navLinks = [...document.querySelectorAll('.global-nav a[href^="#"]')];
@@ -657,6 +670,7 @@ function applyManagedContent(content) {
   renderSiteStatus(content.siteStatus);
   renderRecruitment(content.recruitment);
   ClinicPublicContent.apply(content);
+  refreshPageMotion();
   protectJapanesePhrases();
   updateTodayStatus();
   renderMonthlyCalendar();
@@ -691,4 +705,5 @@ function syncTodayFloating() {
 window.addEventListener('scroll', syncTodayFloating, { passive: true });
 window.addEventListener('resize', syncTodayFloating);
 window.addEventListener('load', syncTodayFloating);
+
 

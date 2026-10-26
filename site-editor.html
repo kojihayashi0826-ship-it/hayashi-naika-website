@@ -14,11 +14,11 @@
   <link rel="stylesheet" href="editor-publish.css?v=20261024-1">
   <script src="clinic-schedule.js?v=20261025-circles1" defer></script>
   <link rel="stylesheet" href="clinic-content.css?v=20261026-video1">
-  <link rel="stylesheet" href="editor-content.css?v=20261024-faq-seo1">
+  <link rel="stylesheet" href="editor-content.css?v=20261027-motion1">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
   <script src="clinic-design.js?v=20261024-gui1" defer></script>
-  <script src="clinic-content.js?v=20261026-video1" defer></script>
-  <script src="editor-content.js?v=20261026-video1" defer></script>
+  <script src="clinic-content.js?v=20261027-motion1" defer></script>
+  <script src="editor-content.js?v=20261027-motion1" defer></script>
   <link rel="stylesheet" href="editor-theme.css?v=20261024-gui1">
   <script src="editor-theme.js?v=20261024-gui1" defer></script>
   <link rel="stylesheet" href="editor-canvas.css?v=20261024-gui1">
@@ -160,7 +160,12 @@
           <div class="card-heading"><div><p>TOP PHOTOS &amp; VIDEOS</p><h2>トップ画像・動画</h2></div><label class="file-button">写真・動画を追加<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.mp4,.webm" multiple data-add-photos></label></div>
           <p class="field-help">写真はJPEG・PNG・WebP、動画はMP4（H.264推奨）・WebMに対応。1ファイル20MBまで、動画は60秒以内です。写真は自動縮小しますが、動画は圧縮しません。iPhoneのHEIC写真はJPEG、MOV動画はMP4に変換してから選んでください。変更は「公開する」で反映されます。</p>
           <div class="stack-list" data-hero-settings></div>
-          <p class="field-help">写真は指定した秒数で切り替わります。動画は無音で最後まで再生して次へ進み、動画1本だけなら繰り返します。先頭画像は自動作成します。端末設定などで自動再生できない場合は静止画と再生ボタンを表示します。</p>
+          <p class="field-help">写真は指定した秒数で切り替わり、最後まで進むと最初の写真・イラストへ戻って繰り返します。動画は無音で最後まで再生して次へ進みます。端末設定などで自動再生できない場合は静止画と再生ボタンを表示します。</p>
+          <section class="hero-effects-preview" aria-label="フェードと縁のぼかしの確認">
+            <div class="card-heading"><h3>その場で仕上がりを確認</h3><button type="button" class="secondary compact" data-replay-hero-effects>最初から確認</button></div>
+            <p class="field-help">設定を変えると下の見本も変わります。左右の矢印でフェードを確認できます。縁のぼかしは、中央をくっきり保ちながら周囲を背景になじませます。</p>
+            <div data-hero-effects-preview></div>
+          </section>
           <div class="stack-list" data-slides></div>
         </section>
       </div>
@@ -227,6 +232,7 @@
   <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章・写真・動画の動作・資料・休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
 </body>
 </html>
+
 
 
 

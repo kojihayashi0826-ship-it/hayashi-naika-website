@@ -241,6 +241,7 @@
     "autoplay": true,
     "hold": 6,
     "fade": 1.2,
+    "edgeSoftness": 3,
     "easing": "ease-in-out",
     "pauseOnHover": true,
     "slides": [
@@ -309,4 +310,5 @@
     }
   ]
 }
+
 

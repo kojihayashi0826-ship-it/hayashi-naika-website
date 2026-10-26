@@ -2,6 +2,13 @@
 .editor-media-thumb { display: block; width: min(100%,420px); height: 190px; object-fit: contain; background: #edf2ee; border: 1px solid #d6dfd9; border-radius: 8px; }
 .document-thumb { max-height: 240px; }
 .content-row { min-width: 0; }
+.hero-effect-control { min-width:0; }
+.hero-effect-choices { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.hero-effect-choices button[aria-pressed="true"] { background:#e4f2e9; border-color:#49785d; color:#244837; }
+.hero-effects-preview { margin:20px 0; padding:16px; border:1px solid #dce7e0; border-radius:12px; background:#fff; }
+.hero-effects-preview h3 { margin:0; font-size:16px; }
+.hero-effects-preview .clinic-slideshow { max-width:720px; margin:auto; background:#fff; border-radius:0; }
+.hero-effects-preview .slideshow-stage { aspect-ratio:1672 / 941; }
 .google-facts { margin: 0; overflow-wrap: anywhere; }
 .google-facts dt { font-weight: 700; margin-top: 12px; }
 .google-facts dd { margin: 4px 0 0; }
@@ -20,4 +27,5 @@
   .editor-tabs button { flex: 0 0 auto; white-space: nowrap; min-height: 42px; }
   .editor-media-thumb { width: 100%; }
 }
+
 

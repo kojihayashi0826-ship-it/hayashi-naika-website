@@ -2,11 +2,12 @@ const fs=require('fs'),path=require('path'),assert=require('node:assert/strict')
 const {JSDOM}=require('jsdom');const {IDBFactory}=require('fake-indexeddb');
 const ROOT=path.resolve(__dirname,'..');const source=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/site-updates.json')));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function waitFor(check,timeout=2000){const start=Date.now();while(!check()){if(Date.now()-start>timeout)throw Error('Timed out waiting for asynchronous media');await sleep(10);}}
 function load(name){return fs.readFileSync(path.join(ROOT,name),'utf8');}
 function setup(name='site-editor.html',options={}){
  const dom=new JSDOM(load(name).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,''),{url:'https://www.hayashinaika.clinic/'+name,runScripts:'dangerously',pretendToBeVisual:true});
  const w=dom.window;let remote=structuredClone(options.source||source),remoteHTML=options.html??load('index.html'),sha='initialsha',calls=[],blobs=new Map(),tree=[],commit='',errors=[];
- w.addEventListener('error',e=>errors.push(e.message));w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.AbortSignal=AbortSignal;w.structuredClone=structuredClone;w.indexedDB=new IDBFactory();w.confirm=()=>true;w.matchMedia=()=>({matches:!!options.reduced,addEventListener(){},removeEventListener(){}});w.IntersectionObserver=class{observe(){}disconnect(){}};w.scrollTo=()=>{};
+ w.addEventListener('error',e=>errors.push(e.message));w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.AbortSignal=AbortSignal;w.structuredClone=structuredClone;w.indexedDB=new IDBFactory();w.confirm=()=>true;w.matchMedia=()=>({matches:!!options.reduced,addEventListener(){},removeEventListener(){}});w.qaObservers=[];w.IntersectionObserver=class{constructor(callback,options){this.callback=callback;this.options=options;this.targets=new Set();w.qaObservers.push(this);}observe(el){this.targets.add(el);}unobserve(el){this.targets.delete(el);}disconnect(){this.targets.clear();}};w.scrollTo=()=>{};
  w.ResizeObserver=class{observe(){}disconnect(){}};
  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
  w.Blob.prototype.arrayBuffer=function(){return new Promise((resolve,reject)=>{const reader=new w.FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsArrayBuffer(this);});};
@@ -58,9 +59,10 @@ async function editorTests(){
  assert.equal(w.qa.prepare().highlights.length,2);w.document.querySelector('[data-highlights] article:last-child button').click();assert.equal(w.qa.get().highlights[0].title,'第二のお知らせ');
  field(w,'[data-highlights] article:first-child [data-content-field="enabled"]',false);assert.equal(w.qa.prepare().highlights[0].enabled,false);
  field(w,'[data-hero-settings] [data-content-field="hold"]','0');assert.ok(w.qa.validate().some(x=>x.includes('秒数')));field(w,'[data-hero-settings] [data-content-field="hold"]','7.5');field(w,'[data-hero-settings] [data-content-field="fade"]','2');
+ assert.equal(w.qa.get().hero.edgeSoftness,3);field(w,'[data-content-field="edgeSoftness"]','21');assert.ok(w.qa.validate().some(x=>x.includes('ぼかし')));field(w,'[data-content-field="edgeSoftness"]','6');assert.equal(w.qa.prepare().hero.edgeSoftness,6);assert.equal(w.ClinicContent.normalize({hero:{edgeSoftness:99}}).hero.edgeSoftness,20);
  const picker=w.document.querySelector('[data-add-photos]');const photo=new w.File([new Uint8Array([255,216,255,224])],'待合室.jpg',{type:'image/jpeg'});Object.defineProperty(picker,'files',{value:[photo],configurable:true});picker.dispatchEvent(new w.Event('change'));await sleep(40);assert.equal(w.qa.get().hero.slides.length,2);assert.ok(w.qa.get().hero.slides[1].fileData.startsWith('data:image/jpeg;base64,'));
  const dp=w.document.querySelector('[data-add-documents]');Object.defineProperty(dp,'files',{value:[new w.File(['%PDF-1.4\n%%EOF'],'院内案内.pdf',{type:'application/pdf'})],configurable:true});dp.dispatchEvent(new w.Event('change'));await sleep(40);assert.equal(w.qa.get().documents[0].title,'院内案内');assert.equal(w.qa.validate().length,0);
- const backup=w.qa.prepare();const publication=w.ClinicEditorContent.publication(backup);assert.equal(publication.files.length,2);assert.equal(JSON.stringify(publication.data).includes('base64'),false);w.qa.set(backup);assert.equal(w.qa.prepare().documents[0].fileData,backup.documents[0].fileData);
+ const backup=w.qa.prepare();const publication=w.ClinicEditorContent.publication(backup);assert.equal(publication.files.length,2);assert.equal(JSON.stringify(publication.data).includes('base64'),false);w.qa.set(backup);assert.equal(w.qa.prepare().documents[0].fileData,backup.documents[0].fileData);assert.equal(w.qa.prepare().hero.edgeSoftness,6);assert.equal(publication.data.hero.edgeSoftness,6);
  await sleep(550);assert.equal((await w.ClinicDrafts.read()).data.documents.length,1);
  const invalid=w.qa.prepare();invalid.documents[0].src='javascript:alert(1)';w.qa.set(invalid);assert.ok(w.qa.validate().length);w.qa.set(backup);
  await connect(t);await w.ClinicPublisher.publish();assert.equal(w.qa.dirty(),false);assert.equal(t.getTree().length,3);assert.ok(t.getRemote().documents[0].src.endsWith('.pdf'));assert.equal(JSON.stringify(t.getRemote()).includes('fileData'),false);assert.equal(t.errors.length,0,JSON.stringify(t.errors));assert.equal(w.document.querySelector('[data-token]').value,'');
@@ -113,7 +115,8 @@ async function videoPlayerTests(){
   const f=structuredClone(fixture);f.hero.slides=f.hero.slides.slice(0,1);if(kind==='manual')f.hero.autoplay=false;
   const page=setup('index.html',{source:f,reduced:kind==='reduced'}),pw=page.w;if(kind==='blocked'){pw.qaBlockVideo=true;pw.qaNoVideoEvents=true;}await sleep(40);const v=pw.document.querySelector('video'),toggle=pw.document.querySelector('.slideshow-video-toggle');assert.equal(v.paused,true);assert.ok(v.poster);assert.equal(toggle.hidden,false);assert.equal(toggle.getAttribute('aria-label'),'動画を再生');pw.qaBlockVideo=false;toggle.click();await sleep(10);assert.equal(v.paused,false);toggle.click();assert.equal(v.paused,true);page.dom.window.close();
  }
- const broken=structuredClone(fixture);broken.hero.slides[0].src='assets/uploads/broken.mp4';const failure=setup('index.html',{source:broken});await sleep(50);assert.equal(failure.w.document.querySelector('.slideshow-image:not([aria-hidden])').alt,'Photo');failure.dom.window.close();
+ const broken=structuredClone(fixture);broken.hero.slides[0].src='assets/uploads/broken.mp4';const failure=setup('index.html',{source:broken});await waitFor(()=>failure.w.document.querySelector('.slideshow-image:not([aria-hidden])')?.alt==='Photo');assert.equal(failure.w.document.querySelector('.slideshow-image:not([aria-hidden])').alt,'Photo');failure.dom.window.close();
+ const fading=structuredClone(fixture);fading.hero.fade=.25;fading.hero.slides=fading.hero.slides.slice(0,1);const fadePage=setup('index.html',{source:fading});await waitFor(()=>fadePage.w.document.querySelector('video'));const fadeToggle=fadePage.w.document.querySelector('.slideshow-video-toggle');assert.equal(fadeToggle.getAttribute('aria-label'),'動画を一時停止');fadeToggle.click();await sleep(350);assert.equal(fadePage.w.document.querySelector('video').paused,true);fadeToggle.click();await sleep(20);assert.equal(fadePage.w.document.querySelector('video').paused,false);fadePage.dom.window.close();
  console.log('PASS video player: muted/inline, ended-to-next, hover/keyboard/tab pause, single loop, manual/reduced/blocked playback, error fallback and cleanup');
 }
 async function publicTests(){
@@ -134,6 +137,21 @@ async function publicTests(){
  const singleFixture=structuredClone(fixture);singleFixture.hero.slides=singleFixture.hero.slides.slice(0,1);const single=setup('index.html',{source:singleFixture});await sleep(35);assert.equal(single.w.document.querySelector('.slideshow-controls').hidden,true);assert.equal(single.w.document.querySelector('.clinic-slideshow').tabIndex,-1);single.dom.window.close();
  const board=setup('clinic-documents.html',{source:fixture});await sleep(20);assert.equal(board.w.document.querySelectorAll('.document-card').length,1);assert.equal(board.w.document.querySelector('.document-card a').textContent,'施設基準');assert.equal(board.errors.length,0);board.dom.window.close();
  console.log('PASS public: two notices, safe text, popup, slideshow auto/manual/pause/reduced-motion, document list and hidden documents');
+}
+
+async function repeatMotionTests(){
+ const t=setup('index.html'),w=t.w;await sleep(70);
+ const target=w.document.querySelector('.guide-card');
+ const observer=w.qaObservers.find(o=>o.targets.has(target));assert.ok(observer);
+ for(let i=0;i<3;i++){
+  observer.callback([{target,isIntersecting:true,intersectionRatio:.01}],observer);assert.equal(target.classList.contains('is-visible'),true);assert.ok(observer.targets.has(target));
+  observer.callback([{target,isIntersecting:false,intersectionRatio:0}],observer);assert.equal(target.classList.contains('is-visible'),false);
+ }
+ const hero=w.document.querySelector('.hero-copy');const entrance=w.qaObservers.find(o=>o.targets.has(hero));
+ entrance.callback([{target:hero,isIntersecting:false}]);assert.equal(hero.classList.contains('motion-offscreen'),true);
+ entrance.callback([{target:hero,isIntersecting:true}]);assert.equal(hero.classList.contains('motion-offscreen'),false);
+ assert.equal(t.errors.length,0);t.dom.window.close();
+ console.log('PASS repeat motion: repeated entries/exits, partial visibility, retained observation and hero entrance reset');
 }
 
 async function themeTests(){
@@ -382,7 +400,8 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+(async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await publicTests();await repeatMotionTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+
 
 
 
