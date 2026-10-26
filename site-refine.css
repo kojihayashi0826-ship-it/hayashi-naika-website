@@ -1,0 +1,104 @@
+/* 2026-10-27 サイトレビューに基づく調整（読みやすさ・見やすさ優先）
+   既存CSSの後に読み込み、上書きします。 */
+
+/* 1. スクロール連動の表示アニメーションを止め、内容を常に表示する
+      （画面外に出ると再び消える動きで、空白に見える区間ができていたため） */
+.motion-ready .reveal,
+.motion-ready .reveal.is-visible,
+.motion-ready .section-heading.reveal,
+.motion-ready .guide-card.reveal:nth-child(n),
+.motion-ready .care-card.reveal:nth-child(n),
+.motion-ready .doctor-copy.reveal,
+.motion-ready .doctor-portrait.reveal,
+.motion-ready .access-info.reveal,
+.motion-ready .map-card.reveal {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* 2. PCで本文に重なっていた「本日の診療」固定表示を非表示
+      （同じ情報はトップの診療状況欄とヘッダーにあります） */
+.today-floating,
+.today-floating.visible { display: none !important; }
+
+/* 3. 中くらいのPC幅（1000〜1200px）でもヘッダーに電話番号を表示 */
+@media (min-width: 1000px) and (max-width: 1200px) {
+  .site-header .header-phone {
+    display: flex !important;
+    gap: 6px;
+    padding-left: 12px;
+  }
+  .site-header .header-phone small { display: none; }
+  .site-header .header-phone strong { font-size: 15px; white-space: nowrap; }
+  .site-header .header-phone svg { width: 20px; }
+  .site-header .brand-logo { width: 170px; }
+  .site-header .global-nav { gap: 12px; }
+  .site-header .global-nav a { font-size: 12.5px; white-space: nowrap; }
+}
+
+/* 821〜999px（タブレット横向きなど）でメニューを1段に */
+@media (min-width: 821px) and (max-width: 999px) {
+  .site-header .brand-logo { width: 150px; }
+  .site-header .global-nav { gap: 10px; }
+  .site-header .global-nav a { font-size: 12px; white-space: nowrap; }
+}
+
+/* 1201px以上でメニューが2段に折り返さないように */
+@media (min-width: 1201px) {
+  .site-header .brand-logo { width: 200px; }
+  .site-header .global-nav { gap: 16px; }
+  .site-header .global-nav a { font-size: 13px; white-space: nowrap; }
+  .site-header .header-phone { padding-left: 16px; }
+}
+
+/* 4. 小さすぎる文字を読みやすい大きさへ（高齢の方にも見やすく） */
+.hero-facts dt,
+.hero-facts dd,
+.today-status .today-reception,
+.today-status #today-reception-current,
+.hours-note,
+.calendar-note,
+.access-note,
+.card-label,
+.footer-links a,
+.footer-main address,
+.footer-bottom p { font-size: 14px; }
+.hours-note strong { color: var(--theme-heading, var(--green-dark)); }
+.faq-list details p { white-space: pre-line; }
+.access-info dd small { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.bring-note + .bring-note { margin-top: 18px; }
+.bring-note p { margin: 8px 0 0; }
+
+/* 5. 院内掲示物：施設基準・診療報酬に関する掲示 */
+.notice-board {
+  margin: 0 0 48px;
+  padding: 28px 30px;
+  border: 1px solid #d6dfd9;
+  border-radius: 12px;
+  background: #fff;
+}
+.notice-board h2 {
+  margin: 0 0 8px;
+  color: #244837;
+  font-size: 21px;
+  line-height: 1.6;
+}
+.notice-board-lead,
+.notice-board-foot { margin: 0; color: #52645b; font-size: 15px; line-height: 1.85; }
+.notice-board-foot { margin-top: 20px; }
+.notice-board-foot a { color: #244837; font-weight: 700; }
+.notice-items { display: grid; gap: 0; margin-top: 18px; border-top: 1px solid #e3ebe6; }
+.notice-item { padding: 18px 0; border-bottom: 1px solid #e3ebe6; }
+.notice-item h3 { margin: 0; color: #244837; font-size: 17px; line-height: 1.6; }
+.notice-item-sub { margin: 0; color: #52645b; font-size: 13px; }
+.notice-item p:not(.notice-item-sub) { margin: 6px 0 0; color: #2d3933; font-size: 15px; line-height: 1.85; }
+.documents-subtitle { margin: 0 0 4px; color: #244837; font-size: 19px; }
+.documents-subnote { margin: 0 0 16px; color: #52645b; font-size: 14px; }
+@media (max-width: 820px) {
+  .notice-board { padding: 20px 18px; }
+  .notice-board h2 { font-size: 19px; }
+}
+@media print {
+  .notice-board { border: 0; padding: 0; }
+}
