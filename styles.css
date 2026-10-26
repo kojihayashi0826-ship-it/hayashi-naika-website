@@ -289,7 +289,8 @@ svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: 
 .footer-main address { color: var(--muted); font-size: 12px; font-style: normal; }
 .footer-links { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 35px; }
 .footer-links a { padding-bottom: 7px; border-bottom: 1px solid #d8d6cf; font-size: 12px; }
-.footer-bottom { display: flex; justify-content: space-between; margin-top: 45px; padding-top: 18px; color: #90938f; border-top: 1px solid #d8d6cf; font-size: 12px; }
+.footer-bottom { display: block; margin-top: 45px; padding-top: 18px; color: #90938f; border-top: 1px solid #d8d6cf; font-size: 12px; }
+.footer-bottom .footer-copyright { margin: 16px 0 0; text-align: center; font-size: 12px; }
 .mobile-actions { display: none; }
 
 @media (max-width: 1080px) {
