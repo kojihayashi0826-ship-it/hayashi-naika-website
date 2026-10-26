@@ -145,3 +145,58 @@
 @media (min-width: 821px) and (pointer: coarse) {
   .visit-layout .calendar-controls button { min-width: 44px; min-height: 44px; }
 }
+
+/* Compact homepage calendar on phones; retain status labels and 44px controls. */
+@media (max-width: 820px) {
+  .visit-layout > .calendar-card { padding: 18px 16px; }
+  .visit-layout .clinic-calendar .calendar-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0;
+  }
+  .visit-layout .clinic-calendar .calendar-header h3 {
+    font-size: calc(18px * var(--design-heading, 1));
+    line-height: 1.5;
+  }
+  .visit-layout .clinic-calendar .calendar-controls {
+    width: auto;
+    flex: 0 0 auto;
+    margin: 0;
+    gap: 6px;
+  }
+  .visit-layout .clinic-calendar .calendar-controls button {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .visit-layout .clinic-calendar .calendar-legend {
+    margin: 8px 0 6px;
+    gap: 6px 12px;
+  }
+  .visit-layout .clinic-calendar .calendar-grid { margin: 0; }
+  .visit-layout .clinic-calendar .calendar-grid .calendar-weekday { min-height: 28px; }
+  .visit-layout .clinic-calendar .calendar-grid .calendar-day,
+  .visit-layout .clinic-calendar .calendar-grid .calendar-day:hover {
+    min-height: 54px;
+    padding: 3px 0;
+    gap: 1px;
+  }
+  .visit-layout .clinic-calendar .day-number {
+    width: min(32px, 100%);
+    font-size: max(18px, calc(18px * var(--design-font, 1)));
+  }
+  .visit-layout .clinic-calendar .day-status {
+    min-height: 14px;
+    font-size: 11px;
+    line-height: 14px;
+  }
+  .visit-layout .clinic-calendar .calendar-note {
+    margin: 10px 0 0;
+    font-size: max(12px, calc(12px * var(--design-font, 1)));
+    line-height: 1.75;
+  }
+}
