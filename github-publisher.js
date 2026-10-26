@@ -100,7 +100,7 @@
     let response;
     try {
       response=await fetch(url,{...options,redirect:"error",cache:"no-store",referrerPolicy:"no-referrer",
-        signal:AbortSignal.timeout(25000),headers:{Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",Authorization:`Bearer ${credential}`,...(options.body ? {"Content-Type":"application/json"} : {})}});
+        signal:AbortSignal.timeout(url.endsWith('/git/blobs')?120000:25000),headers:{Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",Authorization:`Bearer ${credential}`,...(options.body ? {"Content-Type":"application/json"} : {})}});
     } catch { const e=new Error("GitHubとの通信を確認できません。ネット接続を確認し、再度お試しください。"); e.uncertain=["PUT","PATCH"].includes(options.method); throw e; }
     if (!response.ok) {
       let text;
@@ -236,7 +236,7 @@
       tree.push({path:'index.html',mode:'100644',type:'blob',sha:blob.sha});
     }
     for(let i=0;i<files.length;i++){
-      setMessage(`写真・資料を送信中… ${i+1} / ${files.length}`);
+      setMessage(`写真・動画・資料を送信中… ${i+1} / ${files.length}`);
       const blob=await github(`${apiRoot}/git/blobs`,{method:"POST",body:JSON.stringify({encoding:"base64",content:files[i].content})});
       tree.push({path:files[i].path,mode:"100644",type:"blob",sha:blob.sha});
     }
@@ -345,5 +345,6 @@
   if (pending?.revision) {q("[data-publish-followup]").hidden=false;startVerification();}
   syncControls();
 })();
+
 
 

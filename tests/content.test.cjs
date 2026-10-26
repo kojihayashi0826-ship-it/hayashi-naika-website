@@ -13,6 +13,12 @@ function setup(name='site-editor.html',options={}){
  w.URL.createObjectURL=()=> 'blob:https://test/photo';w.URL.revokeObjectURL=()=>{};
  w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},drawImage(){}});w.HTMLCanvasElement.prototype.toBlob=function(cb){cb(new w.Blob([new Uint8Array([255,216,255,224,0])],{type:'image/jpeg'}));};
  w.Image=function(){const img=w.document.createElement('img');Object.defineProperty(img,'naturalWidth',{value:4000});Object.defineProperty(img,'naturalHeight',{value:3000});Object.defineProperty(img,'src',{get(){return img.getAttribute('src');},set(value){img.setAttribute('src',value);setTimeout(()=>{if(value.includes('broken'))img.onerror?.();else img.onload?.();},0);}});img.decode=()=>Promise.resolve();return img;};
+ const playing=new WeakSet();
+ Object.defineProperties(w.HTMLMediaElement.prototype,{duration:{configurable:true,get(){return w.qaVideoDuration??options.videoDuration??2;}},paused:{configurable:true,get(){return !playing.has(this);}}});
+ Object.defineProperties(w.HTMLVideoElement.prototype,{videoWidth:{configurable:true,get(){return 640;}},videoHeight:{configurable:true,get(){return 360;}}});
+ w.HTMLMediaElement.prototype.load=function(){const src=this.getAttribute('src');if(!src || w.qaNoVideoEvents)return;w.setTimeout(()=>{if(src!==this.getAttribute('src'))return;if(src.includes('broken'))this.dispatchEvent(new w.Event('error'));else{this.dispatchEvent(new w.Event('loadedmetadata'));this.dispatchEvent(new w.Event('loadeddata'));}},0);};
+ w.HTMLMediaElement.prototype.play=function(){if(w.qaBlockVideo)return Promise.reject(new w.DOMException('blocked','NotAllowedError'));playing.add(this);return Promise.resolve();};
+ w.HTMLMediaElement.prototype.pause=function(){playing.delete(this);};
  const response=(json,status=200)=>({ok:status<400,status,headers:{get(){return null;}},json:async()=>json});
  w.fetch=async(url,opts={})=>{
   url=String(url);const method=opts.method||'GET';let body=opts.body?JSON.parse(opts.body):null;calls.push({url,method,body});
@@ -69,6 +75,46 @@ async function failureTests(){
   await sleep(50);t.dom.window.close();
  }
  const t=setup(),w=t.w;await w.editorReady;await connect(t);field(w,'[data-field="siteStatus.title"]','Changed');t.setConflict();await w.ClinicPublisher.publish();assert.equal(t.calls.some(c=>c.method==='PUT'),false);assert.equal(w.qa.dirty(),true);await sleep(50);t.dom.window.close();console.log('PASS failures: concurrent content update, failed file upload, concurrent branch update, lost successful ref response');
+}
+async function videoEditorTests(){
+ const t=setup(),w=t.w;await w.editorReady;const q=s=>w.document.querySelector(s);
+ const upload=async file=>{const picker=q('[data-add-photos]');Object.defineProperty(picker,'files',{value:[file],configurable:true});picker.dispatchEvent(new w.Event('change'));await sleep(70);};
+ const mp4=()=>new w.File([new Uint8Array([0,0,0,24,102,116,121,112,105,115,111,109,0,0,0,0])],'院内.mp4',{type:'video/mp4'});
+ await upload(mp4());let slide=w.qa.get().hero.slides.at(-1);
+ assert.ok(slide.src.endsWith('.mp4'));assert.ok(slide.fileData.startsWith('data:video/mp4;base64,'));assert.ok(slide.poster.endsWith('.jpg'));assert.ok(slide.posterData.startsWith('data:image/jpeg;base64,'));assert.equal(slide.duration,2);assert.equal(slide.fit,'contain');assert.equal(slide.x,100);assert.equal(w.qa.validate().length,0);assert.ok(q('[data-slides] video').controls);
+ await upload(new w.File([new Uint8Array([26,69,223,163,0,0,0,0])],'待合.webm',{type:'video/webm'}));assert.ok(w.qa.get().hero.slides.at(-1).src.endsWith('.webm'));
+ const count=w.qa.get().hero.slides.length;
+ await upload(new w.File(['not a movie'],'bad.mp4',{type:'video/mp4'}));assert.equal(w.qa.get().hero.slides.length,count);assert.ok(q('[data-media-status]').textContent.includes('対応形式'));
+ const oversized=mp4();Object.defineProperty(oversized,'size',{value:20*1024*1024+1});await upload(oversized);assert.equal(w.qa.get().hero.slides.length,count);assert.ok(q('[data-media-status]').textContent.includes('20MB'));
+ w.qaVideoDuration=61;await upload(mp4());assert.equal(w.qa.get().hero.slides.length,count);assert.ok(q('[data-media-status]').textContent.includes('60秒'));delete w.qaVideoDuration;
+ const backup=w.qa.prepare();w.qa.set(backup);assert.deepEqual(w.qa.prepare().hero,backup.hero);await sleep(550);assert.ok((await w.ClinicDrafts.read()).data.hero.slides.at(-1).posterData);
+ const invalid=structuredClone(backup);invalid.hero.slides.at(-1).poster='https://bad.invalid/image.jpg';w.qa.set(invalid);assert.ok(w.qa.validate().length);w.qa.set(backup);
+ const mismatch=structuredClone(backup);mismatch.hero.slides.at(-1).fileData='data:image/jpeg;base64,/9j/4AA=';w.qa.set(mismatch);assert.ok(w.qa.validate().some(e=>e.includes('形式')));w.qa.set(backup);
+ const badDocument=structuredClone(backup);badDocument.documents=[{id:'bad',title:'bad',published:true,src:slide.src}];w.qa.set(badDocument);assert.ok(w.qa.validate().some(e=>e.includes('PDF・画像')));w.qa.set(backup);
+ const injected=structuredClone(backup);injected.documents=[{id:'bad',title:'bad',published:true,src:'assets/uploads/test.pdf',poster:'CNAME',posterData:'data:image/jpeg;base64,/9j/4AA='}];w.qa.set(injected);assert.ok(w.qa.validate().length);assert.ok(!w.ClinicEditorContent.publication(injected).files.some(f=>f.path==='CNAME'));w.qa.set(backup);
+ const publication=w.ClinicEditorContent.publication(backup);assert.equal(publication.files.length,4);assert.equal(JSON.stringify(publication.data).includes('base64'),false);assert.equal(JSON.stringify(publication.data).includes('posterData'),false);
+ await connect(t);await w.ClinicPublisher.publish();assert.ok(t.getTree().some(v=>v.path.endsWith('.mp4')));assert.ok(t.getTree().some(v=>v.path.endsWith('.webm')));assert.equal(t.getTree().filter(v=>v.path.endsWith('.jpg')).length,2);assert.equal(JSON.stringify(t.getRemote()).includes('base64'),false);
+ const replacement=q('[data-slides] article:last-child input[type="file"]');Object.defineProperty(replacement,'files',{value:[new w.File([new Uint8Array([255,216,255,224])],'写真.jpg',{type:'image/jpeg'})]});replacement.dispatchEvent(new w.Event('change'));await sleep(70);slide=w.qa.get().hero.slides.at(-1);assert.ok(slide.src.endsWith('.jpg'));assert.equal(slide.poster,'');assert.equal(slide.posterData,'');assert.equal(slide.duration,null);
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));await sleep(50);t.dom.window.close();
+ console.log('PASS video editor: MP4/WebM import, poster, invalid/oversize/long rejection, MIME validation, draft/backup, atomic publication, video-to-photo replacement');
+}
+async function videoPlayerTests(){
+ const fixture=structuredClone(source);fixture.hero={autoplay:true,hold:1,fade:0,pauseOnHover:true,slides:[{id:'v',src:'assets/uploads/clip.mp4',poster:'assets/uploads/poster.jpg',alt:'Movie',enabled:true,fit:'contain',x:100,y:50},{id:'p',src:'assets/clinic-logo-clean.webp',alt:'Photo',enabled:true,fit:'contain',x:100,y:50}]};
+ const t=setup('index.html',{source:fixture}),w=t.w;await sleep(40);const root=w.document.querySelector('.clinic-slideshow');let video=root.querySelector('video');assert.ok(video);assert.equal(video.muted,true);assert.equal(video.playsInline,true);assert.equal(video.paused,false);assert.ok(video.poster.endsWith('/assets/uploads/poster.jpg'));
+ await sleep(1150);assert.equal(root.querySelector('.slideshow-image:not([aria-hidden])'),video); // Still waits for the movie to end.
+ root.dispatchEvent(new w.Event('pointerenter'));assert.equal(video.paused,true);root.dispatchEvent(new w.Event('pointerleave'));assert.equal(video.paused,false);
+ root.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));assert.equal(video.paused,true);root.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));assert.equal(video.paused,false);
+ Object.defineProperty(w.document,'hidden',{configurable:true,value:true});w.document.dispatchEvent(new w.Event('visibilitychange'));assert.equal(video.paused,true);Object.defineProperty(w.document,'hidden',{configurable:true,value:false});w.document.dispatchEvent(new w.Event('visibilitychange'));assert.equal(video.paused,false);
+ video.dispatchEvent(new w.Event('ended'));await sleep(30);assert.equal(root.querySelector('.slideshow-image:not([aria-hidden])').alt,'Photo');assert.equal(video.paused,true);assert.equal(video.hasAttribute('src'),false);
+ root.querySelector('[aria-label="前のスライド"]').click();await sleep(30);video=root.querySelector('video');assert.equal(video.paused,false);
+ const single={...fixture.hero,slides:[fixture.hero.slides[0]]};const dispose=w.ClinicContent.slideshow(root,single);await sleep(30);video=root.querySelector('video');assert.equal(video.loop,true);assert.equal(video.paused,false);dispose();assert.equal(video.paused,true);assert.equal(video.hasAttribute('src'),false);
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));t.dom.window.close();
+ for(const kind of ['reduced','blocked','manual']){
+  const f=structuredClone(fixture);f.hero.slides=f.hero.slides.slice(0,1);if(kind==='manual')f.hero.autoplay=false;
+  const page=setup('index.html',{source:f,reduced:kind==='reduced'}),pw=page.w;if(kind==='blocked'){pw.qaBlockVideo=true;pw.qaNoVideoEvents=true;}await sleep(40);const v=pw.document.querySelector('video'),toggle=pw.document.querySelector('.slideshow-video-toggle');assert.equal(v.paused,true);assert.ok(v.poster);assert.equal(toggle.hidden,false);assert.equal(toggle.getAttribute('aria-label'),'動画を再生');pw.qaBlockVideo=false;toggle.click();await sleep(10);assert.equal(v.paused,false);toggle.click();assert.equal(v.paused,true);page.dom.window.close();
+ }
+ const broken=structuredClone(fixture);broken.hero.slides[0].src='assets/uploads/broken.mp4';const failure=setup('index.html',{source:broken});await sleep(50);assert.equal(failure.w.document.querySelector('.slideshow-image:not([aria-hidden])').alt,'Photo');failure.dom.window.close();
+ console.log('PASS video player: muted/inline, ended-to-next, hover/keyboard/tab pause, single loop, manual/reduced/blocked playback, error fallback and cleanup');
 }
 async function publicTests(){
  const fixture=structuredClone(source);fixture.highlights=[{id:'a',enabled:true,title:'FIRST',body:'<img src=x onerror=alert(1)>',mode:'banner'},{id:'b',enabled:true,title:'SECOND',body:'text',mode:'popup'},{id:'c',enabled:false,title:'HIDDEN'}];fixture.hero={hold:1,fade:.1,autoplay:true,pauseOnHover:true,slides:[{id:'1',enabled:true,src:'assets/clinic-logo-clean.webp',alt:'First',x:50,y:50},{id:'2',enabled:true,src:'assets/director-koji-hayashi.webp',alt:'Second',x:40,y:60}]};fixture.documents=[{id:'d',title:'施設基準',src:'assets/uploads/test.pdf',published:true},{id:'e',title:'非掲載',src:'assets/uploads/test.jpg',published:false}];
@@ -336,7 +382,8 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+(async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+
 
 
 

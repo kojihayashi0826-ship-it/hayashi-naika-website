@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data: blob:; media-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'self'">
   <meta name="theme-color" content="#244837">
   <title>林内科医院｜サイト更新アプリ</title>
   <link rel="icon" href="favicon.ico">
@@ -13,19 +13,19 @@
   <link rel="stylesheet" href="calendar-sync.css?v=20261025-circles1">
   <link rel="stylesheet" href="editor-publish.css?v=20261024-1">
   <script src="clinic-schedule.js?v=20261025-circles1" defer></script>
-  <link rel="stylesheet" href="clinic-content.css?v=20261026-subtle-arrows1">
+  <link rel="stylesheet" href="clinic-content.css?v=20261026-video1">
   <link rel="stylesheet" href="editor-content.css?v=20261024-faq-seo1">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
   <script src="clinic-design.js?v=20261024-gui1" defer></script>
-  <script src="clinic-content.js?v=20261026-vaccine-guide1" defer></script>
-  <script src="editor-content.js?v=20261024-faq-seo1" defer></script>
+  <script src="clinic-content.js?v=20261026-video1" defer></script>
+  <script src="editor-content.js?v=20261026-video1" defer></script>
   <link rel="stylesheet" href="editor-theme.css?v=20261024-gui1">
   <script src="editor-theme.js?v=20261024-gui1" defer></script>
   <link rel="stylesheet" href="editor-canvas.css?v=20261024-gui1">
   <script src="editor-canvas.js?v=20261024-gui1" defer></script>
   <script src="site-editor.js?v=20261024-faq-seo1" defer></script>
   <script src="editor-drafts.js?v=20261024-1" defer></script>
-  <script src="github-publisher.js?v=20261024-faq-seo1" defer></script>
+  <script src="github-publisher.js?v=20261026-video1" defer></script>
 </head>
 <body>
   <header class="editor-header">
@@ -36,7 +36,7 @@
     <section class="editor-intro">
       <p class="editor-kicker">SITE CONTENT MANAGER</p>
       <h1>編集して、そのまま公開。</h1>
-      <p>お知らせ、臨時休診、トップ画像、院内掲示物、スタッフ募集、デザインの色をこの画面から更新します。ファイルの入れ替えは不要です。</p>
+      <p>お知らせ、臨時休診、トップ画像・動画、院内掲示物、スタッフ募集、デザインの色をこの画面から更新します。ファイルの入れ替えは不要です。</p>
       <ol class="editor-steps"><li><span>1</span>GitHubに接続</li><li><span>2</span>内容を編集・確認</li><li><span>3</span>「公開する」を押す</li></ol>
     </section>
     <details class="connection-card" data-connection open>
@@ -74,7 +74,7 @@
       <button type="button" role="tab" aria-selected="false" data-tab="faq">よくある質問</button>
       <button type="button" role="tab" aria-selected="false" data-tab="recruitment">スタッフ募集</button>
       <button type="button" role="tab" aria-selected="false" data-tab="site">重要なお知らせ・案内</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="photos">トップ画像</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="photos">トップ画像・動画</button>
       <button type="button" role="tab" aria-selected="false" data-tab="documents">院内掲示物</button>
       <button type="button" role="tab" aria-selected="false" data-tab="design">デザイン・配置</button>
       <button type="button" role="tab" aria-selected="false" data-tab="google">Google検索・マップ</button>
@@ -157,10 +157,10 @@
       </div>
       <div class="editor-panel" data-panel="photos" hidden>
         <section class="editor-card">
-          <div class="card-heading"><div><p>TOP PHOTOS</p><h2>トップ画像</h2></div><label class="file-button">写真を追加<input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple data-add-photos></label></div>
-          <p class="field-help">複数選択できます。JPEG・PNG・WebP、1枚20MBまで。写真は長辺2400pxまで自動縮小します。iPhoneのHEIC写真はJPEGへ変換してから選んでください。変更は「公開する」で反映されます。</p>
+          <div class="card-heading"><div><p>TOP PHOTOS &amp; VIDEOS</p><h2>トップ画像・動画</h2></div><label class="file-button">写真・動画を追加<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.mp4,.webm" multiple data-add-photos></label></div>
+          <p class="field-help">写真はJPEG・PNG・WebP、動画はMP4（H.264推奨）・WebMに対応。1ファイル20MBまで、動画は60秒以内です。写真は自動縮小しますが、動画は圧縮しません。iPhoneのHEIC写真はJPEG、MOV動画はMP4に変換してから選んでください。変更は「公開する」で反映されます。</p>
           <div class="stack-list" data-hero-settings></div>
-          <p class="field-help">例：静止6秒 ＋ フェード1.2秒なら、7.2秒ごとに次の写真へ移ります。写真が1枚の場合は静止表示です。端末の「視差効果を減らす」設定時は自動再生しません。</p>
+          <p class="field-help">写真は指定した秒数で切り替わります。動画は無音で最後まで再生して次へ進み、動画1本だけなら繰り返します。先頭画像は自動作成します。端末設定などで自動再生できない場合は静止画と再生ボタンを表示します。</p>
           <div class="stack-list" data-slides></div>
         </section>
       </div>
@@ -222,11 +222,12 @@
     </form>
     <div class="publish-followup" data-publish-followup hidden><button type="button" class="secondary compact" data-check-publish>公開サイトへの反映を確認</button><a href="./" target="_blank" rel="noopener noreferrer">公開サイトを開く ↗</a><a data-commit-link target="_blank" rel="noopener noreferrer" hidden>変更履歴 ↗</a></div>
     <details class="backup-tools"><summary>バックアップ・復元</summary><div class="backup-actions"><button type="button" class="secondary" data-download-json disabled>バックアップJSONを保存</button><label class="file-button">JSONから編集内容を復元<input type="file" accept="application/json,.json" data-file-input></label><button type="button" class="secondary" data-restore-previous disabled>1回前の公開内容を読み込む</button><button type="button" class="secondary" data-save-folder disabled>ローカルフォルダへ保存</button></div><p>復元・ローカル保存だけでは公開サイトは変わりません。内容を確認後、「公開する」を押してください。</p></details>
-    <p class="editor-footer">医院用の端末でご利用ください。文章・写真・院内掲示物をまとめて公開します。<a href="START_HERE.html" target="_blank" rel="noopener noreferrer">操作ガイド</a></p>
+    <p class="editor-footer">医院用の端末でご利用ください。文章・写真・動画・院内掲示物をまとめて公開します。<a href="START_HERE.html" target="_blank" rel="noopener noreferrer">操作ガイド</a></p>
   </main>
-  <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章・写真の動作・資料・休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
+  <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章・写真・動画の動作・資料・休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
 </body>
 </html>
+
 
 
 

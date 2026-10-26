@@ -9,6 +9,10 @@
 .clinic-slideshow .slideshow-arrow:focus-visible { opacity: 1; background: rgba(36,72,55,.35); outline: 2px solid #fff; outline-offset: -3px; }
 .clinic-slideshow:focus-visible { outline: 2px solid #49785d; outline-offset: -3px; }
 .slideshow-state { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.slideshow-video-toggle { position:absolute; top:12px; left:12px; z-index:4; display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid #ffffffaa; border-radius:50%; color:#244837; background:#ffffffdf; box-shadow:0 2px 10px #0002; font:700 18px/1 sans-serif; cursor:pointer; }
+.slideshow-video-toggle[data-playing="false"] { top:50%; left:50%; transform:translate(-50%,-50%); }
+.slideshow-video-toggle[hidden] { display:none!important; }
+.slideshow-video-toggle:focus-visible { outline:3px solid #244837; outline-offset:3px; }
 .hero-visual .parking-badge { z-index: 2; pointer-events: none; }
 .hero-visual:has(.slideshow-controls) { z-index: auto; }
 @media(min-width:821px) {
@@ -78,3 +82,4 @@
 .care-intro, .care-links { line-height: 1.9; }
 .care-intro { margin: 0 0 24px; }
 .care-links { margin: 24px 0; }
+
