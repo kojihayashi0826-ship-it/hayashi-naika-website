@@ -72,10 +72,20 @@ async function failureTests(){
 }
 async function publicTests(){
  const fixture=structuredClone(source);fixture.highlights=[{id:'a',enabled:true,title:'FIRST',body:'<img src=x onerror=alert(1)>',mode:'banner'},{id:'b',enabled:true,title:'SECOND',body:'text',mode:'popup'},{id:'c',enabled:false,title:'HIDDEN'}];fixture.hero={hold:1,fade:.1,autoplay:true,pauseOnHover:true,slides:[{id:'1',enabled:true,src:'assets/clinic-logo-clean.webp',alt:'First',x:50,y:50},{id:'2',enabled:true,src:'assets/director-koji-hayashi.webp',alt:'Second',x:40,y:60}]};fixture.documents=[{id:'d',title:'施設基準',src:'assets/uploads/test.pdf',published:true},{id:'e',title:'非掲載',src:'assets/uploads/test.jpg',published:false}];
- const t=setup('index.html',{source:fixture}),w=t.w;await sleep(35);assert.equal(w.document.querySelectorAll('.important-notice').length,2);assert.equal(w.document.querySelectorAll('.important-notice img').length,0);assert.equal(w.document.querySelector('dialog').open,true);assert.equal(w.document.querySelector('.slideshow-count').textContent,'1 / 2');w.document.querySelector('dialog').close();await sleep(1150);assert.equal(w.document.querySelector('.slideshow-count').textContent,'2 / 2');
- const pause=[...w.document.querySelectorAll('.slideshow-controls button')].find(e=>e.textContent==='一時停止');pause.click();const current=w.document.querySelector('.slideshow-count').textContent;await sleep(1200);assert.equal(w.document.querySelector('.slideshow-count').textContent,current);
- const next=[...w.document.querySelectorAll('.slideshow-controls button')].find(e=>e.textContent==='次へ');next.click();await sleep(30);assert.equal(w.document.querySelector('.slideshow-count').textContent,'1 / 2');assert.equal(t.errors.length,0,JSON.stringify(t.errors));await sleep(50);t.dom.window.close();
- const reduced=setup('index.html',{source:fixture,reduced:true});await sleep(1300);assert.equal(reduced.w.document.querySelector('.slideshow-count').textContent,'1 / 2');assert.equal([...reduced.w.document.querySelectorAll('.slideshow-controls button')].at(-1).textContent,'再生');reduced.dom.window.close();
+ const t=setup('index.html',{source:fixture}),w=t.w;await sleep(35);assert.equal(w.document.querySelectorAll('.important-notice').length,2);assert.equal(w.document.querySelectorAll('.important-notice img').length,0);assert.equal(w.document.querySelector('dialog').open,true);
+ const active=win=>win.document.querySelector('.slideshow-image:not([aria-hidden])').alt;
+ const root=w.document.querySelector('.clinic-slideshow'),controls=root.querySelector('.slideshow-controls');
+ assert.equal(controls.textContent,'');assert.equal(controls.querySelectorAll('button').length,2);assert.equal(root.querySelector('.slideshow-count'),null);assert.equal(active(w),'First');
+ w.document.querySelector('dialog').close();await sleep(1150);assert.equal(active(w),'Second');
+ root.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));await sleep(1200);assert.equal(active(w),'Second');
+ const next=controls.querySelector('[aria-label="次の写真"]'),prev=controls.querySelector('[aria-label="前の写真"]');
+ next.click();await sleep(30);assert.equal(active(w),'First');prev.click();await sleep(30);assert.equal(active(w),'Second');
+ root.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));await sleep(30);assert.equal(active(w),'First');
+ root.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));await sleep(1250);assert.equal(active(w),'Second');
+ root.dispatchEvent(new w.Event('pointerenter'));await sleep(1200);assert.equal(active(w),'Second');root.dispatchEvent(new w.Event('pointerleave'));await sleep(1250);assert.equal(active(w),'First');
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));t.dom.window.close();
+ const reduced=setup('index.html',{source:fixture,reduced:true});await sleep(1300);assert.equal(active(reduced.w),'First');assert.equal(reduced.w.document.querySelector('.slideshow-controls').textContent,'');reduced.w.document.querySelector('[aria-label="次の写真"]').click();await sleep(30);assert.equal(active(reduced.w),'Second');reduced.dom.window.close();
+ const singleFixture=structuredClone(fixture);singleFixture.hero.slides=singleFixture.hero.slides.slice(0,1);const single=setup('index.html',{source:singleFixture});await sleep(35);assert.equal(single.w.document.querySelector('.slideshow-controls').hidden,true);assert.equal(single.w.document.querySelector('.clinic-slideshow').tabIndex,-1);single.dom.window.close();
  const board=setup('clinic-documents.html',{source:fixture});await sleep(20);assert.equal(board.w.document.querySelectorAll('.document-card').length,1);assert.equal(board.w.document.querySelector('.document-card a').textContent,'施設基準');assert.equal(board.errors.length,0);board.dom.window.close();
  console.log('PASS public: two notices, safe text, popup, slideshow auto/manual/pause/reduced-motion, document list and hidden documents');
 }
@@ -327,5 +337,6 @@ function seoTests(){
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
 (async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await publicTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+
 
 

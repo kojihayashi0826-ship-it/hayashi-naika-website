@@ -60,14 +60,19 @@
     root.replaceChildren();root.classList.add('clinic-slideshow');root.setAttribute('role','region');root.setAttribute('aria-label','医院の写真');root.setAttribute('aria-roledescription','スライドショー');
     const stage=document.createElement('div');stage.className='slideshow-stage';
     const controls=document.createElement('div');controls.className='slideshow-controls';controls.hidden=slides.length<2;
-    const count=document.createElement('span');count.className='slideshow-count';
     const state=document.createElement('span');state.className='slideshow-state';state.setAttribute('role','status');
     const clear=()=>{clearTimeout(timer);timers.delete(timer);};
     const schedule=()=>{clear();if(!disposed && !paused && !hover && !focused && !document.hidden && slides.length>1)timer=later(()=>show((index+1)%slides.length),hero.hold*1000);};
-    const play=button(paused?'再生':'一時停止',()=>{paused=!paused;if(!paused){focused=false;hover=false;}sync();schedule();});
-    function sync(){play.textContent=paused?'再生':'一時停止';play.setAttribute('aria-label',paused?'写真の自動切り替えを再生':'写真の自動切り替えを一時停止');}
-    const step=direction=>{paused=true;sync();show((Math.max(0,index)+direction+slides.length)%slides.length,true);};
-    controls.append(button('前へ',()=>step(-1)),count,button('次へ',()=>step(1)),play);
+    // Keep the image controls quiet; keyboard users can also pause/resume.
+    root.tabIndex=slides.length>1?0:-1;
+    function sync(){root.setAttribute('aria-description',slides.length>1?'左右の矢印キーで写真を切り替え。スペースキーで自動切り替えを'+(paused?'再生':'一時停止')+'できます。':'');}
+    const step=direction=>show((Math.max(0,index)+direction+slides.length)%slides.length,true);
+    function arrow(direction,label) {
+      const b=button('',()=>step(direction));b.className='slideshow-arrow';b.setAttribute('aria-label',label);
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 32');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',direction<0?'M15 6 6 16l9 10':'m9 6 9 10-9 10');svg.append(path);b.append(svg);return b;
+    }
+    controls.append(arrow(-1,'前の写真'),arrow(1,'次の写真'));sync();
     root.append(stage,controls,state);
     async function show(next,manual=false,failures=0) {
       clear();const ticket=++request;const item=slides[next];const img=new Image();
@@ -86,10 +91,16 @@
       previous.forEach(el=>{el.setAttribute('aria-hidden','true');el.style.transition=`opacity ${duration}ms ${hero.easing}`;});
       // Flush the initial opacity before starting a crossfade; no blank frame.
       void img.offsetWidth;img.style.opacity='1';previous.forEach(el=>el.style.opacity='0');
-      index=next;count.textContent=`${next+1} / ${slides.length}`;
+      index=next;
       if(manual)state.textContent=`写真 ${next+1}：${img.alt}`;
       later(()=>{previous.forEach(el=>el.remove());if(ticket===request)schedule();},duration);
     }
+    const keyboard=e=>{
+      if(slides.length<2 || e.altKey || e.ctrlKey || e.metaKey)return;
+      if(e.key==='ArrowLeft' || e.key==='ArrowRight'){e.preventDefault();step(e.key==='ArrowLeft'?-1:1);}
+      else if(e.key===' ' && e.target===root){e.preventDefault();paused=!paused;if(!paused){focused=false;hover=false;}sync();schedule();}
+    };
+    root.addEventListener('keydown',keyboard);
     const visibility=()=>{if(document.hidden)clear();else schedule();};
     const motion=()=>{if(media.matches){paused=true;sync();clear();}};
     const enter=()=>{if(hero.pauseOnHover){hover=true;clear();}};
@@ -98,7 +109,7 @@
     const blur=e=>{if(!root.contains(e.relatedTarget)){focused=false;schedule();}};
     root.addEventListener('pointerenter',enter);root.addEventListener('pointerleave',leave);root.addEventListener('focusin',focus);root.addEventListener('focusout',blur);
     document.addEventListener('visibilitychange',visibility);media.addEventListener('change',motion);show(0);
-    return ()=>{disposed=true;request++;timers.forEach(clearTimeout);timers.clear();document.removeEventListener('visibilitychange',visibility);media.removeEventListener('change',motion);root.removeEventListener('pointerenter',enter);root.removeEventListener('pointerleave',leave);root.removeEventListener('focusin',focus);root.removeEventListener('focusout',blur);};
+    return ()=>{disposed=true;request++;root.removeEventListener('keydown',keyboard);timers.forEach(clearTimeout);timers.clear();document.removeEventListener('visibilitychange',visibility);media.removeEventListener('change',motion);root.removeEventListener('pointerenter',enter);root.removeEventListener('pointerleave',leave);root.removeEventListener('focusin',focus);root.removeEventListener('focusout',blur);};
   }
   function documentList(root,items,{preview=false}={}) {
     root.replaceChildren();const visible=items.filter(d=>d.published && d.title && assetURL(d,preview));
