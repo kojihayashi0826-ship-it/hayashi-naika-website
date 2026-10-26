@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-26T11:45:02.581Z",
+  "updatedAt": "2026-10-26T11:45:11.357Z",
   "siteStatus": {
     "enabled": true,
     "title": "正式公開前・ウェブサイト調整中",
@@ -181,7 +181,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "493dccad-e9d2-43d7-b072-2140ffdf64c6",
+  "revision": "0ebd2e60-7914-478c-a707-01d0633fb33a",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
@@ -271,16 +271,6 @@
         "y": 50,
         "alt": "木のぬくもりあるクリニック待合室",
         "src": "assets/uploads/a477cf6c-2850-462d-a110-63beacb3fe7d.jpg",
-        "name": "木のぬくもりあるクリニック待合室.png"
-      },
-      {
-        "id": "slide-1793014887459-221c11ce7e7098",
-        "enabled": true,
-        "fit": "cover",
-        "x": 50,
-        "y": 50,
-        "alt": "木のぬくもりあるクリニック待合室",
-        "src": "assets/uploads/d311d7b7-da36-4c28-9d3d-794591884308.jpg",
         "name": "木のぬくもりあるクリニック待合室.png"
       }
     ]
