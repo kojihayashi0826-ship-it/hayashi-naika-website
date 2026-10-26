@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-26T11:41:38.855Z",
+  "updatedAt": "2026-10-26T11:45:02.581Z",
   "siteStatus": {
     "enabled": true,
     "title": "正式公開前・ウェブサイト調整中",
@@ -181,7 +181,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "fdc2af75-e10e-437e-a93a-f04bad8b5a8c",
+  "revision": "493dccad-e9d2-43d7-b072-2140ffdf64c6",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
@@ -256,7 +256,7 @@
       {
         "id": "slide-1793014883497-0c3d1c4988e3f",
         "enabled": true,
-        "fit": "cover",
+        "fit": "contain",
         "x": 50,
         "y": 50,
         "alt": "林内科医院の受付サイン",
@@ -266,7 +266,7 @@
       {
         "id": "slide-1793014810214-b4bb4899d68e78",
         "enabled": true,
-        "fit": "cover",
+        "fit": "contain",
         "x": 50,
         "y": 50,
         "alt": "木のぬくもりあるクリニック待合室",
