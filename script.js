@@ -354,8 +354,6 @@ function renderNews(items, loadError = false) {
 
 let refreshPageMotion = () => {};
 function initPageMotion() {
-  const reducedMotion = typeof window.matchMedia === "function"
-    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const header = document.querySelector(".site-header");
 
   const updateHeader = () => {
@@ -382,7 +380,9 @@ function initPageMotion() {
   ].join(",");
   const revealTargets = document.querySelectorAll(revealSelector);
 
-  if (reducedMotion || !("IntersectionObserver" in window)) {
+  // CSS selects full motion, gentle desktop fades or static mobile content.
+  // Keep observers active so preference changes and re-entry work immediately.
+  if (!("IntersectionObserver" in window)) {
     revealTargets.forEach((target) => target.classList.add("is-visible"));
   } else {
     document.documentElement.classList.add("motion-ready");
@@ -682,7 +682,9 @@ async function refreshManagedContent() {
   try { applyManagedContent(await loadManagedContent()); }
   finally { refreshingContent = false; }
 }
-refreshManagedContent().then(initPageMotion);
+// Page animation must not wait for the content request (up to 12 seconds).
+initPageMotion();
+refreshManagedContent();
 setInterval(updateTodayStatus, 60000);
 setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 120000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshManagedContent(); });
@@ -705,5 +707,6 @@ function syncTodayFloating() {
 window.addEventListener('scroll', syncTodayFloating, { passive: true });
 window.addEventListener('resize', syncTodayFloating);
 window.addEventListener('load', syncTodayFloating);
+
 
 

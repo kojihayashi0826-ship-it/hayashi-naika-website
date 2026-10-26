@@ -7,7 +7,7 @@ function load(name){return fs.readFileSync(path.join(ROOT,name),'utf8');}
 function setup(name='site-editor.html',options={}){
  const dom=new JSDOM(load(name).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,''),{url:'https://www.hayashinaika.clinic/'+name,runScripts:'dangerously',pretendToBeVisual:true});
  const w=dom.window;let remote=structuredClone(options.source||source),remoteHTML=options.html??load('index.html'),sha='initialsha',calls=[],blobs=new Map(),tree=[],commit='',errors=[];
- w.addEventListener('error',e=>errors.push(e.message));w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.AbortSignal=AbortSignal;w.structuredClone=structuredClone;w.indexedDB=new IDBFactory();w.confirm=()=>true;w.matchMedia=()=>({matches:!!options.reduced,addEventListener(){},removeEventListener(){}});w.qaObservers=[];w.IntersectionObserver=class{constructor(callback,options){this.callback=callback;this.options=options;this.targets=new Set();w.qaObservers.push(this);}observe(el){this.targets.add(el);}unobserve(el){this.targets.delete(el);}disconnect(){this.targets.clear();}};w.scrollTo=()=>{};
+ w.addEventListener('error',e=>errors.push(e.message));w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.AbortSignal=AbortSignal;w.structuredClone=structuredClone;w.indexedDB=new IDBFactory();w.confirm=()=>true;w.matchMedia=query=>({matches:query.includes('prefers-reduced-motion')?!!options.reduced:query==='(min-width: 821px)'?!options.mobile:false,addEventListener(){},removeEventListener(){}});w.qaObservers=[];w.IntersectionObserver=class{constructor(callback,options){this.callback=callback;this.options=options;this.targets=new Set();w.qaObservers.push(this);}observe(el){this.targets.add(el);}unobserve(el){this.targets.delete(el);}disconnect(){this.targets.clear();}};w.scrollTo=()=>{};
  w.ResizeObserver=class{observe(){}disconnect(){}};
  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
  w.Blob.prototype.arrayBuffer=function(){return new Promise((resolve,reject)=>{const reader=new w.FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsArrayBuffer(this);});};
@@ -133,7 +133,15 @@ async function publicTests(){
  root.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));await sleep(1250);assert.equal(active(w),'Second');
  root.dispatchEvent(new w.Event('pointerenter'));await sleep(1200);assert.equal(active(w),'Second');root.dispatchEvent(new w.Event('pointerleave'));await sleep(1250);assert.equal(active(w),'First');
  assert.equal(t.errors.length,0,JSON.stringify(t.errors));t.dom.window.close();
- const reduced=setup('index.html',{source:fixture,reduced:true});await sleep(1300);assert.equal(active(reduced.w),'First');assert.equal(reduced.w.document.querySelector('.slideshow-controls').textContent,'');reduced.w.document.querySelector('[aria-label="次の写真"]').click();await sleep(30);assert.equal(active(reduced.w),'Second');reduced.dom.window.close();
+ const reduced=setup('index.html',{source:fixture,reduced:true,mobile:true});await sleep(1300);assert.equal(active(reduced.w),'First');assert.equal(reduced.w.document.querySelector('.slideshow-controls').textContent,'');reduced.w.document.querySelector('[aria-label="次の写真"]').click();await sleep(30);assert.equal(active(reduced.w),'Second');reduced.dom.window.close();
+ const desktop=setup('index.html',{source:fixture,reduced:true}),dw=desktop.w;
+ await sleep(1300);assert.equal(active(dw),'Second');
+ dw.document.querySelector('[aria-label="次の写真"]').click();await sleep(30);
+ assert.equal(active(dw),'First');assert.equal(dw.document.querySelectorAll('.slideshow-image').length,2);
+ assert.equal(dw.document.querySelector('.slideshow-image:not([aria-hidden])').style.getPropertyValue('--slideshow-fade-duration'),'100ms');
+ await sleep(1250);assert.equal(active(dw),'Second');
+ const reducedCard=dw.document.querySelector('.guide-card');assert.ok(dw.qaObservers.some(o=>o.targets.has(reducedCard)));
+ assert.equal(desktop.errors.length,0);desktop.dom.window.close();
  const singleFixture=structuredClone(fixture);singleFixture.hero.slides=singleFixture.hero.slides.slice(0,1);const single=setup('index.html',{source:singleFixture});await sleep(35);assert.equal(single.w.document.querySelector('.slideshow-controls').hidden,true);assert.equal(single.w.document.querySelector('.clinic-slideshow').tabIndex,-1);single.dom.window.close();
  const board=setup('clinic-documents.html',{source:fixture});await sleep(20);assert.equal(board.w.document.querySelectorAll('.document-card').length,1);assert.equal(board.w.document.querySelector('.document-card a').textContent,'施設基準');assert.equal(board.errors.length,0);board.dom.window.close();
  console.log('PASS public: two notices, safe text, popup, slideshow auto/manual/pause/reduced-motion, document list and hidden documents');

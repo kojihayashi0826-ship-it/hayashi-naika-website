@@ -773,7 +773,17 @@ h1, h2, h3 { font-family: var(--rounded); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
-  .motion-ready .reveal { opacity: 1; transform: none; }
+  .motion-ready .reveal { opacity: 1; transform: none !important; }
+}
+
+/* Reduced-motion desktops retain subtle fades without sliding, scaling or
+   zooming. Mobile keeps its existing static reduced-motion presentation. */
+@keyframes clinic-soft-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (min-width: 821px) and (prefers-reduced-motion: reduce) {
+  .motion-ready .reveal { opacity: 0; transform: none !important; transition: opacity .6s ease var(--reveal-delay, 0ms) !important; }
+  .motion-ready .reveal.is-visible { opacity: 1; }
+  .hero-copy:not(.motion-offscreen) > :is(.eyebrow,h1,.hero-lead,.hero-actions,.hero-facts),
+  .today-panel:not(.motion-offscreen) { animation-name: clinic-soft-fade; animation-duration: .6s !important; }
 }
 
 /* Bright and fresh visual refinement */
@@ -1362,6 +1372,7 @@ button,
 .hero-hours-note .hours-time { font-size:.92em; }
 .hours-time { display:inline-block; white-space:nowrap; }
 .hours-card .saturday-hours { margin:12px 0 0; font-size:calc(14px * var(--design-font,1)); line-height:1.8; color:var(--green-dark); }
+
 
 
 

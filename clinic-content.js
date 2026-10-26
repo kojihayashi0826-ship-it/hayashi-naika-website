@@ -62,8 +62,9 @@
     const slides=hero.slides.filter(s=>s.enabled && slideAsset(s.src) && assetURL(s,preview));
     if(!slides.length) slides.push(defaultSlide);
     const media=matchMedia('(prefers-reduced-motion: reduce)');
+    const desktop=matchMedia('(min-width: 821px)');
     const hasVideo=slides.some(s=>videoAsset(s.src));
-    let paused=!hero.autoplay || media.matches,hover=false,focused=false,index=-1,timer=null,disposed=false,request=0,active=null,blocked=false,cancelPending=null,transitioning=false;
+    let paused=!hero.autoplay,hover=false,focused=false,index=-1,timer=null,disposed=false,request=0,active=null,blocked=false,cancelPending=null,transitioning=false,motionOverride=false;
     const timers=new Set(),resources=new Set(),frames=new Set();
     const later=(fn,ms)=>{const id=setTimeout(()=>{timers.delete(id);fn();},ms);timers.add(id);return id;};
     const frame=fn=>{const id=requestAnimationFrame(()=>{frames.delete(id);fn();});frames.add(id);};
@@ -72,7 +73,11 @@
     const controls=document.createElement('div');controls.className='slideshow-controls';controls.hidden=slides.length<2;
     const state=document.createElement('span');state.className='slideshow-state';state.setAttribute('role','status');
     const clear=()=>{clearTimeout(timer);timers.delete(timer);};
-    const playbackAllowed=()=>!disposed && !cancelPending && !paused && !hover && !focused && !doc.hidden;
+    // Desktop photos still cycle with a gentle opacity-only fade. Keep reduced
+    // motion on mobile and video autoplay opt-in; never latch an OS setting as
+    // a user pause, otherwise turning that setting off cannot resume playback.
+    const motionBlocked=()=>media.matches && (!desktop.matches || isVideo(active)) && !motionOverride;
+    const playbackAllowed=()=>!disposed && !cancelPending && !paused && !hover && !focused && !doc.hidden && !motionBlocked();
     const canRun=()=>!transitioning && playbackAllowed();
     const isVideo=el=>el?.tagName==='VIDEO';
     // Feather the displayed media edges, including contained portrait photos.
@@ -121,8 +126,8 @@
       videoToggle.setAttribute('aria-label',playing?'動画を一時停止':'動画を再生');
     }
     function togglePlayback(){
-      if(isVideo(active) && (!playbackAllowed() || blocked)){paused=false;hover=false;focused=false;blocked=false;}
-      else {paused=!paused;if(!paused){hover=false;focused=false;blocked=false;}}
+      if(!playbackAllowed() || blocked){paused=false;hover=false;focused=false;blocked=false;motionOverride=true;}
+      else paused=true;
       schedule();
     }
     const step=direction=>show((Math.max(0,index)+direction+slides.length)%slides.length,true);
@@ -159,12 +164,13 @@
         state.textContent='写真・動画を読み込めませんでした。';paused=true;transitioning=false;sync();return;
       }
       state.textContent='';const previous=[...stage.children];
-      const duration=media.matches ? 0 : hero.fade*1000;
+      const duration=media.matches ? (desktop.matches ? Math.min(hero.fade,.6)*1000 : 0) : hero.fade*1000;
+      img.style.setProperty('--slideshow-fade-duration',`${duration}ms`);
       transitioning=true;
       img.style.opacity=duration?'0':'1';img.style.transition=`opacity ${duration}ms ${hero.easing}`;stage.append(img);
       soften(img);
       if(video)img.onloadedmetadata=()=>soften(img);
-      previous.forEach(el=>{el.setAttribute('aria-hidden','true');el.style.transition=`opacity ${duration}ms ${hero.easing}`;});
+      previous.forEach(el=>{el.setAttribute('aria-hidden','true');el.style.setProperty('--slideshow-fade-duration',`${duration}ms`);el.style.transition=`opacity ${duration}ms ${hero.easing}`;});
       index=next;active=img;blocked=false;
       if(video){
         img.onended=()=>{if(img===active && canRun() && slides.length>1)show((index+1)%slides.length);};
@@ -189,7 +195,7 @@
     };
     root.addEventListener('keydown',keyboard);
     const visibility=()=>schedule();
-    const motion=()=>{if(media.matches){paused=true;schedule();}};
+    const motion=()=>{motionOverride=false;schedule();};
     const enter=e=>{if(hero.pauseOnHover && e.pointerType!=='touch'){hover=true;schedule();}};
     const leave=()=>{hover=false;schedule();};
     // Touch/mouse arrow clicks must not leave autoplay permanently focus-paused.
@@ -197,8 +203,8 @@
     const focus=e=>{focused=e.target.matches(':focus-visible');schedule();};
     const blur=e=>{if(!root.contains(e.relatedTarget)){focused=false;schedule();}};
     root.addEventListener('pointerdown',pointer);root.addEventListener('pointerenter',enter);root.addEventListener('pointerleave',leave);root.addEventListener('focusin',focus);root.addEventListener('focusout',blur);
-    document.addEventListener('visibilitychange',visibility);media.addEventListener('change',motion);show(0);
-    return ()=>{disposed=true;request++;cancelPending?.();resizeObserver?.disconnect();window.removeEventListener('resize',resize);frames.forEach(cancelAnimationFrame);frames.clear();resources.forEach(release);active=null;videoToggle.removeEventListener('click',togglePlayback);root.removeEventListener('keydown',keyboard);timers.forEach(clearTimeout);timers.clear();document.removeEventListener('visibilitychange',visibility);media.removeEventListener('change',motion);root.removeEventListener('pointerdown',pointer);root.removeEventListener('pointerenter',enter);root.removeEventListener('pointerleave',leave);root.removeEventListener('focusin',focus);root.removeEventListener('focusout',blur);};
+    document.addEventListener('visibilitychange',visibility);media.addEventListener('change',motion);desktop.addEventListener('change',motion);show(0);
+    return ()=>{disposed=true;request++;cancelPending?.();resizeObserver?.disconnect();window.removeEventListener('resize',resize);frames.forEach(cancelAnimationFrame);frames.clear();resources.forEach(release);active=null;videoToggle.removeEventListener('click',togglePlayback);root.removeEventListener('keydown',keyboard);timers.forEach(clearTimeout);timers.clear();document.removeEventListener('visibilitychange',visibility);media.removeEventListener('change',motion);desktop.removeEventListener('change',motion);root.removeEventListener('pointerdown',pointer);root.removeEventListener('pointerenter',enter);root.removeEventListener('pointerleave',leave);root.removeEventListener('focusin',focus);root.removeEventListener('focusout',blur);};
   }
   function documentList(root,items,{preview=false}={}) {
     root.replaceChildren();const visible=items.filter(d=>d.published && d.title && safeAsset(d.src) && assetURL(d,preview));
@@ -218,6 +224,7 @@
   }
   window.ClinicContent=Object.freeze({defaults,defaultSlide,normalize,safeAsset,imageAsset,videoAsset,slideAsset,assetURL,posterURL,slideshow,documentList,normalizeFaqs,faqHTML,renderFaq,updateFaqHTML});
 })();
+
 
 
 
