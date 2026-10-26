@@ -39,9 +39,9 @@
   <link rel="stylesheet" href="clinic-content.css?v=20261027-desktop-motion2">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
   <script src="clinic-design.js?v=20261024-gui1" defer></script>
-  <script src="clinic-content.js?v=20261027-desktop-motion2" defer></script>
+  <script src="clinic-content.js?v=20261027-guidance1" defer></script>
   <script src="content-public.js?v=20261024-faq-seo1" defer></script>
-  <script src="script.js?v=20261027-desktop-motion2" defer></script>
+  <script src="script.js?v=20261027-guidance1" defer></script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -197,6 +197,7 @@
   <link rel="stylesheet" href="clinic-design.css?v=20261026-hero-split1">
   <link rel="stylesheet" href="visit-layout.css?v=20261027-compact1">
   <link rel="stylesheet" href="today-status.css?v=20261026-logo2">
+  <link rel="stylesheet" href="patient-guidance.css?v=20261027-guidance1">
 </head>
 <body id="page-top" class="has-mobile-actions">
   <a class="skip-link" href="#main">本文へ移動</a>
@@ -210,9 +211,9 @@
         </picture>
       </a>
 
-      <div class="mobile-clinic-status" data-state="loading" role="status" aria-live="polite" aria-atomic="true" aria-label="本日の診療状況">
+      <div class="mobile-clinic-status" data-state="unknown" role="status" aria-live="polite" aria-atomic="true" aria-label="本日の診療状況">
         <strong data-mobile-status-label>診療状況</strong>
-        <small data-mobile-status-detail>確認中</small>
+        <small data-mobile-status-detail>お電話でご確認ください</small>
       </div>
 
       <button class="menu-button" type="button" aria-expanded="false" aria-controls="global-nav" aria-label="メニューを開閉">
@@ -224,6 +225,8 @@
         <a href="first-visit.html">初診案内</a>
         <a href="care.html">診療案内</a>
         <a href="tests.html">検査案内</a>
+        <a href="vaccines.html">ワクチン</a>
+        <a href="checkups.html">健康診断</a>
         <a href="doctor.html">医師紹介</a>
         <a href="#access">アクセス</a>
         <a href="#news">お知らせ</a>
@@ -254,7 +257,7 @@
           <div class="hero-copy">
             <p class="eyebrow">石川県小松市下牧町の内科</p>
             <h1 id="hero-title">林内科医院</h1>
-            <p class="hero-lead"><strong>体調の不安を、気軽に相談できる場所。</strong><br>発熱などの急な体調不良から生活習慣病、循環器・消化器の症状、胃カメラ・大腸カメラまで、分かりやすく丁寧に診療します。</p>
+            <p class="hero-lead"><strong>体調の不安を、気軽に相談できる場所。</strong><br>発熱などの急な体調不良から生活習慣病、循環器・消化器の症状、胃カメラ・大腸カメラまで、わかりやすく丁寧に診療します。</p>
             <div class="hero-actions">
               <a class="button button-primary" href="first-visit.html">初めて受診される方へ</a>
               <a class="button button-outline" href="tel:0761246288">
@@ -277,7 +280,7 @@
             </picture></div>
             <div class="parking-badge">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V3h7a6 6 0 0 1 0 12H9v6M9 6v6h4a3 3 0 0 0 0-6H9Z"/></svg>
-              <span><strong>駐車場 9台</strong><small>医院前をご利用ください</small></span>
+              <span><strong>駐車場 9台</strong><small>医院前の駐車場をご利用ください。</small></span>
             </div>
           </div>
         </div>
@@ -289,7 +292,7 @@
       <div class="container">
         <div class="section-heading heading-row">
           <div>
-            <p class="eyebrow">NEWS</p>
+            
             <h2>お知らせ</h2>
           </div>
           <button class="plain-button" type="button" data-show-all>すべて見る <span>→</span></button>
@@ -306,10 +309,10 @@
             <div class="status-icon" aria-hidden="true"><span></span></div>
             <div>
               <p id="today-date">本日の診療</p>
-              <h2 id="today-label">診療時間は下記の表をご確認ください</h2>
-              <p id="today-detail">休診：木曜・日曜・祝日</p>
+              <h2 id="today-label">診療状況はお電話でご確認ください</h2>
+              <p id="today-detail"><a href="tel:0761246288">0761-24-6288</a></p>
               <p id="today-reception-current" hidden></p>
-              <p class="today-reception"><span data-reception-heading>受付時間：</span><span data-reception-am>午前 12:00まで</span><span data-reception-pm>午後 18:30まで</span></p>
+              <p class="today-reception"><span data-reception-heading></span><span data-reception-am>午前 9:00–12:00</span><span class="reception-divider" aria-hidden="true">／</span><span data-reception-pm>午後 13:30–18:30</span></p>
             </div>
           </div>
           <div class="today-actions">
@@ -384,7 +387,7 @@
               <span><i class="legend-special"></i>臨時休診</span>
             </div>
             <div class="calendar-grid" data-calendar-grid aria-live="polite"></div>
-            <p class="calendar-note" data-calendar-note>休診予定は変更になる場合があります。</p>
+            <p class="calendar-note" data-calendar-note>休診予定はお電話でご確認ください（0761-24-6288）。</p>
             <div class="seasonal-closures" data-closure-summary hidden></div>
           </div>
         </div>
@@ -395,7 +398,7 @@
 
     <section class="section page-links-section" data-design-section="links" aria-labelledby="page-links-title">
       <div class="container">
-        <div class="section-heading"><p class="eyebrow">OUR CLINIC</p><h2 id="page-links-title">医院のご案内</h2></div>
+        <div class="section-heading"><h2 id="page-links-title">医院のご案内</h2></div>
         <div class="page-links-grid">
           <a class="page-link-card" href="first-visit.html">
             <span class="page-link-icon" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><rect x="7" y="5" width="26" height="30" rx="3"/><circle cx="20" cy="15" r="4"/><path d="M13 27a7 7 0 0 1 14 0M13 31h14"/></svg></span>
@@ -429,7 +432,7 @@
       <div class="container">
         <div class="section-heading heading-row access-heading">
           <div>
-            <p class="eyebrow">ACCESS</p>
+            
             <h2>アクセス</h2>
           </div>
         </div>
@@ -456,7 +459,7 @@
           <div class="access-info">
             <dl>
               <div><dt>所在地</dt><dd>石川県小松市下牧町ホ102-1</dd></div>
-              <div><dt>駐車場</dt><dd><strong>9台</strong><br>医院前をご利用ください</dd></div>
+              <div><dt>駐車場</dt><dd><strong>9台</strong><br>医院前の駐車場をご利用ください。</dd></div>
               <div><dt>小松空港から</dt><dd>車で約3分（約1.9km）</dd></div>
               <div><dt>小松駅から</dt><dd>車で約8分（約3.8km）</dd></div>
               <div><dt>小松ICから</dt><dd>車で約5分（約3.0km）</dd></div>
@@ -471,7 +474,7 @@
       <div class="container">
         <div class="section-heading heading-row recruitment-heading">
           <div>
-            <p class="eyebrow">RECRUIT</p>
+            
             <h2 id="recruitment-title" data-recruitment-title>スタッフ募集中</h2>
             <p data-recruitment-lead></p>
           </div>
@@ -490,17 +493,17 @@
     <section id="faq" data-design-section="faq" class="section faq-section" aria-labelledby="faq-title">
       <div class="container faq-layout">
         <div class="section-heading">
-          <p class="eyebrow">FAQ</p>
+          
           <h2 id="faq-title">よくある質問</h2>
           <p>受診前に確認されることが多い内容をまとめました。判断に迷う場合は、診療時間内にお電話でお問い合わせください。</p>
         </div>
         <div class="faq-list">
           <!-- clinic-faq:start -->
 <details><summary>受付時間はいつまでですか？</summary><p>午前は12時まで、午後は18時30分まで受け付けています。</p></details>
-<details><summary>予防接種はできますか？予約は必要ですか？</summary><p>インフルエンザ・新型コロナワクチンは、原則予約不要です。体調のよい日にご来院ください。帯状疱疹・肺炎球菌・子宮頸がん（HPV）・二種混合（DT）・日本脳炎などのワクチンは、事前にお電話でご相談ください。接種に向けてワクチンを準備いたします。
+<details><summary>予防接種はできますか？予約は必要ですか？</summary><p>インフルエンザ・新型コロナワクチンは、原則予約不要です。体調のよい日にご来院ください。帯状疱疹・肺炎球菌・子宮頸がん（HPV）・二種混合（DT）・日本脳炎などのワクチンは、事前にお電話でご相談ください。ご予約を承り、ワクチンをご用意します。
 ※ワクチンの種類・対象年齢・在庫状況により、接種できない場合があります。</p></details>
 <details><summary>初診はどのように受診すればよいですか？</summary><p>通常診療は事前のお申し込み不要です。受付時間内に直接ご来院ください。インフルエンザ・新型コロナワクチンは原則予約不要です。それ以外のワクチン・健康診断は、事前にお電話ください。</p></details>
-<details><summary>発熱がある場合はどうすればよいですか？</summary><p>発熱のある方は来院前にお電話ください。発熱がなければ、咳やのどの痛みだけで事前電話は必要ありません。感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。</p></details>
+<details><summary>発熱がある場合はどうすればよいですか？</summary><p>発熱のある方は来院前にお電話ください。咳やのどの痛みのみで37.5℃以上の発熱がない場合は、事前のお電話は不要です。感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。</p></details>
 <!-- clinic-faq:end -->
         </div>
       </div>
@@ -509,7 +512,7 @@
     <section class="contact-section" data-design-section="contact">
       <div class="container contact-inner">
         <div>
-          <p class="eyebrow">CONTACT</p>
+          
           <h2>受診についてご不安なことは、<br>お電話でご相談ください。</h2>
         </div>
         <div class="contact-details">
@@ -529,12 +532,12 @@
             <img class="brand-logo footer-logo" src="assets/clinic-logo-clean.png" width="720" height="240" loading="lazy" alt="林内科医院 ロゴ">
           </picture>
         </a>
-        <address>石川県小松市下牧町ホ102-1<br>TEL 0761-24-6288</address>
+        <address>石川県小松市下牧町ホ102-1<br>電話：0761-24-6288</address>
       </div>
       <div class="footer-links">
         <a href="first-visit.html">初診案内</a>
         <a href="care.html">診療案内</a><a href="tests.html">検査案内</a><a href="vaccines.html">ワクチン</a><a href="checkups.html">健康診断</a><a href="doctor.html">医師紹介</a>
-        <a href="#access">アクセス</a><a href="#news">お知らせ</a><a href="#faq">よくある質問</a><a href="clinic-documents.html">院内掲示物</a><a href="digikar-lab-panel-privacy/">DigiKar Lab Panel プライバシー</a><a href="#recruitment" data-recruitment-footer hidden>スタッフ募集中</a><a href="#top">トップ</a>
+        <a href="#access">アクセス</a><a href="#news">お知らせ</a><a href="#faq">よくある質問</a><a href="clinic-documents.html">院内掲示物</a><a href="privacy.html">個人情報保護方針</a><a href="#recruitment" data-recruitment-footer hidden>スタッフ募集中</a><a href="#top">トップ</a>
       </div>
     </div>
     <div class="container footer-bottom">
@@ -542,7 +545,7 @@
       <p class="footer-copyright">© 2026 林内科医院</p>
     </div>
   </footer>
-  <a class="today-floating" href="#today-status" aria-label="本日の診療と受付時間を確認"><span class="floating-status"><strong id="floating-today-label">本日の診療</strong><small id="floating-today-detail"></small><small id="floating-today-reception-current" hidden></small></span><span class="floating-reception"><span data-reception-heading>受付時間：</span><span data-reception-am>午前 12:00まで</span><span data-reception-pm>午後 18:30まで</span></span></a>
+  <a class="today-floating" href="#today-status" aria-label="本日の診療と受付時間を確認"><span class="floating-status"><strong id="floating-today-label">本日の診療</strong><small id="floating-today-detail"></small><small id="floating-today-reception-current" hidden></small></span><span class="floating-reception"><span data-reception-heading></span><span data-reception-am>午前 9:00–12:00</span><span class="reception-divider" aria-hidden="true">／</span><span data-reception-pm>午後 13:30–18:30</span></span></a>
 
   <div class="mobile-actions" aria-label="クイックメニュー">
     <a href="tel:0761246288"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 2.8 9.4 8l-2 1.8a15 15 0 0 0 6.8 6.8l1.8-2 5.2 2.8-.8 3.8c-.2.8-.9 1.4-1.8 1.4A17.3 17.3 0 0 1 1.4 5.4c0-.9.6-1.6 1.4-1.8l3.8-.8Z"/></svg><span>電話する</span></a>

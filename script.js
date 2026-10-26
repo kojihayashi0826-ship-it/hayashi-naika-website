@@ -1,6 +1,6 @@
 const schedule = ClinicSchedule.regular;
 const nationalHolidays = ClinicSchedule.holidays;
-let managedContentUnavailable = false;
+let managedContentUnavailable = true;
 
 const defaultManagedContent = {
   closures: [],
@@ -66,7 +66,6 @@ const protectedJapanesePhrases = [
   "大学病院",
   "医療機関",
   "かかりつけ医",
-  "分かりやすく",
   "わかりやすく",
   "丁寧に診療",
   "1988年の開業以来",
@@ -231,11 +230,11 @@ function updateTodayStatus() {
       document.querySelectorAll(`[data-reception-${key}]`).forEach(el => { el.textContent = text; });
     }
   };
-  setHours("受付時間：", "午前 12:00まで", "午後 18:30まで");
+  setHours("", "午前 9:00–12:00", "午後 13:30–18:30");
   if (managedContentUnavailable) {
     label.textContent = "診療状況はお電話でご確認ください";
     detail.textContent = "臨時休診情報を取得できません（0761-24-6288）";
-    setHours("通常の受付時間：", "午前 12:00まで", "午後 18:30まで");
+    setHours("通常：", "午前 9:00–12:00", "午後 13:30–18:30");
     syncTodayFloating();
     return;
   }
@@ -245,8 +244,8 @@ function updateTodayStatus() {
   const upcoming = state.sessions.find(([a]) => clock.minute < minutes(a));
   const next = ClinicSchedule.nextOpening(now, specialClosureRanges);
   const nextText = next ? `次の診療は${next.key === clock.key ? "" : ClinicSchedule.pretty(next.key) + " "}${next.time}からです` : "次回診療日はお電話でご確認ください";
-  if (state.closed) setHours("通常の受付時間：", "午前 12:00まで", "午後 18:30まで");
-  else if (state.partial) setHours("本日の受付時間：", state.sessions.some(([a]) => minutes(a) < 720) ? "午前 12:00まで" : "午前 休診", state.sessions.some(([a]) => minutes(a) >= 720) ? "午後 18:30まで" : "午後 休診");
+  if (state.closed) setHours("通常：", "午前 9:00–12:00", "午後 13:30–18:30");
+  else if (state.partial) setHours("本日：", state.sessions.some(([a]) => minutes(a) < 720) ? "午前 9:00–12:00" : "午前 休診", state.sessions.some(([a]) => minutes(a) >= 720) ? "午後 13:30–18:30" : "午後 休診");
   if (state.closed) {
     panel.classList.add("closed"); label.textContent = "本日は休診日です";
     detail.textContent = `${state.reason}。${nextText}`;
@@ -433,9 +432,7 @@ async function loadManagedContent() {
   if (window.location.protocol === "file:") return { ...defaultManagedContent, loadError: true };
 
   try {
-    const response = await fetch("data/site-updates.json?v=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(12000) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const content = await response.json();
+    const content = await ClinicContent.fetchJSON("data/site-updates.json?v=" + Date.now());
     if (!content || !Array.isArray(content.closures) || !Array.isArray(content.news)) throw new Error("更新データの形式が不正です");
     return {
       ...ClinicContent.normalize(content),
@@ -675,14 +672,46 @@ function applyManagedContent(content) {
   updateTodayStatus();
   renderMonthlyCalendar();
 }
+function showStatusUnavailable() {
+  managedContentUnavailable = true;
+  lastContentSignature = "";
+  const text = (selector, value) => document.querySelectorAll(selector).forEach(el => { el.textContent = value; });
+  const badge = document.querySelector(".mobile-clinic-status");
+  if (badge) badge.dataset.state = "unknown";
+  text("[data-mobile-status-label]", "診療状況");
+  text("[data-mobile-status-detail]", "お電話でご確認ください");
+  text("#today-label, #floating-today-label", "診療状況はお電話でご確認ください");
+  text("#today-detail, #floating-today-detail", "0761-24-6288");
+  text("[data-reception-heading]", "通常：");
+  text("[data-reception-am]", "午前 9:00–12:00");
+  text("[data-reception-pm]", "午後 13:30–18:30");
+  document.querySelectorAll("#today-reception-current, #floating-today-reception-current").forEach(el => { el.textContent = ""; el.hidden = true; });
+  // Never leave a previously loaded calendar looking current after a rendering failure.
+  document.querySelectorAll("[data-calendar-grid]").forEach(el => el.replaceChildren());
+  text("[data-calendar-note]", "休診予定はお電話でご確認ください（0761-24-6288）。");
+  document.querySelectorAll("[data-calendar-prev], [data-calendar-next]").forEach(el => { el.disabled = true; });
+}
+
 let refreshingContent = false;
 async function refreshManagedContent() {
   if (refreshingContent) return;
   refreshingContent = true;
+  if (!lastContentSignature) {
+    const badge = document.querySelector(".mobile-clinic-status");
+    if (badge) {
+      badge.dataset.state = "loading";
+      const detail = badge.querySelector("[data-mobile-status-detail]");
+      if (detail) detail.textContent = "確認中";
+    }
+  }
   try { applyManagedContent(await loadManagedContent()); }
+  catch (error) {
+    console.warn("診療状況を表示できませんでした。", error);
+    showStatusUnavailable();
+  }
   finally { refreshingContent = false; }
 }
-// Page animation must not wait for the content request (up to 12 seconds).
+// Page animation must not wait for the content request (up to 8 seconds).
 initPageMotion();
 refreshManagedContent();
 setInterval(updateTodayStatus, 60000);

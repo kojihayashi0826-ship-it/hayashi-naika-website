@@ -1,0 +1,18 @@
+/* Patient navigation and readable fallback messages. */
+@media (min-width: 821px) {
+  .site-header .global-nav {
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    padding-block: 14px;
+  }
+  .site-header .global-nav a { font-size: 13px; line-height: 1.6; }
+  .site-header .global-nav a::after { bottom: -4px; }
+}
+.today-reception [data-reception-heading]:empty,
+.floating-reception [data-reception-heading]:empty { display: none; }
+.floating-reception .reception-divider { display: none; }
+@media (max-width: 820px) {
+  .site-header .mobile-clinic-status[data-state="unknown"] { min-width: 0; }
+  .mobile-clinic-status[data-state="unknown"] small { white-space: normal; }
+}

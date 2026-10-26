@@ -3,7 +3,7 @@
   'use strict';
   const defaultSlide = {id:'original-illustration',src:'assets/clinic-illustration-new-building-v4.webp',alt:'林内科医院の外観イメージ（イラスト）',enabled:true,fit:'cover',x:50,y:50};
   const defaults = {autoplay:true,hold:6,fade:1.2,easing:'ease-in-out',edgeSoftness:3,pauseOnHover:true,slides:[defaultSlide]};
-  const defaultFaqs = [{"id":"faq-1","published":true,"question":"初診はどのように受診すればよいですか？","answer":"通常診療は事前のお申し込み不要です。受付時間内に直接ご来院ください。インフルエンザ・新型コロナワクチンは原則予約不要です。それ以外のワクチン・健康診断は、事前にお電話ください。"},{"id":"faq-2","published":true,"question":"発熱がある場合はどうすればよいですか？","answer":"発熱のある方は来院前にお電話ください。発熱がなければ、咳やのどの痛みだけで事前電話は必要ありません。感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。"},{"id":"faq-3","published":true,"question":"胃カメラ・大腸カメラは受けられますか？","answer":"上部内視鏡検査と下部内視鏡検査に対応しています。検査の必要性、前処置、鎮静薬の使用可否は診察時にご説明します。"},{"id":"faq-4","published":true,"question":"健康診断や予防接種はできますか？","answer":"特定健康診査、後期高齢者健康診査、雇入時・定期健康診断、大腸がん検診（便潜血検査）に対応しています。また、子宮頸がん予防（HPV）、二種混合（DT）、日本脳炎などの小児用ワクチンも事前の電話相談により対応します。種類・対象年齢・在庫状況によってはご用意できない場合があります。"},{"id":"faq-5","published":true,"question":"駐車場はありますか？","answer":"医院前に9台分の駐車場があります。小松空港、小松駅、小松IC方面からお車で来院しやすい立地です。"},{"id":"faq-6","published":true,"question":"受付時間はいつまでですか？","answer":"午前は12時まで、午後は18時30分まで受け付けています。"}];
+  const defaultFaqs = [{"id":"faq-1","published":true,"question":"初診はどのように受診すればよいですか？","answer":"通常診療は事前のお申し込み不要です。受付時間内に直接ご来院ください。インフルエンザ・新型コロナワクチンは原則予約不要です。それ以外のワクチン・健康診断は、事前にお電話ください。"},{"id":"faq-2","published":true,"question":"発熱がある場合はどうすればよいですか？","answer":"発熱のある方は来院前にお電話ください。咳やのどの痛みのみで37.5℃以上の発熱がない場合は、事前のお電話は不要です。感染対策のため、一般診療とは別の時間・場所をご案内する場合があります。"},{"id":"faq-3","published":true,"question":"胃カメラ・大腸カメラは受けられますか？","answer":"上部内視鏡検査と下部内視鏡検査に対応しています。検査の必要性、前処置、鎮静薬の使用可否は診察時にご説明します。"},{"id":"faq-4","published":true,"question":"健康診断や予防接種はできますか？","answer":"特定健康診査、後期高齢者健康診査、雇入時・定期健康診断、大腸がん検診（便潜血検査）に対応しています。また、子宮頸がん予防（HPV）、二種混合（DT）、日本脳炎などの小児用ワクチンも事前の電話相談により対応します。種類・対象年齢・在庫状況によってはご用意できない場合があります。"},{"id":"faq-5","published":true,"question":"駐車場はありますか？","answer":"医院前に9台分の駐車場があります。小松空港、小松駅、小松IC方面からお車で来院しやすい立地です。"},{"id":"faq-6","published":true,"question":"受付時間はいつまでですか？","answer":"午前は12時まで、午後は18時30分まで受け付けています。"}];
   const number = (v,fallback,min,max) => v !== '' && v != null && Number.isFinite(Number(v)) ? Math.min(max,Math.max(min,Number(v))) : fallback;
   const text = v => typeof v === 'string' ? v : '';
   function safeAsset(path) { return typeof path === 'string' && /^assets\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(?:pdf|jpe?g|png|webp)$/i.test(path); }
@@ -206,6 +206,34 @@
     document.addEventListener('visibilitychange',visibility);media.addEventListener('change',motion);desktop.addEventListener('change',motion);show(0);
     return ()=>{disposed=true;request++;cancelPending?.();resizeObserver?.disconnect();window.removeEventListener('resize',resize);frames.forEach(cancelAnimationFrame);frames.clear();resources.forEach(release);active=null;videoToggle.removeEventListener('click',togglePlayback);root.removeEventListener('keydown',keyboard);timers.forEach(clearTimeout);timers.clear();document.removeEventListener('visibilitychange',visibility);media.removeEventListener('change',motion);desktop.removeEventListener('change',motion);root.removeEventListener('pointerdown',pointer);root.removeEventListener('pointerenter',enter);root.removeEventListener('pointerleave',leave);root.removeEventListener('focusin',focus);root.removeEventListener('focusout',blur);};
   }
+  // Bound both the request and JSON body, including browsers without AbortSignal.timeout.
+  function fetchJSON(url, timeout = 8000) {
+    return new Promise((resolve, reject) => {
+      const controller = typeof AbortController === 'function' ? new AbortController() : null;
+      let settled = false;
+      const finish = (callback, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        callback(value);
+      };
+      const timer = setTimeout(() => {
+        finish(reject, new Error('更新データの読み込みがタイムアウトしました'));
+        if (controller) controller.abort();
+      }, timeout);
+      Promise.resolve().then(() => fetch(url, {
+        cache: 'no-store',
+        ...(controller ? { signal: controller.signal } : {})
+      })).then(response => {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      }).then(
+        data => finish(resolve, data),
+        error => finish(reject, error)
+      );
+    });
+  }
+
   function documentList(root,items,{preview=false}={}) {
     root.replaceChildren();const visible=items.filter(d=>d.published && d.title && safeAsset(d.src) && assetURL(d,preview));
     if(!visible.length){const p=document.createElement('p');p.className='documents-empty';p.textContent='現在、掲載中の資料はありません。';root.append(p);return;}
@@ -222,7 +250,7 @@
       article.append(num,body,hint);root.append(article);
     });
   }
-  window.ClinicContent=Object.freeze({defaults,defaultSlide,normalize,safeAsset,imageAsset,videoAsset,slideAsset,assetURL,posterURL,slideshow,documentList,normalizeFaqs,faqHTML,renderFaq,updateFaqHTML});
+  window.ClinicContent=Object.freeze({fetchJSON,defaults,defaultSlide,normalize,safeAsset,imageAsset,videoAsset,slideAsset,assetURL,posterURL,slideshow,documentList,normalizeFaqs,faqHTML,renderFaq,updateFaqHTML});
 })();
 
 

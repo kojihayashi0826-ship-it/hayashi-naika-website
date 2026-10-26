@@ -2,7 +2,7 @@
   "name": "hayashi-clinic-static-site",
   "private": true,
   "scripts": {
-    "test": "node tests/content.test.cjs"
+    "test": "node tests/loading-fallback.test.cjs && node tests/content.test.cjs"
   },
   "devDependencies": {
     "fake-indexeddb": "6.2.4",
