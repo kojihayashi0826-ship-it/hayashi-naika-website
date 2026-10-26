@@ -1,0 +1,147 @@
+/* Approved visit guide: receiving patients above, hours and calendar below.
+   Scope these rules to the homepage so the shared editor calendar is unchanged. */
+.visit-layout > * { min-width: 0; }
+.visit-layout > .walkin-bar { margin: 0; }
+
+@media (min-width: 821px) {
+  .visit-layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 20px;
+  }
+  .visit-layout > .walkin-bar,
+  .visit-layout > .guide-card {
+    height: auto;
+    min-height: 0;
+    padding: 22px 24px;
+    border-radius: var(--design-radius, 12px);
+  }
+  .visit-layout > .walkin-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 18px;
+  }
+  .visit-layout .walkin-copy { display: block; }
+  .visit-layout .walkin-icon,
+  .visit-layout .fever-card > .card-icon { display: none; }
+  .visit-layout .walkin-copy h3,
+  .visit-layout .fever-card h3 {
+    margin: 7px 0 10px;
+    font-size: calc(19px * var(--design-heading, 1));
+    line-height: 1.65;
+  }
+  .visit-layout .walkin-copy p:last-child,
+  .visit-layout .fever-card p:not(.card-label) {
+    font-size: max(13px, calc(13px * var(--design-font, 1)));
+    line-height: 1.95;
+  }
+  .visit-layout > .walkin-bar > .button {
+    margin-top: auto;
+    min-height: 44px;
+    padding: 9px 16px;
+    font-size: max(12px, calc(12px * var(--design-font, 1)));
+  }
+  .visit-layout .fever-card {
+    display: flex;
+    background: #fff8f5;
+    border-color: #ead8d1;
+    --ink: #34473c;
+    --muted: #52645b;
+  }
+  .visit-layout .fever-card > div:last-child {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+  }
+  .visit-layout .fever-card :is(.card-label, h3, a) { color: #934f48; }
+  .visit-layout .fever-card a {
+    margin-top: auto;
+    padding-top: 18px;
+    font-size: calc(22px * var(--design-font, 1));
+  }
+  .visit-layout .fever-card a span { font-size: max(11px, calc(11px * var(--design-font, 1))); }
+  .visit-layout .hours-heading { margin-bottom: 17px; }
+  .visit-layout .hours-heading .card-label {
+    font-family: var(--rounded);
+    font-size: calc(19px * var(--design-heading, 1));
+    font-weight: 700;
+  }
+  .visit-layout .hours-table-wrap { margin: 0; }
+  .visit-layout .hours-table th,
+  .visit-layout .hours-table td { padding: 13px 4px; }
+  .visit-layout .hours-table thead th { padding-top: 4px; padding-bottom: 11px; }
+  .visit-layout .hours-table tbody th { font-size: max(13px, calc(14px * var(--design-font, 1))); }
+  .visit-layout .hours-card .hours-note {
+    margin-top: auto;
+    padding-top: 22px;
+    font-size: max(12px, calc(13px * var(--design-font, 1)));
+    line-height: 1.85;
+    text-align: left;
+  }
+  .visit-layout > .calendar-card { grid-column: auto; padding: 18px 20px; }
+  .visit-layout .monthly-calendar { display: block; }
+  .visit-layout .clinic-calendar .calendar-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+  }
+  .visit-layout .calendar-header .card-label {
+    font-family: var(--rounded);
+    font-size: calc(16px * var(--design-heading, 1));
+    line-height: 1.6;
+    font-weight: 700;
+  }
+  .visit-layout .calendar-header h3 {
+    font-size: calc(18px * var(--design-heading, 1));
+    line-height: 1.65;
+  }
+  .visit-layout .calendar-controls { width: auto; margin: 0; gap: 6px; }
+  .visit-layout .calendar-controls button { min-width: 42px; min-height: 36px; padding: 6px 7px; }
+  .visit-layout .clinic-calendar .calendar-legend {
+    margin: 9px 0 5px;
+    gap: 5px 12px;
+    font-size: max(11px, calc(11px * var(--design-font, 1)));
+  }
+  .visit-layout .clinic-calendar .calendar-grid { margin: 0; }
+  .visit-layout .clinic-calendar .calendar-weekday { min-height: 28px; font-size: 11px; }
+  .visit-layout .clinic-calendar .calendar-grid .calendar-day,
+  .visit-layout .clinic-calendar .calendar-grid .calendar-day:hover {
+    min-height: 36px;
+    padding: 3px 0;
+    justify-content: center;
+  }
+  .visit-layout .clinic-calendar .day-number {
+    width: min(29px, 100%);
+    font-size: max(16px, calc(16px * var(--design-font, 1)));
+  }
+  /* Rings/fills and the legend carry full-day status; accessible labels remain.
+     Keep explicit labels for half-day closures and unavailable schedule data. */
+  .visit-layout .clinic-calendar .day-status { display: none; }
+  .visit-layout .clinic-calendar :is(.is-partial, .is-unknown) .day-status { display: flex; }
+  .visit-layout .clinic-calendar .calendar-grid .calendar-day:is(.is-partial, .is-unknown) { min-height: 55px; }
+  .visit-layout .clinic-calendar .calendar-note {
+    margin: 10px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    font-size: max(11px, calc(11px * var(--design-font, 1)));
+    line-height: 1.85;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1080px) {
+  .visit-layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; }
+  .visit-layout > .walkin-bar, .visit-layout > .guide-card { padding: 20px 17px; }
+  .visit-layout .hours-table th, .visit-layout .hours-table td { min-width: 0; padding-inline: 3px; }
+  .visit-layout .hours-table tbody th { font-size: 12px; white-space: nowrap; }
+  .visit-layout .fever-card a { font-size: calc(20px * var(--design-font, 1)); }
+}
+
+@media (min-width: 821px) and (pointer: coarse) {
+  .visit-layout .calendar-controls button { min-width: 44px; min-height: 44px; }
+}
