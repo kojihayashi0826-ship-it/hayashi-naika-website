@@ -99,6 +99,7 @@ svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: 
 .parking-badge span, .parking-badge strong { display: block; line-height: 1.5; }
 .parking-badge span { color: var(--muted); font-size: 11px; }
 .parking-badge strong { color: var(--ink); font-size: 15px; }
+.parking-badge small { font: inherit; }
 
 .quick-guide { position: relative; z-index: 3; margin-top: -35px; padding-bottom: 35px; }
 .guide-grid { display: grid; grid-template-columns: .85fr 1.15fr; align-items: start; gap: 20px; }
@@ -671,8 +672,10 @@ h1, h2, h3 { font-family: var(--rounded); }
   .hero-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero-actions .button { width: 100%; padding-inline: 10px; }
   .hero-visual img { max-height: 200px; }
-  .parking-badge span { display: none; }
-  .parking-badge svg { width: 24px; }
+  .parking-badge { padding: 7px 11px; }
+  .parking-badge span { display: block; }
+  .parking-badge strong { font-size: 12px; white-space: nowrap; }
+  .parking-badge svg, .parking-badge small { display: none; }
   .walkin-copy h3 { font-size: 16px; }
   .fever-card { grid-template-columns: 36px 1fr; }
   .fever-card .card-icon { width: 36px; height: 36px; }
