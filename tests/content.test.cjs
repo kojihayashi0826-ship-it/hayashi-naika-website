@@ -317,12 +317,16 @@ async function todayStatusTests(){
  at('2026-10-26T08:59:00+09:00');
  assert.equal(text('#today-label'),'本日は診療日です');assert.equal(text('#today-detail'),'次の診療は09:00からです');
  at('2026-10-26T09:00:00+09:00');
- assert.equal(text('#today-label'),'本日は診療しています');assert.equal(text('#today-reception-current'),'午前は12時まで受付');assert.equal(text('#today-detail'),'次の診療は13:30からです');
+ assert.equal(text('#today-label'),'本日は診療しています');assert.equal(text('#today-reception-current'),'午前は12時まで受付');assert.equal(text('#today-detail'),'現在受付中です');
  at('2026-10-26T12:00:00+09:00');
  assert.equal(text('#today-label'),'本日は診療日です');assert.equal(text('#today-detail'),'次の診療は13:30からです');assert.equal(text('#today-reception-current'),'午後は18時30分まで受付');
  at('2026-10-26T13:30:00+09:00');
  assert.equal(text('#today-label'),'本日は診療しています');assert.equal(text('#floating-today-reception-current'),'午後は18時30分まで受付');
- assert.ok(text('#today-detail').includes('10月27日（火） 09:00'));
+ assert.equal(text('#today-detail'),'現在受付中です');assert.equal(text('#floating-today-detail'),'現在受付中です');
+ at('2026-10-27T18:29:59+09:00');
+ assert.equal(text('#today-detail'),'現在受付中です');assert.equal(text('#floating-today-detail'),'現在受付中です');
+ at('2026-10-27T18:30:00+09:00');
+ assert.equal(text('#today-detail'),'次の診療は10月28日（水） 09:00からです');assert.equal(text('#floating-today-detail'),text('#today-detail'));
  at('2026-10-26T18:30:00+09:00');
  assert.equal(text('#floating-today-label'),'本日の診療は終了しました');assert.equal(q('#floating-today-reception-current').hidden,true);
  at('2026-10-29T10:00:00+09:00',published.closures);

@@ -251,7 +251,7 @@ function updateTodayStatus() {
     detail.textContent = `${state.reason}。${nextText}`;
   } else if (active) {
     label.textContent = state.partial ? `診療中（本日は${state.status}）` : "本日は診療しています";
-    detail.textContent = nextText;
+    detail.textContent = "現在受付中です";
   } else if (upcoming) {
     label.textContent = state.partial ? `本日は${state.status}です` : "本日は診療日です";
     detail.textContent = `次の診療は${upcoming[0]}からです`;
