@@ -414,6 +414,9 @@
 .visit-layout > .hours-calendar-pair {
   display: contents;
 }
+.visit-layout .hours-calendar-pair :is(.hours-heading, .hours-table-wrap, .hours-note, .calendar-header, .calendar-grid, .calendar-footer, .calendar-note, .calendar-legend, .seasonal-closures) {
+  grid-column: 1;
+}
 .visit-layout .hours-calendar-pair > .guide-card,
 .visit-layout .hours-calendar-pair > .guide-card:hover {
   height: auto;
@@ -445,6 +448,7 @@
   }
   .visit-layout .hours-calendar-pair > .guide-card {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     grid-row: 1 / span 3;
     grid-template-rows: minmax(44px, auto) minmax(228px, 1fr) auto;
     row-gap: 14px;
