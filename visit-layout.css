@@ -409,3 +409,134 @@
     margin-left: auto;
   }
 }
+
+/* Approved middle option: equal titles and centered tables with moderate spacing. */
+.visit-layout > .hours-calendar-pair {
+  display: contents;
+}
+.visit-layout .hours-calendar-pair > .guide-card,
+.visit-layout .hours-calendar-pair > .guide-card:hover {
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+.visit-layout .hours-heading .card-label,
+.visit-layout .calendar-header .card-label {
+  margin: 0;
+  font-family: var(--rounded);
+  font-size: calc(19px * var(--design-heading, 1));
+  font-weight: 700;
+  line-height: 1.65;
+}
+@media (min-width: 821px) {
+  .visit-layout > .hours-calendar-pair {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: minmax(44px, auto) minmax(228px, auto) auto;
+    gap: 14px 40px;
+    padding-top: 30px;
+  }
+  .visit-layout .hours-calendar-pair > .guide-card {
+    display: grid;
+    grid-row: 1 / span 3;
+    grid-template-rows: minmax(44px, auto) minmax(228px, 1fr) auto;
+    row-gap: 14px;
+  }
+  @supports (grid-template-rows: subgrid) {
+    .visit-layout .hours-calendar-pair > .guide-card {
+      grid-template-rows: subgrid;
+    }
+  }
+  .visit-layout .hours-calendar-pair > .hours-card { grid-column: 1; }
+  .visit-layout .hours-calendar-pair > .calendar-card { grid-column: 2; }
+  .visit-layout .hours-calendar-pair .monthly-calendar { display: contents; }
+  .visit-layout .hours-heading,
+  .visit-layout .clinic-calendar .calendar-header {
+    grid-row: 1;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    min-width: 0;
+  }
+  .visit-layout .clinic-calendar .calendar-header > div:first-child {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 12px;
+    min-width: 0;
+  }
+  .visit-layout .clinic-calendar .calendar-header h3 {
+    margin: 0;
+    font-size: calc(15px * var(--design-heading, 1));
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+  .visit-layout .calendar-header .card-label { white-space: nowrap; }
+  .visit-layout .calendar-controls { flex-shrink: 0; }
+  .visit-layout .hours-table-wrap,
+  .visit-layout .clinic-calendar .calendar-grid {
+    grid-row: 2;
+    align-self: center;
+    min-width: 0;
+    margin: 0;
+  }
+  .visit-layout .hours-table { height: 184px; }
+  .visit-layout .hours-table thead { height: 28px; }
+  .visit-layout .hours-table tbody tr { height: 78px; }
+  .visit-layout .hours-table th,
+  .visit-layout .hours-table td,
+  .visit-layout .hours-table thead th {
+    padding-block: 0;
+    vertical-align: middle;
+  }
+  .visit-layout .clinic-calendar .calendar-grid .calendar-weekday { min-height: 28px; }
+  .visit-layout .clinic-calendar .calendar-grid .calendar-day,
+  .visit-layout .clinic-calendar .calendar-grid .calendar-day:hover {
+    min-height: 40px;
+  }
+  .visit-layout .clinic-calendar .calendar-grid .calendar-day:is(.is-partial, .is-unknown) {
+    min-height: 55px;
+  }
+  .visit-layout .hours-card .hours-note,
+  .visit-layout .calendar-footer {
+    grid-row: 3;
+    align-self: start;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+  .visit-layout .clinic-calendar .calendar-legend { margin: 0 0 9px; }
+  .visit-layout .clinic-calendar .calendar-note {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+@media (min-width: 821px) and (max-width: 1080px) {
+  .visit-layout > .hours-calendar-pair { column-gap: 28px; }
+}
+@media (max-width: 820px) {
+  .visit-layout .hours-calendar-pair > .hours-card {
+    padding: 24px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .visit-layout .hours-calendar-pair > .calendar-card { padding: 24px 0 0; }
+  .visit-layout .hours-calendar-pair .monthly-calendar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .visit-layout .calendar-footer { display: contents; }
+  .visit-layout .clinic-calendar .calendar-header { grid-row: 1; }
+  .visit-layout .clinic-calendar .calendar-legend { grid-row: 2; }
+  .visit-layout .clinic-calendar .calendar-grid { grid-row: 3; }
+  .visit-layout .clinic-calendar .calendar-note { grid-row: 4; }
+  .visit-layout .clinic-calendar .seasonal-closures { grid-row: 5; }
+}

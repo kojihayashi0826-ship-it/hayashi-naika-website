@@ -196,7 +196,7 @@
   <script src="page-navigation.js?v=20261024-5" defer></script>
   <link rel="stylesheet" href="clinic-theme.css?v=20261024-7">
   <link rel="stylesheet" href="clinic-design.css?v=20261026-hero-split1">
-  <link rel="stylesheet" href="visit-layout.css?v=20261027-aligned-actions1">
+  <link rel="stylesheet" href="visit-layout.css?v=20261027-balanced-hours1">
   <link rel="stylesheet" href="today-status.css?v=20261026-logo2">
   <link rel="stylesheet" href="patient-guidance.css?v=20261027-guidance1">
   <link rel="stylesheet" href="site-refine.css?v=20261027-review1">
@@ -344,6 +344,7 @@
           </div>
         </article>
 
+        <div class="hours-calendar-pair">
         <article id="hours" class="guide-card hours-card">
           <div class="hours-heading">
             <div class="card-icon">
@@ -379,15 +380,18 @@
                 <button type="button" data-calendar-next>翌月</button>
               </div>
             </div>
+            <div class="calendar-grid" data-calendar-grid aria-live="polite"></div>
+            <div class="calendar-footer">
             <div class="calendar-legend" aria-label="カレンダーの凡例">
               <span><i class="legend-open"></i>診療日</span>
               <span><i class="legend-closed"></i>休診</span>
               <span><i class="legend-special"></i>臨時休診</span>
             </div>
-            <div class="calendar-grid" data-calendar-grid aria-live="polite"></div>
             <p class="calendar-note" data-calendar-note>休診予定はお電話でご確認ください（0761-24-6288）。</p>
             <div class="seasonal-closures" data-closure-summary hidden></div>
+            </div>
           </div>
+        </div>
         </div>
       </div>
     </section>
