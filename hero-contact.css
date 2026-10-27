@@ -1,0 +1,100 @@
+/* Hero contact layout: a soft pill button, then a rule and stacked contact details. */
+.hero .hero-actions.hero-primary-action {
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: none;
+  margin-top: 28px;
+}
+.hero .hero-primary-action .hero-first-visit {
+  display: inline-flex;
+  flex: 0 1 250px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  width: 250px;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: #eef5f4;
+  color: #405e4e;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.hero .hero-primary-action .hero-first-visit:hover {
+  background: #e3eeeb;
+  color: #405e4e;
+  transform: none;
+}
+.hero .hero-first-visit .hero-action-arrow {
+  flex: 0 0 17px;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+  text-align: right;
+}
+.hero .hero-facts.hero-contact-details {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 23px 0 0;
+  padding: 18px 0 0;
+  border: 0;
+  border-top: 1px solid #dceae2;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.hero .hero-contact-details > div {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+}
+.hero .hero-contact-details > div + div { margin-top: 6px; }
+.hero .hero-contact-details dt {
+  color: var(--theme-heading, #405e4e);
+  font-size: 12px;
+  font-weight: 700;
+}
+.hero .hero-contact-details dd {
+  margin: 0;
+  color: var(--muted, #5b6e64);
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.hero .hero-contact-details .hero-phone {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  color: var(--theme-heading, #405e4e);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .015em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.hero .hero-contact-details .hero-phone:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (max-width: 820px) {
+  .hero .hero-contact-details > div {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+@media (pointer: coarse) {
+  .hero .hero-contact-details .hero-phone { min-height: 44px; }
+}
