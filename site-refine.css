@@ -32,21 +32,24 @@
   .site-header .header-phone small { display: none; }
   .site-header .header-phone strong { font-size: 15px; white-space: nowrap; }
   .site-header .header-phone svg { width: 20px; }
-  .site-header .brand-logo { width: clamp(180px, calc(100vw - 820px), 260px); }
+  .site-header .brand-logo,
+  .site-footer .brand-logo { width: clamp(180px, calc(100vw - 820px), 260px); }
   .site-header .global-nav { gap: 12px; }
   .site-header .global-nav a { font-size: 12.5px; white-space: nowrap; }
 }
 
 /* 821〜999px（タブレット横向きなど）でメニューを1段に */
 @media (min-width: 821px) and (max-width: 999px) {
-  .site-header .brand-logo { width: 168px; }
+  .site-header .brand-logo,
+  .site-footer .brand-logo { width: 168px; }
   .site-header .global-nav { gap: 10px; }
   .site-header .global-nav a { font-size: 12px; white-space: nowrap; }
 }
 
 /* 1201px以上でメニューが2段に折り返さないように */
 @media (min-width: 1201px) {
-  .site-header .brand-logo { width: 280px; }
+  .site-header .brand-logo,
+  .site-footer .brand-logo { width: 280px; }
   .site-header .header-inner,
   .site-header.is-scrolled .header-inner { min-height: 96px; }
   .site-header .global-nav { gap: 16px; }
@@ -103,4 +106,9 @@
 }
 @media print {
   .notice-board { border: 0; padding: 0; }
+}
+
+/* Match the mobile header before the exact rendered size is synchronized. */
+@media (max-width: 820px) {
+  .site-footer .brand-logo { width: 192px; max-width: 100%; }
 }
