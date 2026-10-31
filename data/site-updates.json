@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-31T05:22:38.733Z",
+  "updatedAt": "2026-10-31T05:44:28.682Z",
   "siteStatus": {
     "enabled": false,
     "title": "正式公開前・ウェブサイト調整中",
@@ -181,7 +181,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "7cddb967-d515-4994-811c-63c6532ae2ef",
+  "revision": "8a749505-eba1-4e91-8b97-e44fb31e8416",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
@@ -246,36 +246,26 @@
     "pauseOnHover": false,
     "slides": [
       {
-        "id": "original-illustration",
-        "src": "assets/clinic-illustration-new-building-v4.webp",
-        "alt": "林内科医院の外観イメージ（イラスト）",
+        "id": "slide-1793425432437-b140bfb090bb8",
         "enabled": true,
         "fit": "contain",
         "x": 100,
         "y": 50,
-        "poster": ""
-      },
-      {
-        "id": "slide-1793423744305-3bccfa47e34a9",
-        "enabled": true,
-        "fit": "contain",
-        "x": 100,
-        "y": 50,
-        "alt": "IMG_4034_shadow_corrected",
-        "src": "assets/uploads/ec2b2f0e-64e9-49eb-b594-b92ec716d9fd.jpg",
-        "name": "IMG_4034_shadow_corrected.jpg",
+        "alt": "看板下から(横長)",
+        "src": "assets/uploads/2ac115d3-1dcd-48a1-8efc-be5d412ab868.jpg",
+        "name": "看板下から(横長).jpeg",
         "poster": "",
         "duration": null
       },
       {
-        "id": "slide-1793424129660-394c9ab03ea6e8",
+        "id": "slide-1793425435565-bfd471388c00a8",
         "enabled": true,
         "fit": "contain",
         "x": 100,
         "y": 50,
-        "alt": "明るい林内科医院と駐車場",
-        "src": "assets/uploads/c2cb7ca0-740d-4669-a99e-90e80e96da4c.jpg",
-        "name": "明るい林内科医院と駐車場.png",
+        "alt": "林内科医院の外観と駐車場(横長)-1",
+        "src": "assets/uploads/b88140ee-ca86-402f-8ab6-28c320fd767e.jpg",
+        "name": "林内科医院の外観と駐車場(横長)-1.png",
         "poster": "",
         "duration": null
       },
