@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-31T05:19:20.975Z",
+  "updatedAt": "2026-10-31T05:22:38.733Z",
   "siteStatus": {
     "enabled": false,
     "title": "正式公開前・ウェブサイト調整中",
@@ -181,7 +181,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "f9f83ea7-01ff-4975-ab4b-b468ea7a580b",
+  "revision": "7cddb967-d515-4994-811c-63c6532ae2ef",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
@@ -264,6 +264,18 @@
         "alt": "IMG_4034_shadow_corrected",
         "src": "assets/uploads/ec2b2f0e-64e9-49eb-b594-b92ec716d9fd.jpg",
         "name": "IMG_4034_shadow_corrected.jpg",
+        "poster": "",
+        "duration": null
+      },
+      {
+        "id": "slide-1793424129660-394c9ab03ea6e8",
+        "enabled": true,
+        "fit": "contain",
+        "x": 100,
+        "y": 50,
+        "alt": "明るい林内科医院と駐車場",
+        "src": "assets/uploads/c2cb7ca0-740d-4669-a99e-90e80e96da4c.jpg",
+        "name": "明るい林内科医院と駐車場.png",
         "poster": "",
         "duration": null
       },
