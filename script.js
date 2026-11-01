@@ -363,9 +363,9 @@ function initPageMotion() {
 
   const isPanoramaHome = !!document.querySelector('body.panorama-home');
   const textRevealSelector = [
-    '.hero-title-group', '.hero-lead strong', '.panorama-caption > span',
+    '.hero-title-group', '.hero-lead strong > span', '.panorama-caption > span',
     '.panorama-intro > h2', '.panorama-intro > p', '.section-heading',
-    '.walkin-copy > div', '.fever-card > div:not(.card-icon)',
+    '.walkin-copy h3', '.walkin-copy p', '.fever-card h3', '.fever-card p', '.fever-card .visit-action',
     '.page-link-card h3', '.page-link-more', '.access-info',
     '.news-content', '.faq-list summary', '.faq-list details > p',
     '.contact-inner h2', '.contact-details'
@@ -388,28 +388,31 @@ function initPageMotion() {
   ].join(",");
   const revealTargets = document.querySelectorAll(revealSelector);
 
-  // CSS selects full motion, gentle desktop fades or static mobile content.
-  // Keep observers active so preference changes and re-entry work immediately.
+  // Enter after the text clears the bottom controls, not at the viewport edge.
+  // A separate full-viewport observer re-arms only after the entire group leaves.
   if (!("IntersectionObserver" in window)) {
     revealTargets.forEach((target) => target.classList.add("is-visible"));
   } else {
     document.documentElement.classList.add("motion-ready");
     const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        // Re-arm only after the whole element has left the viewport.
-        // Expanded FAQ answers stay readable while any part is still visible.
-        entry.target.classList.toggle("is-visible", entry.isIntersecting);
+        if (!isPanoramaHome) entry.target.classList.toggle("is-visible", entry.isIntersecting);
+        else if (entry.isIntersecting && entry.intersectionRatio >= .12) entry.target.classList.add("is-visible");
       });
-    }, { threshold: 0, rootMargin: "0px" });
+    }, isPanoramaHome ? { threshold: [0, .12], rootMargin: "0px 0px -96px 0px" } : { threshold: 0, rootMargin: "0px" });
+
+    const resetObserver = isPanoramaHome ? new IntersectionObserver(entries => {
+      entries.forEach(entry => { if (!entry.isIntersecting) entry.target.classList.remove('is-visible'); });
+    }, { threshold: 0, rootMargin: '0px' }) : null;
 
     const observed = new Set();
     refreshPageMotion = () => {
-      observed.forEach(target => { if (!target.isConnected) { revealObserver.unobserve(target); observed.delete(target); } });
+      observed.forEach(target => { if (!target.isConnected) { revealObserver.unobserve(target); resetObserver?.unobserve(target); observed.delete(target); } });
       document.querySelectorAll(revealSelector).forEach((target, index) => {
         if (observed.has(target)) return;
         target.classList.add("reveal");
-        target.style.setProperty("--reveal-delay", `${(index % 3) * 70}ms`);
-        revealObserver.observe(target); observed.add(target);
+        target.style.setProperty("--reveal-delay", `${(index % 3) * (isPanoramaHome ? 140 : 70)}ms`);
+        revealObserver.observe(target); resetObserver?.observe(target); observed.add(target);
       });
     };
     refreshPageMotion();

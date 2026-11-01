@@ -237,20 +237,27 @@ async function publicTests(){
 
 async function repeatMotionTests(){
  const t=setup('index.html'),w=t.w;await sleep(70);
- const target=w.document.querySelector('.walkin-copy > div');
- const observer=w.qaObservers.find(o=>o.targets.has(target));assert.ok(observer);
+ const target=w.document.querySelector('.walkin-copy h3');
+ const observer=w.qaObservers.find(o=>o.targets.has(target) && Array.isArray(o.options.threshold));assert.ok(observer);
+ const reset=w.qaObservers.find(o=>o.targets.has(target) && o.options.rootMargin==='0px');assert.ok(reset);
  for(let i=0;i<3;i++){
-  observer.callback([{target,isIntersecting:true,intersectionRatio:.01}],observer);assert.equal(target.classList.contains('is-visible'),true);assert.ok(observer.targets.has(target));
-  observer.callback([{target,isIntersecting:false,intersectionRatio:0}],observer);assert.equal(target.classList.contains('is-visible'),false);
+  observer.callback([{target,isIntersecting:true,intersectionRatio:.01}],observer);assert.equal(target.classList.contains('is-visible'),false,'wait until the text is inside the reading area');
+  observer.callback([{target,isIntersecting:true,intersectionRatio:.2}],observer);assert.equal(target.classList.contains('is-visible'),true);assert.ok(observer.targets.has(target));
+  observer.callback([{target,isIntersecting:false,intersectionRatio:0}],observer);assert.equal(target.classList.contains('is-visible'),true,'keep visible at the padded boundary');
+  reset.callback([{target,isIntersecting:true,intersectionRatio:.01}],reset);assert.equal(target.classList.contains('is-visible'),true,'partial text remains readable');
+  reset.callback([{target,isIntersecting:false,intersectionRatio:0}],reset);assert.equal(target.classList.contains('is-visible'),false);
  }
- const hero=w.document.querySelector('.hero-title-group');const entrance=w.qaObservers.find(o=>o.targets.has(hero));
- entrance.callback([{target:hero,isIntersecting:false}]);assert.equal(hero.classList.contains('is-visible'),false);
- entrance.callback([{target:hero,isIntersecting:true}]);assert.equal(hero.classList.contains('is-visible'),true);
+ const hero=w.document.querySelector('.hero-title-group');
+ reset.callback([{target:hero,isIntersecting:false}]);assert.equal(hero.classList.contains('is-visible'),false);
+ observer.callback([{target:hero,isIntersecting:true,intersectionRatio:1}]);assert.equal(hero.classList.contains('is-visible'),true);
  assert.equal(w.document.querySelector('.hero-visual').classList.contains('reveal'),false);
  assert.equal(w.document.querySelector('.guide-card').classList.contains('reveal'),false);
- assert.match(w.document.querySelector('.contact-fax').textContent,/0761-24-6645/);
+ for(const block of ['.header-contact-group','.contact-details','.footer-contact-numbers']){
+  const rows=w.document.querySelector(block).querySelectorAll('.contact-number-row');assert.equal(rows.length,2);
+  assert.deepEqual(Array.from(rows,r=>r.querySelector('.contact-number').textContent),['0761-24-6288','0761-24-6645']);
+ }
  assert.equal(t.errors.length,0);t.dom.window.close();
- console.log('PASS repeat motion: repeated entries/exits, partial visibility, retained observation, static photo/cards and hero text re-entry');
+ console.log('PASS repeat motion: readable entry threshold, stable partial visibility, re-entry, static photo/cards and aligned contact markup');
 }
 
 async function themeTests(){

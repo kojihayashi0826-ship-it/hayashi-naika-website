@@ -2,9 +2,14 @@
 html:has(body.panorama-home) { color-scheme: only light; }
 body.panorama-home { -webkit-text-fill-color: currentColor; }
 body.panorama-home .header-contact-group { flex:0 0 auto; color:var(--green-dark,#3e5749); }
-body.panorama-home .header-contact-group .header-phone { border-left:0; padding-left:0; }
-body.panorama-home .header-fax { display:block; margin-top:2px; text-align:right; font-size:12px; line-height:1.7; color:var(--muted,#52645b); white-space:nowrap; }
-body.panorama-home .contact-fax { font-size:16px; color:var(--ink,#293b34); }
+body.panorama-home .contact-number-row { display:grid; grid-template-columns:2.5em max-content; align-items:baseline; column-gap:.65em; width:max-content; margin:0; padding:0; border:0; color:var(--green-dark,#3e5749); font-size:inherit; font-weight:500; line-height:1.75; text-align:left; text-decoration:none; white-space:nowrap; }
+body.panorama-home .contact-number { font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; letter-spacing:0; }
+body.panorama-home .contact-heading { display:block; margin:0 0 4px; color:var(--muted,#52645b); font-size:12px; line-height:1.7; }
+body.panorama-home .header-contact-group { font-size:14px; }
+body.panorama-home .header-contact-group .header-phone { min-height:0; }
+body.panorama-home .contact-details .contact-number-row { font-size:26px; }
+body.panorama-home .contact-details .contact-fax { margin:0; }
+body.panorama-home .footer-contact-numbers { display:inline-grid; margin-top:6px; font-size:14px; }
 .panorama-caption, .panorama-cue, .panorama-intro { display:none; }
 html[data-hero-layout="panorama"] #top.hero { padding:0; background:var(--theme-page,#fff); color:var(--ink,#293b34); }
 html[data-hero-layout="panorama"] #top > .container { width:100%; max-width:none; }
@@ -20,7 +25,7 @@ html[data-hero-layout="panorama"] #top .hero-lead { margin:0; max-width:none; co
 html[data-hero-layout="panorama"] #top .hero-lead strong { display:block; color:var(--green-dark,#3e5749); font-family:var(--rounded); font-size:calc(21px * var(--design-heading,1)); font-weight:700; line-height:1.85; letter-spacing:normal; }
 html[data-hero-layout="panorama"] #top .hero-lead strong > span { display:block; }
 html[data-hero-layout="panorama"] #top :is(.hero-description,.hero-actions,.hero-facts) { display:none; }
-html[data-hero-layout="panorama"] #top .hero-visual { position:relative; inset:auto; width:100%; max-width:none; height:clamp(320px,40vw,500px); aspect-ratio:auto; margin:0; padding:0; overflow:hidden; background:var(--theme-page,#fff); border:0; border-radius:0; box-shadow:none; }
+html[data-hero-layout="panorama"] #top .hero-visual { position:relative; inset:auto; width:100%; max-width:none; height:clamp(360px,47vw,700px); aspect-ratio:auto; margin:0; padding:0; overflow:hidden; background:var(--theme-page,#fff); border:0; border-radius:0; box-shadow:none; }
 html[data-hero-layout="panorama"] #top .clinic-slideshow,
 html[data-hero-layout="panorama"] #top .slideshow-stage { width:100%; height:100%; aspect-ratio:auto; border:0; border-radius:0; box-shadow:none; background:var(--theme-page,#fff); }
 html[data-hero-layout="panorama"] #top .slideshow-image { max-height:none; mix-blend-mode:normal; animation:none!important; transform:none!important; }
@@ -33,7 +38,7 @@ html[data-hero-layout="panorama"] .panorama-intro { display:flex; justify-conten
 .panorama-intro p { margin:0; color:var(--muted,#52645b); font-size:14px; line-height:1.9; }
 /* Re-entry animates only short text groups; photographs and cards remain still. */
 body.panorama-home .hero-copy > *, body.panorama-home .today-panel { animation:none!important; }
-html.motion-ready body.panorama-home .reveal { opacity:0!important; transform:translate3d(0,20px,0)!important; transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1)!important; transition-delay:0ms!important; }
+html.motion-ready body.panorama-home .reveal { opacity:0!important; transform:translate3d(0,52px,0)!important; transition:opacity 1.05s cubic-bezier(.2,.65,.25,1),transform 1.05s cubic-bezier(.2,.65,.25,1)!important; transition-delay:0ms!important; }
 html.motion-ready body.panorama-home .reveal.is-visible,
 html.motion-ready body.panorama-home .reveal:focus-within { opacity:1!important; transform:none!important; transition-delay:var(--reveal-delay,0ms)!important; }
 @media(max-width:1200px) { body.panorama-home .header-contact-group { display:none; } }
@@ -42,18 +47,20 @@ html.motion-ready body.panorama-home .reveal:focus-within { opacity:1!important;
  html[data-hero-layout="panorama"] #top h1 { font-size:calc(clamp(33px,9.5vw,37px) * var(--design-heading,1)); }
  html[data-hero-layout="panorama"] #top .hero-lead { margin-top:17px; }
  html[data-hero-layout="panorama"] #top .hero-lead strong { font-size:calc(17px * var(--design-heading,1)); }
- html[data-hero-layout="panorama"] #top .hero-visual { height:auto; aspect-ratio:16/10; }
- html[data-hero-layout="panorama"] #top .slideshow-stage { height:auto; aspect-ratio:16/10; }
+ html[data-hero-layout="panorama"] #top .hero-visual { height:auto; aspect-ratio:16/9; }
+ html[data-hero-layout="panorama"] #top .slideshow-stage { height:auto; aspect-ratio:16/9; }
  html[data-hero-layout="panorama"] #top .panorama-caption { padding:12px 6% 0; gap:12px; font-size:11px; }
  html[data-hero-layout="panorama"] #top .panorama-cue { padding:13px 6% 22px; }
  html[data-hero-layout="panorama"] .panorama-intro { display:block; margin-bottom:21px; }
  .panorama-intro h2 { font-size:25px; }
  .panorama-intro p { margin-top:12px; }
- html.motion-ready body.panorama-home .reveal { transform:translate3d(0,14px,0)!important; }
+ body.panorama-home .contact-details .contact-number-row { font-size:22px; }
+ html.motion-ready body.panorama-home .reveal { transform:translate3d(0,36px,0)!important; }
  html.motion-ready body.panorama-home .reveal.is-visible { transform:none!important; }
 }
 @media(prefers-reduced-motion:reduce) {
- html.motion-ready body.panorama-home .reveal { opacity:1!important; transform:none!important; transition:none!important; }
+ /* Keep a visible, non-spatial fade when the visitor reduces motion. */
+ html.motion-ready body.panorama-home .reveal { transform:none!important; transition:opacity .8s ease!important; }
 }
 @media print {
  html.motion-ready body.panorama-home .reveal { opacity:1!important; transform:none!important; }
