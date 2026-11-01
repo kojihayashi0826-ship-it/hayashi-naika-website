@@ -1,6 +1,6 @@
 /* Approved panorama: original typography and palette, text outside the photo. */
 html:has(body.panorama-home) { color-scheme: only light; }
-body.panorama-home { -webkit-text-fill-color: currentColor; }
+body.panorama-home { -webkit-text-fill-color: currentColor; overflow-x:clip; }
 body.panorama-home .header-contact-group { flex:0 0 auto; color:var(--green-dark,#3e5749); }
 body.panorama-home .contact-number-row { display:grid; grid-template-columns:2.5em max-content; align-items:baseline; column-gap:.65em; width:max-content; margin:0; padding:0; border:0; color:var(--green-dark,#3e5749); font-size:inherit; font-weight:500; line-height:1.75; text-align:left; text-decoration:none; white-space:nowrap; }
 body.panorama-home .contact-number { font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; letter-spacing:0; }
@@ -36,7 +36,7 @@ html[data-hero-layout="panorama"] .panorama-intro { display:flex; justify-conten
 .panorama-intro p { margin:0; color:var(--muted,#52645b); font-size:14px; line-height:1.9; }
 /* Re-entry animates only short text groups; photographs and cards remain still. */
 body.panorama-home .hero-copy > *, body.panorama-home .today-panel { animation:none!important; }
-html.motion-ready body.panorama-home .reveal { opacity:0!important; transform:translate3d(-24px,0,0)!important; transition:opacity .52s cubic-bezier(.22,.61,.36,1),transform .52s cubic-bezier(.22,.61,.36,1)!important; transition-delay:0ms!important; }
+html.motion-ready body.panorama-home .reveal { opacity:0!important; transform:translate3d(var(--text-motion-x,-24px),var(--text-motion-y,0px),0)!important; transition:opacity var(--text-motion-duration,520ms) cubic-bezier(.22,.61,.36,1),transform var(--text-motion-duration,520ms) cubic-bezier(.22,.61,.36,1)!important; transition-delay:0ms!important; }
 html.motion-ready body.panorama-home .reveal.is-visible,
 html.motion-ready body.panorama-home .reveal:focus-within { opacity:1!important; transform:none!important; transition-delay:var(--reveal-delay,0ms)!important; }
 @media(max-width:1200px) { body.panorama-home .header-contact-group { display:none; } }
@@ -52,13 +52,14 @@ html.motion-ready body.panorama-home .reveal:focus-within { opacity:1!important;
  .panorama-intro h2 { font-size:25px; }
  .panorama-intro p { margin-top:12px; }
  body.panorama-home .contact-details .contact-number-row { font-size:22px; }
- html.motion-ready body.panorama-home .reveal { transform:translate3d(-18px,0,0)!important; }
+ html.motion-ready body.panorama-home .reveal { transform:translate3d(var(--text-motion-mobile-x,-18px),var(--text-motion-mobile-y,0px),0)!important; }
  html.motion-ready body.panorama-home .reveal.is-visible { transform:none!important; }
 }
 @media(prefers-reduced-motion:reduce) {
  /* Keep a visible, non-spatial fade when the visitor reduces motion. */
- html.motion-ready body.panorama-home .reveal { transform:none!important; transition:opacity .4s ease!important; }
+ html.motion-ready body.panorama-home .reveal { transform:none!important; transition:opacity var(--text-motion-reduced-duration,400ms) ease!important; }
 }
+html.motion-ready[data-motion-enabled="false"] body.panorama-home .reveal { opacity:1!important; transform:none!important; transition:none!important; }
 @media print {
  html.motion-ready body.panorama-home .reveal { opacity:1!important; transform:none!important; }
 }

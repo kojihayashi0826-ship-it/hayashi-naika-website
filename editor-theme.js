@@ -97,7 +97,7 @@
   controls.addEventListener('input',()=>{collect();refresh();markDirty();});
   [accent,tint].forEach(input=>input.addEventListener('input',()=>{collect();renderColors();refresh();markDirty();}));
   q('[data-theme-reset]').addEventListener('click',()=>{collect();data.theme=ClinicTheme.normalize(null);render();markDirty();});
-  q('[data-design-reset]').addEventListener('click',()=>{collect();data.design=ClinicDesign.normalize(null);render();markDirty();q('[data-design-message]').textContent='配置・大きさを標準に戻しました。';});
+  q('[data-design-reset]').addEventListener('click',()=>{collect();data.design=ClinicDesign.normalize({motion:data.design.motion});render();markDirty();q('[data-design-message]').textContent='配置・大きさを標準に戻しました。';});
   window.ClinicEditorTheme={render,collect,preview,getDesign:()=>ClinicDesign.normalize(data.design),setDesign:(value,commit=true)=>{
     data.design=ClinicDesign.normalize(value);
     document.querySelectorAll('[data-design-field]').forEach(input=>input.value=String(data.design[input.dataset.designField]));

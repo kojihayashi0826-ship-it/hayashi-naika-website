@@ -51,7 +51,7 @@ function setup(name='site-editor.html',options={}){
   throw Error('Unexpected request: '+url);
  };
  let scripts;
- if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','editor-content.js','editor-theme.js','editor-canvas.js','site-editor.js','editor-drafts.js','github-publisher.js'];
+ if(name==='site-editor.html')scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','editor-content.js','editor-theme.js','editor-motion.js','editor-canvas.js','site-editor.js','editor-drafts.js','github-publisher.js'];
  else if(['index.html','care.html','tests.html','doctor.html','first-visit.html','vaccines.html','checkups.html'].includes(name))scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','content-public.js','script.js'];
  else scripts=['clinic-theme.js','clinic-design.js','clinic-content.js','clinic-documents.js'];
  const expose=name==='site-editor.html'?`\nwindow.qa={get:()=>JSON.parse(JSON.stringify(data)),set:v=>{data=safeData(v);render();},prepare:()=>JSON.parse(preparedJson()),validate:()=>{collect();return validate();},dirty:()=>dirty,mark:markDirty};`:'';
@@ -233,6 +233,37 @@ async function publicTests(){
  const singleFixture=structuredClone(fixture);singleFixture.hero.slides=singleFixture.hero.slides.slice(0,1);const single=setup('index.html',{source:singleFixture});await sleep(35);assert.equal(single.w.document.querySelector('.slideshow-controls').hidden,true);assert.equal(single.w.document.querySelector('.clinic-slideshow').tabIndex,-1);single.dom.window.close();
  const board=setup('clinic-documents.html',{source:fixture});await sleep(20);assert.equal(board.w.document.querySelectorAll('.document-card').length,1);assert.equal(board.w.document.querySelector('.document-card a').textContent,'施設基準');assert.equal(board.errors.length,0);board.dom.window.close();
  console.log('PASS public: two notices, safe text, popup, slideshow auto/manual/pause/reduced-motion, document list and hidden documents');
+}
+
+async function motionEditorTests(){
+ const t=setup(),w=t.w;await w.editorReady;const q=s=>w.document.querySelector(s);
+ const plain=v=>JSON.parse(JSON.stringify(v));const initial=plain(w.qa.prepare());assert.deepEqual(initial.design.motion,{enabled:true,duration:520,distance:24,direction:'left',stagger:70,repeat:true});
+ const bad=w.ClinicDesign.normalizeMotion({duration:Infinity,distance:-20,direction:'url(x)',stagger:500,enabled:'false',repeat:0});
+ assert.deepEqual(JSON.parse(JSON.stringify(bad)),{enabled:true,duration:520,distance:0,direction:'left',stagger:200,repeat:true});
+ q('[data-tab="design"]').click();
+ field(w,'[data-motion-field="duration"]','340');field(w,'[data-motion-field="distance"]','32');
+ field(w,'[data-motion-field="direction"]','right');field(w,'[data-motion-field="stagger"]','100');field(w,'[data-motion-field="repeat"]',false);
+ const edited=plain(w.qa.prepare());assert.deepEqual(edited.design.motion,{enabled:true,duration:340,distance:32,direction:'right',stagger:100,repeat:false});
+ assert.equal(q('[data-motion-sample]').style.getPropertyValue('--text-motion-x'),'32px');assert.equal(q('[data-motion-output="duration"]').textContent,'0.34秒');
+ assert.deepEqual(edited.hero,initial.hero,'Text settings must not change slideshow settings');
+ w.qa.set(edited);assert.deepEqual(plain(w.qa.prepare().design.motion),edited.design.motion);
+ await sleep(550);assert.deepEqual(JSON.parse(JSON.stringify((await w.ClinicDrafts.read()).data.design.motion)),edited.design.motion);
+ q('[data-motion-open]').click();assert.equal(q('[data-motion-dialog]').open,true);assert.equal(q('[data-motion-frame]').getAttribute('src'),'index.html?motion-preview=1');
+ q('[data-motion-width="mobile"]').click();assert.equal(q('[data-motion-width="mobile"]').getAttribute('aria-pressed'),'true');
+ q('[data-motion-close]').click();assert.equal(q('[data-motion-dialog]').open,false);assert.equal(q('[data-motion-frame]').hasAttribute('src'),false);
+ q('[data-design-reset]').click();assert.deepEqual(plain(w.qa.prepare().design.motion),edited.design.motion,'Layout reset preserves text motion');
+ await connect(t);await w.ClinicPublisher.publish();assert.deepEqual(t.getRemote().design.motion,edited.design.motion);
+ const page=setup('index.html',{source:t.getRemote()}),pw=page.w;await sleep(50);
+ const root=pw.document.documentElement;assert.equal(root.style.getPropertyValue('--text-motion-duration'),'340ms');assert.equal(root.style.getPropertyValue('--text-motion-x'),'32px');assert.equal(root.style.getPropertyValue('--text-motion-mobile-x'),'24px');assert.equal(root.style.getPropertyValue('--text-motion-stagger'),'100ms');
+ const target=pw.document.querySelector('.walkin-copy h3'),enter=pw.qaObservers.find(o=>o.targets.has(target)&&Array.isArray(o.options.threshold)),reset=pw.qaObservers.find(o=>o.targets.has(target)&&o.options.rootMargin==='0px');
+ enter.callback([{target,isIntersecting:true,intersectionRatio:1}]);reset.callback([{target,isIntersecting:false}]);assert.equal(target.classList.contains('is-visible'),true,'Once-only mode does not hide entered text');
+ pw.ClinicDesign.apply({...t.getRemote().design,motion:{...edited.design.motion,repeat:true,direction:'bottom'}},t.getRemote().theme);
+ reset.callback([{target,isIntersecting:false}]);assert.equal(target.classList.contains('is-visible'),false);assert.equal(root.style.getPropertyValue('--text-motion-y'),'32px');
+ field(w,'[data-motion-field="enabled"]',false);assert.equal(q('[data-motion-field="duration"]').disabled,true);assert.equal(q('[data-motion-sample]').dataset.motionEnabled,'false');
+ await w.ClinicPublisher.publish();assert.equal(t.getRemote().design.motion.enabled,false);pw.applyManagedContent(t.getRemote());assert.equal(root.dataset.motionEnabled,'false');
+ q('[data-motion-reset]').click();assert.deepEqual(plain(w.qa.prepare().design.motion),initial.design.motion);assert.equal(q('[data-motion-field="duration"]').disabled,false);
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));assert.equal(page.errors.length,0,JSON.stringify(page.errors));await sleep(50);t.dom.window.close();page.dom.window.close();
+ console.log('PASS motion editor: legacy defaults, validation, sample, full-page preview, independent reset, draft/backup/publish, live settings and repeat/off modes');
 }
 
 async function repeatMotionTests(){
@@ -600,4 +631,4 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await noticeSyncTests();await publicationReliabilityTests();await editorReadRaceTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await noticeLoadingTests();await publicTests();await repeatMotionTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+(async()=>{seoTests();await noticeSyncTests();await publicationReliabilityTests();await editorReadRaceTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await noticeLoadingTests();await publicTests();await repeatMotionTests();await motionEditorTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});

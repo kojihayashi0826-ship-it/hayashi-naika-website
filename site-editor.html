@@ -16,11 +16,13 @@
   <link rel="stylesheet" href="clinic-content.css?v=20261027-desktop-motion2">
   <link rel="stylesheet" href="editor-content.css?v=20261027-motion1">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
-  <script src="clinic-design.js?v=20261101-panorama1" defer></script>
+  <script src="clinic-design.js?v=20261101-motion-editor1" defer></script>
   <script src="clinic-content.js?v=20261101-publish2" defer></script>
   <script src="editor-content.js?v=20261101-hero-loading1" defer></script>
   <link rel="stylesheet" href="editor-theme.css?v=20261024-gui1">
-  <script src="editor-theme.js?v=20261101-panorama1" defer></script>
+  <script src="editor-theme.js?v=20261101-motion-editor1" defer></script>
+  <link rel="stylesheet" href="editor-motion.css?v=20261101-motion-editor1">
+  <script src="editor-motion.js?v=20261101-motion-editor1" defer></script>
   <link rel="stylesheet" href="editor-canvas.css?v=20261024-gui1">
   <script src="editor-canvas.js?v=20261101-panorama1" defer></script>
   <script src="site-editor.js?v=20261101-publish2" defer></script>
@@ -181,6 +183,27 @@
       </div>
       <p class="field-help" data-media-status role="status" aria-live="polite"></p>
       <div class="editor-panel" data-panel="design" hidden>
+        <section class="editor-card" aria-labelledby="motion-heading">
+          <div class="card-heading"><div><p>ANIMATION</p><h2 id="motion-heading">文字アニメーション</h2></div><button type="button" class="secondary compact" data-motion-reset>おすすめに戻す</button></div>
+          <p class="field-help">トップページの文字が、画面に入るときの動きです。見本を見ながら調整し、最後に「公開する」で反映します。</p>
+          <div class="motion-editor-grid">
+            <div class="motion-settings" data-motion-settings>
+              <label class="inline-check"><input type="checkbox" data-motion-field="enabled">文字アニメーションを使う</label>
+              <label>表示までの時間 <output data-motion-output="duration"></output><input type="range" min="150" max="1500" step="10" data-motion-field="duration" aria-label="表示までの時間"><span class="theme-range-labels"><span>すばやく</span><span>ゆっくり</span></span></label>
+              <label>動く距離 <output data-motion-output="distance"></output><input type="range" min="0" max="80" step="1" data-motion-field="distance" aria-label="動く距離"><span class="theme-range-labels"><span>控えめ</span><span>大きく</span></span></label>
+              <label>文字が入る方向<select data-motion-field="direction"><option value="left">左から</option><option value="right">右から</option><option value="bottom">下から</option><option value="fade">移動せずフェードのみ</option></select></label>
+              <label>文字ごとの時間差 <output data-motion-output="stagger"></output><input type="range" min="0" max="200" step="10" data-motion-field="stagger" aria-label="文字ごとの時間差"><span class="theme-range-labels"><span>同時に</span><span>順番に</span></span></label>
+              <label class="inline-check"><input type="checkbox" data-motion-field="repeat">画面に戻るたびに再生する</label>
+            </div>
+            <div>
+              <div class="motion-sample is-playing" data-motion-sample aria-label="文字の動きの見本"><strong data-motion-line>受診のご案内</strong><p data-motion-line>気軽に相談できる場所。</p></div>
+              <div class="motion-preview-actions"><button type="button" class="secondary compact" data-motion-replay>もう一度再生</button><button type="button" class="secondary compact" data-motion-open>ページ全体で確認</button></div>
+              <p class="theme-summary" data-motion-summary role="status" aria-live="polite"></p>
+              <p class="field-help">おすすめは0.52秒・左から24px。スマホでは移動距離が少し短くなります。写真の切り替えは「トップ画像・動画」の設定で調整できます。</p>
+              <p class="field-help">端末で「動きを減らす」を設定している場合は、移動せずフェードのみになります。</p>
+            </div>
+          </div>
+        </section>
         <section class="editor-card visual-editor">
           <div class="card-heading"><div><p>VISUAL EDITOR · 未公開</p><h2>ページを直接触って編集</h2></div><div class="design-preview-switch" role="group" aria-label="プレビューの画面幅"><button type="button" class="secondary compact" data-design-width="desktop" aria-pressed="true">PC</button><button type="button" class="secondary compact" data-design-width="mobile" aria-pressed="false">スマホ</button></div></div>
           <p class="field-help">項目を選び、<strong>⠿ をドラッグして移動</strong>。ページ内の青い<strong>↔・↕・↘ を引っ張ってサイズ変更</strong>。スマホではつまみを指で動かせます。</p>
@@ -230,6 +253,11 @@
     <details class="backup-tools"><summary>バックアップ・復元</summary><div class="backup-actions"><button type="button" class="secondary" data-download-json disabled>バックアップJSONを保存</button><label class="file-button">JSONから編集内容を復元<input type="file" accept="application/json,.json" data-file-input></label><button type="button" class="secondary" data-restore-previous disabled>1回前の公開内容を読み込む</button><button type="button" class="secondary" data-save-folder disabled>ローカルフォルダへ保存</button></div><p>復元・ローカル保存だけでは公開サイトは変わりません。内容を確認後、「公開する」を押してください。</p></details>
     <p class="editor-footer">医院用の端末でご利用ください。文章・写真・動画・院内掲示物をまとめて公開します。<a href="START_HERE.html" target="_blank" rel="noopener noreferrer">操作ガイド</a></p>
   </main>
+  <dialog class="motion-dialog" data-motion-dialog aria-labelledby="motion-preview-heading">
+    <div class="card-heading"><h2 id="motion-preview-heading">文字アニメーションの確認 · 未公開</h2><div class="design-preview-switch" role="group" aria-label="動きの確認画面幅"><button type="button" class="secondary compact" data-motion-width="desktop" aria-pressed="true">PC</button><button type="button" class="secondary compact" data-motion-width="mobile" aria-pressed="false">スマホ</button></div><button type="button" class="secondary compact" data-motion-close>閉じる</button></div>
+    <p class="field-help">ページ内を上下に動かしてご確認ください。文字の動き・配色・配置に編集中の設定を使います。写真・文章は現在公開中の内容です。</p>
+    <div class="motion-frame-wrap" data-motion-frame-wrap><iframe data-motion-frame title="文字アニメーションのページプレビュー" sandbox="allow-scripts allow-same-origin" referrerpolicy="same-origin"></iframe></div>
+  </dialog>
   <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章・写真・動画の動作・資料・休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
 </body>
 </html>

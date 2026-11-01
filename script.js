@@ -402,7 +402,7 @@ function initPageMotion() {
     }, isPanoramaHome ? { threshold: [0, .12], rootMargin: "0px 0px -96px 0px" } : { threshold: 0, rootMargin: "0px" });
 
     const resetObserver = isPanoramaHome ? new IntersectionObserver(entries => {
-      entries.forEach(entry => { if (!entry.isIntersecting) entry.target.classList.remove('is-visible'); });
+      entries.forEach(entry => { if (!entry.isIntersecting && document.documentElement.dataset.motionRepeat !== 'false') entry.target.classList.remove('is-visible'); });
     }, { threshold: 0, rootMargin: '0px' }) : null;
 
     const observed = new Set();
@@ -411,7 +411,7 @@ function initPageMotion() {
       document.querySelectorAll(revealSelector).forEach((target, index) => {
         if (observed.has(target)) return;
         target.classList.add("reveal");
-        target.style.setProperty("--reveal-delay", `${(index % 3) * 70}ms`);
+        target.style.setProperty("--reveal-delay", isPanoramaHome ? `calc(var(--text-motion-stagger,70ms) * ${index % 3})` : `${(index % 3) * 70}ms`);
         revealObserver.observe(target); resetObserver?.observe(target); observed.add(target);
       });
     };

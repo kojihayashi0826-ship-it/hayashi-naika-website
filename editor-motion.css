@@ -1,0 +1,25 @@
+.motion-editor-grid { display:grid; grid-template-columns:1.1fr 1fr; gap:28px; align-items:start; }
+.motion-settings { display:grid; gap:18px; }
+.motion-settings input[type="range"] { padding:0; accent-color:#315d49; }
+.motion-settings output { color:#315d49; font-variant-numeric:tabular-nums; }
+.motion-settings .inline-check { display:flex; gap:10px; align-items:center; font-size:14px; }
+.motion-settings .inline-check input { width:18px; height:18px; flex-shrink:0; }
+.motion-settings input:disabled, .motion-settings select:disabled { opacity:.45; }
+.motion-sample { display:grid; align-content:center; min-height:200px; overflow:hidden; padding:36px; background:#f5f9f6; border:1px solid #dce8df; border-radius:12px; color:#3e5749; }
+.motion-sample strong { display:block; font-size:26px; line-height:1.6; }
+.motion-sample p { margin:12px 0 0; font-size:14px; }
+.motion-sample [data-motion-line] { opacity:0; transform:translate3d(var(--text-motion-x,-24px),var(--text-motion-y,0px),0); transition:opacity var(--text-motion-duration,520ms) cubic-bezier(.22,.61,.36,1),transform var(--text-motion-duration,520ms) cubic-bezier(.22,.61,.36,1); }
+.motion-sample.is-playing [data-motion-line] { opacity:1; transform:none; }
+.motion-sample.is-playing p { transition-delay:var(--text-motion-stagger,70ms); }
+.motion-sample.is-restarting [data-motion-line] { transition:none; }
+.motion-sample[data-motion-enabled="false"] [data-motion-line] { opacity:1; transform:none; transition:none; }
+.motion-preview-actions { display:flex; gap:10px; flex-wrap:wrap; margin:16px 0; }
+.motion-dialog { width:min(1240px,calc(100% - 24px)); max-width:none; max-height:calc(100dvh - 24px); padding:22px; border:1px solid #d6dfd9; border-radius:14px; color:#293b34; }
+.motion-dialog::backdrop { background:rgba(22,42,31,.5); }
+.motion-dialog h2 { margin:0; font-size:20px; }
+.motion-dialog .card-heading { gap:16px; flex-wrap:wrap; }
+.motion-dialog .field-help { margin:10px 0; }
+.motion-frame-wrap { width:100%; height:min(65vh,660px); overflow:hidden; background:#edf1ee; border:1px solid #d6dfd9; border-radius:8px; }
+.motion-frame-wrap iframe { display:block; border:0; background:white; transform-origin:top left; }
+@media(max-width:700px) { .motion-editor-grid { grid-template-columns:1fr; gap:20px; } .motion-sample { padding:28px; min-height:170px; } .motion-dialog { padding:14px; } }
+@media(prefers-reduced-motion:reduce) { .motion-sample [data-motion-line] { transform:none; transition:opacity var(--text-motion-reduced-duration,400ms) ease; } }
