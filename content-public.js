@@ -62,7 +62,7 @@
     document.body.append(dialog);dialog.showModal();disposeNotices=()=>dialog.remove();
   }
   window.ClinicPublicContent={apply(source){
-    const content=ClinicContent.normalize(source);ClinicDesign.apply(content.design,content.theme);notices(content.highlights);
+    const content=ClinicContent.normalize(source);ClinicDesign.apply(content.design,content.theme);notices(ClinicContent.visibleHighlights(source));
     // A failed JSON request must not overwrite the last published HTML with old defaults.
     if(!source.loadError)ClinicContent.renderFaq(document.querySelector('#faq .faq-list'),content.faqs);
     // Keep the current photo (or the empty initial stage) when settings fail.

@@ -26,12 +26,15 @@ function setup(name='site-editor.html',options={}){
   if(!url.startsWith('https://api.github.com/')){
    if(options.publicDelay)await sleep(options.publicDelay);
    if(options.publicError)throw Error('Simulated settings request failure');
-   return response(remote);
+   return response(options.publicSource || remote);
   }
   if(url==='https://api.github.com/user')return response({login:'test-user'});
   if(url.includes('/contents/index.html'))return response({encoding:'base64',content:Buffer.from(remoteHTML).toString('base64')});
   if(url.includes('/contents/data/site-updates.json')){
-   if(method==='GET')return response({sha,encoding:'base64',content:Buffer.from(JSON.stringify(remote)).toString('base64')});
+   if(method==='GET'){
+    if(options.sourceRead)return options.sourceRead({url,opts,remote,sha,response});
+    return response({sha,encoding:'base64',content:Buffer.from(JSON.stringify(remote)).toString('base64')});
+   }
    assert.equal(body.sha,sha);remote=JSON.parse(Buffer.from(body.content,'base64'));sha='updatedsha';return response({content:{sha},commit:{sha:'b'.repeat(40)}});
   }
   if(url.endsWith('/git/ref/heads/main'))return response({object:{sha:'a'.repeat(40)}});
@@ -339,8 +342,97 @@ async function faqTests(){
  }
  console.log('PASS FAQ: legacy/empty data, CRUD/reorder/visibility, validation, draft/backup/preview, safe text, atomic HTML+JSON, concurrent edits and failed writes');
 }
+async function noticeSyncTests(){
+ const fixture=structuredClone(source);fixture.highlights=[];
+ fixture.news=[{id:'opening',date:'2026-11-01',category:'notice',published:true,featured:false,title:'New opening',body:'Original body'}];
+ const t=setup('site-editor.html',{source:fixture}),w=t.w;await w.editorReady;
+ assert.equal(w.document.querySelector('[data-editor-form]').hasAttribute('inert'),false);
+ assert.equal(w.document.querySelector('[data-highlights]').closest('[data-panel]').dataset.panel,'news');
+ field(w,'[data-news-field="featured"]',true);await connect(t);await w.ClinicPublisher.publish();
+ const page=setup('index.html',{source:t.getRemote()}),pw=page.w;
+ await waitFor(()=>pw.document.querySelector('.important-notice'));
+ assert.equal(pw.document.querySelector('.important-notice h2').textContent,'New opening');
+ assert.equal(t.getRemote().highlights.length,0,'Featured articles are not copied into standalone notices');
+ field(w,'[data-news-field="title"]','Updated opening');field(w,'[data-news-field="body"]','Updated body');await w.ClinicPublisher.publish();
+ pw.applyManagedContent(t.getRemote());
+ assert.equal(pw.document.querySelector('.important-notice h2').textContent,'Updated opening');
+ assert.equal(pw.document.querySelector('.important-notice p').textContent,'Updated body');
+ assert.equal(pw.document.querySelector('[data-news-list] h3').textContent,'Updated opening');
+ field(w,'[data-news-field="published"]',false);await w.ClinicPublisher.publish();pw.applyManagedContent(t.getRemote());
+ assert.equal(pw.document.querySelector('.important-notice'),null,'Unpublishing an article also removes its banner');
+ field(w,'[data-news-field="published"]',true);await w.ClinicPublisher.publish();pw.applyManagedContent(t.getRemote());assert.ok(pw.document.querySelector('.important-notice'));
+ w.document.querySelector('.news-row .danger-button').click();await w.ClinicPublisher.publish();pw.applyManagedContent(t.getRemote());
+ assert.equal(pw.document.querySelector('.important-notice'),null,'Deleting the article also removes its banner');
+ assert.equal(t.getRemote().news.length,0);assert.equal(t.getRemote().highlights.length,0);
+ // An explicit empty list must win over an obsolete legacy highlight field.
+ pw.ClinicPublicContent.apply({...t.getRemote(),highlight:source.highlight,highlights:[]});assert.equal(pw.document.querySelector('.important-notice'),null);
+ assert.equal(t.errors.length,0,JSON.stringify(t.errors));assert.equal(page.errors.length,0,JSON.stringify(page.errors));
+ await sleep(50);w.close();pw.close();
+ console.log('PASS notices: one editing tab, linked article/banner updates, unpublish/delete, and no legacy resurrection');
+}
+async function publicationReliabilityTests(){
+ const options={publicSource:structuredClone(source)},t=setup('site-editor.html',options),w=t.w;await w.editorReady;await connect(t);
+ field(w,'[data-news-field="title"]','Saved but waiting');await w.ClinicPublisher.publish();await sleep(20);
+ const status=()=>w.document.querySelector('[data-publish-status]').dataset.state;
+ assert.equal(status(),'waiting');assert.equal(w.qa.dirty(),false);
+ assert.equal(w.document.querySelector('[data-editor-message]').classList.contains('is-success'),false,'Saving alone is not public success');
+ const key='hayashi-editor:kojihayashi0826-ship-it/hayashi-naika-website:pending-v1';
+ assert.equal(JSON.parse(w.localStorage.getItem(key)).revision,t.getRemote().revision);
+ options.publicSource=structuredClone(t.getRemote());assert.equal(await w.ClinicPublisher.verifyPublished(),true);
+ assert.equal(status(),'verified');assert.equal(w.localStorage.getItem(key),null);
+ assert.ok(w.localStorage.getItem('hayashi-public-content-updated'),'Signal other open website tabs after verification');
+ // A matching revision with altered content must not be reported as complete.
+ field(w,'[data-news-field="title"]','Must match exactly');await w.ClinicPublisher.publish();
+ options.publicSource=structuredClone(t.getRemote());options.publicSource.news[0].title='Incorrect payload';
+ await w.ClinicPublisher.verifyPublished();assert.equal(status(),'error');assert.equal(w.document.querySelector('[data-editor-message]').classList.contains('is-success'),false);
+ await sleep(50);w.close();
+
+ const race=setup(),rw=race.w;await rw.editorReady;await connect(race);
+ const transport=rw.fetch,checks=[];
+ rw.fetch=(url,opts)=>String(url).includes('publish_check')?new Promise(resolve=>checks.push(resolve)):transport(url,opts);
+ field(rw,'[data-news-field="title"]','First save');await rw.ClinicPublisher.publish();await waitFor(()=>checks.length===1);const first=structuredClone(race.getRemote());
+ field(rw,'[data-news-field="title"]','Second save');await rw.ClinicPublisher.publish();await waitFor(()=>checks.length===2);const second=structuredClone(race.getRemote());
+ const response=json=>({ok:true,status:200,json:async()=>json});
+ checks[0](response(first));await sleep(15);
+ assert.equal(rw.document.querySelector('[data-publish-status]').dataset.state,'waiting','An older verification must not confirm the newer save');
+ assert.equal(JSON.parse(rw.localStorage.getItem(key)).revision,second.revision);
+ checks[1](response(second));await waitFor(()=>rw.document.querySelector('[data-publish-status]').dataset.state==='verified');
+ assert.equal(rw.localStorage.getItem(key),null);assert.equal(race.getRemote().news[0].title,'Second save');
+ assert.equal(race.errors.length,0,JSON.stringify(race.errors));await sleep(50);rw.close();
+ console.log('PASS publication: saved/waiting/verified states, content comparison, cross-tab notification and out-of-order verification');
+}
+async function editorReadRaceTests(){
+ const options={},t=setup('site-editor.html',options),w=t.w;await w.editorReady;await connect(t);
+ const transport=w.fetch;let resolveRead;
+ w.fetch=(url,opts={})=>String(url).includes('/contents/data/site-updates.json') && !opts.method
+  ?new Promise(resolve=>{resolveRead=resolve;}):transport(url,opts);
+ const pending=w.ClinicPublisher.reload();await waitFor(()=>resolveRead);
+ field(w,'[data-news-field="title"]','Keep this unsaved edit');
+ resolveRead({ok:true,status:200,json:async()=>({sha:'initialsha',encoding:'base64',content:Buffer.from(JSON.stringify(source)).toString('base64')})});
+ await pending;assert.equal(w.qa.prepare().news[0].title,'Keep this unsaved edit');assert.equal(w.qa.dirty(),true);
+ await sleep(50);w.close();
+
+ // An initial anonymous read may return after an authenticated connection.
+ const newer=structuredClone(source);newer.news[0].title='Latest saved source';let releaseInitial;
+ const initialOptions={source:newer,sourceRead:({opts,remote,sha,response})=>{
+  if(!opts.headers?.Authorization)return new Promise(resolve=>{releaseInitial=()=>resolve(response({sha:'stale',encoding:'base64',content:Buffer.from(JSON.stringify(source)).toString('base64')}));});
+  return response({sha,encoding:'base64',content:Buffer.from(JSON.stringify(remote)).toString('base64')});
+ }};
+ const initial=setup('site-editor.html',initialOptions),iw=initial.w;await waitFor(()=>releaseInitial);
+ assert.ok(iw.document.querySelector('[data-editor-form]').hasAttribute('inert'));
+ await connect(initial);assert.equal(iw.qa.get().news[0].title,'Latest saved source');releaseInitial();await iw.editorReady;
+ assert.equal(iw.qa.get().news[0].title,'Latest saved source','Late initial data cannot overwrite a newer connection');
+ assert.equal(iw.document.querySelector('[data-editor-form]').hasAttribute('inert'),false);
+ assert.equal(initial.errors.length,0,JSON.stringify(initial.errors));await sleep(50);iw.close();
+
+ const fallback=setup('site-editor.html',{sourceRead:()=>Promise.reject(Error('Source offline'))});await fallback.w.editorReady;
+ assert.ok(fallback.w.document.querySelector('[data-editor-message]').textContent.includes('現在の公開内容'));
+ assert.equal(fallback.w.qa.get().news[0].title,source.news[0].title);await sleep(50);fallback.w.close();
+ console.log('PASS editor reads: source-first loading, public fallback label, edits during reload and late initial reads after connection');
+}
 async function todayStatusTests(){
  const published=JSON.parse(load('data/site-updates.json'));
+ published.closures=[{start:'2026-10-30',end:'2026-10-31',label:'移転休診',published:true}];
  const t=setup('index.html',{source:published}),w=t.w;await sleep(40);
  const RealDate=w.Date;let instant;
  w.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[instant]));}static now(){return new RealDate(instant).getTime();}};
@@ -385,6 +477,7 @@ async function todayStatusTests(){
 }
 async function mobileStatusTests(){
  const published=JSON.parse(load('data/site-updates.json'));
+ published.closures=[{start:'2026-10-30',end:'2026-10-31',label:'移転休診',published:true}];
  const t=setup('index.html',{source:published}),w=t.w;await sleep(40);
  const RealDate=w.Date;let instant='2026-10-26T08:59:00+09:00';
  w.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[instant]));}static now(){return new RealDate(instant).getTime();}};
@@ -445,4 +538,4 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await publicTests();await repeatMotionTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+(async()=>{seoTests();await noticeSyncTests();await publicationReliabilityTests();await editorReadRaceTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await publicTests();await repeatMotionTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});

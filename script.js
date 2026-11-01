@@ -715,8 +715,11 @@ async function refreshManagedContent() {
 initPageMotion();
 refreshManagedContent();
 setInterval(updateTodayStatus, 60000);
-setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 120000);
+setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 15000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshManagedContent(); });
+window.addEventListener('focus',()=>{if(!document.hidden)refreshManagedContent();});
+window.addEventListener('pageshow',event=>{if(event.persisted)refreshManagedContent();});
+window.addEventListener('storage',event=>{if(event.key==='hayashi-public-content-updated' && !document.hidden)refreshManagedContent();});
 
 
 /* Keep the compact panel current even without a scroll or resize. */
@@ -736,6 +739,3 @@ function syncTodayFloating() {
 window.addEventListener('scroll', syncTodayFloating, { passive: true });
 window.addEventListener('resize', syncTodayFloating);
 window.addEventListener('load', syncTodayFloating);
-
-
-

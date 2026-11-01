@@ -23,6 +23,14 @@
       documents:(Array.isArray(source.documents)?source.documents:[]).filter(Boolean).map((v,i)=>({...v,id:v.id || `document-${i}`,title:text(v.title),description:text(v.description),src:text(v.src),name:text(v.name),published:v.published !== false}))
     };
   }
+  // Featured articles are projected from their source, never copied into another list.
+  function visibleHighlights(source) {
+    const standalone=normalize(source).highlights;
+    const featured=(Array.isArray(source.news)?source.news:[])
+      .filter(n=>n && n.published!==false && n.featured===true && text(n.title).trim())
+      .map((n,i)=>({id:'news:'+String(n.id || i),enabled:true,mode:'banner',title:text(n.title),body:text(n.body),linkText:'',linkUrl:''}));
+    return [...featured,...standalone].filter(h=>h.enabled && h.title);
+  }
   function normalizeFaqs(items) {
     const seen=new Set();
     return (Array.isArray(items)?items:defaultFaqs).filter(v=>v && typeof v==='object').map((v,i)=>{
@@ -256,5 +264,5 @@
       article.append(num,body,hint);root.append(article);
     });
   }
-  window.ClinicContent=Object.freeze({fetchJSON,defaults,defaultSlide,normalize,safeAsset,imageAsset,videoAsset,slideAsset,assetURL,posterURL,slideshow,documentList,normalizeFaqs,faqHTML,renderFaq,updateFaqHTML});
+  window.ClinicContent=Object.freeze({fetchJSON,defaults,defaultSlide,normalize,visibleHighlights,safeAsset,imageAsset,videoAsset,slideAsset,assetURL,posterURL,slideshow,documentList,normalizeFaqs,faqHTML,renderFaq,updateFaqHTML});
 })();

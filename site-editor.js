@@ -29,6 +29,9 @@ let data = { ...clone(defaultData), ...ClinicContent.normalize(defaultData) };
 let loaded = false;
 let dirty = false;
 let baseDocument = null;
+// Ignore an older read if a newer read, connection, or edit has already won.
+let contentLoadVersion = 0;
+let contentEditVersion = 0;
 
 const form = document.querySelector("[data-editor-form]");
 const status = document.querySelector("[data-load-status]");
@@ -66,7 +69,8 @@ function safeData(input) {
         category: ["notice", "trend", "vaccine"].includes(item?.category) ? item.category : "notice",
         title: typeof item?.title === "string" ? item.title : "",
         body: typeof item?.body === "string" ? item.body : "",
-        published: item?.published !== false
+        published: item?.published !== false,
+        featured: item?.featured === true
       }))
     : [];
   merged.closures = source.closures.map(item => ({ ...ClinicSchedule.normalize(item), id: item?.id || makeId("closure") }));
@@ -98,6 +102,7 @@ function setMessage(text, type = "") {
 
 function setLoaded(text) {
   loaded = true;
+  form.removeAttribute('inert');
   dirty = false;
   status.textContent = text;
   downloadButton.disabled = false;
@@ -111,6 +116,7 @@ function setLoaded(text) {
 function markDirty() {
   if (!loaded) return;
   dirty = true;
+  contentEditVersion++;
   setMessage("未公開の変更があります。");
   document.dispatchEvent(new CustomEvent("clinic-editor-changed"));
 }
@@ -199,7 +205,11 @@ function renderNews() {
     const publishText = document.createElement("span");
     publishText.textContent = "掲載する";
     publishLabel.append(publishInput, publishText);
-    meta.append(dateLabel, categoryLabel, publishLabel);
+    const featuredLabel=document.createElement('label');featuredLabel.className='publish-switch';
+    const featuredInput=document.createElement('input');featuredInput.type='checkbox';featuredInput.checked=item.featured===true;featuredInput.dataset.newsField='featured';
+    const featuredText=document.createElement('span');featuredText.textContent='ページ上部にも表示';
+    featuredLabel.append(featuredInput,featuredText);
+    meta.append(dateLabel, categoryLabel, publishLabel, featuredLabel);
 
     const titleLabel = document.createElement("label");
     titleLabel.textContent = "見出し";
@@ -231,7 +241,8 @@ function collectNews() {
     category: row.querySelector('[data-news-field="category"]').value,
     title: row.querySelector('[data-news-field="title"]').value.trim(),
     body: row.querySelector('[data-news-field="body"]').value.trim(),
-    published: row.querySelector('[data-news-field="published"]').checked
+    published: row.querySelector('[data-news-field="published"]').checked,
+    featured: row.querySelector('[data-news-field="featured"]').checked
   }));
 }
 
@@ -425,20 +436,30 @@ function preparedJson() {
 async function loadCurrent() {
   if (dirty && !window.confirm("未公開の変更を破棄して、最新の内容を読み込みますか？")) return;
   if (window.ClinicPublisher?.isConnected()) return window.ClinicPublisher.reload();
-  status.textContent = "読み込み中…";
+  const generation=++contentLoadVersion,edits=contentEditVersion;
+  status.textContent = "保存済みの最新内容を読み込み中…";
   try {
     if (window.location.protocol === "file:") throw new Error("file protocol");
-    const response = await fetch("data/site-updates.json?v=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(12000) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    data = safeData(await response.json());
-    render();
-    setLoaded("現在の公開設定を読み込みました");
+    let current,fromSaved=true;
+    try {
+      // Editor-only read: bypass the Pages deployment delay without exposing a token.
+      const file=await ClinicContent.fetchJSON("https://api.github.com/repos/kojihayashi0826-ship-it/hayashi-naika-website/contents/data/site-updates.json?ref=main&t="+Date.now());
+      if(file.encoding!=='base64' || typeof file.content!=='string')throw Error('Invalid source');
+      current=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(file.content.replace(/\s/g,'')),c=>c.charCodeAt(0))));
+    } catch {
+      fromSaved=false;
+      current=await ClinicContent.fetchJSON("data/site-updates.json?v="+Date.now());
+    }
+    if(generation!==contentLoadVersion)return;
+    if(edits!==contentEditVersion){status.textContent="編集中の内容を保持しました";return;}
+    data=safeData(current);render();
+    setLoaded(fromSaved?"保存済みの最新内容を読み込みました":"公開サイトの表示内容を読み込みました");
+    if(!fromSaved)setMessage("保存済みデータを取得できなかったため、現在の公開内容を表示しています。保存直後の変更は接続後に確認できます。");
   } catch (error) {
-    loaded = false;
-    downloadButton.disabled = true;
-    folderButton.disabled = true;
-    status.textContent = "自動読込できません。手元の site-updates.json を選択してください。";
-    setMessage("公開前やローカル表示では「手元のJSONを選択」を使用します。", "error");
+    if(generation!==contentLoadVersion || edits!==contentEditVersion)return;
+    if(!loaded){downloadButton.disabled=true;folderButton.disabled=true;}
+    status.textContent="読み込みを確認できませんでした";
+    setMessage("編集中の内容は保持しています。接続して最新内容を読み込むか、バックアップJSONを選択してください。", "error");
   }
 }
 
@@ -589,7 +610,7 @@ function showPreview() {
   const themeSample=document.createElement("div");themeSample.className="theme-preview";themeCard.append(themeSample);
   ClinicEditorTheme.preview(themeSample,data.theme);
   if (data.siteStatus.enabled) section(data.siteStatus.title,data.siteStatus.body);
-  data.highlights.filter(h=>h.enabled).forEach(h=>section(h.title,h.body));
+  ClinicContent.visibleHighlights(data).forEach(h=>section(h.title,h.body));
   ClinicEditorContent.preview(root,section);
   const cal=section("診療カレンダー"); const widget=document.createElement("div"); cal.append(widget);
   const first=ClinicSchedule.active(data.closures).find(c=>c.end>=localDateString());
@@ -621,5 +642,3 @@ const requestedTab = new URLSearchParams(window.location.search).get("tab");
 tabButtons.find(button => button.dataset.tab === requestedTab)?.click();
 render();
 window.editorReady = loadCurrent();
-
-

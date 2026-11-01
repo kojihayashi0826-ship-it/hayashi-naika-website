@@ -1,16 +1,15 @@
 {
-  "updatedAt": "2026-11-01T00:46:16.935Z",
+  "updatedAt": "2026-11-01T00:52:57.651Z",
   "siteStatus": {
     "enabled": false,
     "title": "正式公開前・ウェブサイト調整中",
     "body": "新医院の開院に向けて、掲載内容を最終調整しています。内容は変更になる場合があります。"
   },
   "highlight": {
-    "id": "legacy-highlight",
-    "enabled": true,
+    "enabled": false,
     "mode": "banner",
-    "title": "新医院への移転に伴う休診のお知らせ",
-    "body": "新医院への移転に伴い、10月30日（金）・31日（土）は休診とさせていただきます。11月2日（月）から新医院で診療を開始します。\n新住所：小松市下牧町ホ102-1（旧：下牧町ホ103）。電話番号は変わりません。",
+    "title": "",
+    "body": "",
     "linkText": "",
     "linkUrl": ""
   },
@@ -56,7 +55,8 @@
       "category": "notice",
       "title": "11月2日（月）より、新医院での診療を開始します",
       "body": "2026年11月2日（月）より、新医院での診療を開始いたします。\n移転に伴う休診にご理解とご協力をいただき、ありがとうございました。\n\n新しい医院でも、地域の皆さまが安心して相談できる身近なかかりつけ医として、丁寧な診療を続けてまいります。\n\n今後とも林内科医院をどうぞよろしくお願いいたします。",
-      "published": true
+      "published": true,
+      "featured": true
     },
     {
       "id": "news-flumist-draft-202611",
@@ -177,7 +177,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "0368f67d-2086-4e0a-a198-4ef24d5b01f1",
+  "revision": "cfc9d31b-14fd-4099-bbba-4d70dc151a5c",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
@@ -222,17 +222,7 @@
     },
     "sectionSizes": {}
   },
-  "highlights": [
-    {
-      "id": "legacy-highlight",
-      "enabled": true,
-      "mode": "banner",
-      "title": "新医院への移転に伴う休診のお知らせ",
-      "body": "新医院への移転に伴い、10月30日（金）・31日（土）は休診とさせていただきます。11月2日（月）から新医院で診療を開始します。\n新住所：小松市下牧町ホ102-1（旧：下牧町ホ103）。電話番号は変わりません。",
-      "linkText": "",
-      "linkUrl": ""
-    }
-  ],
+  "highlights": [],
   "hero": {
     "autoplay": true,
     "hold": 6,

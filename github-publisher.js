@@ -28,11 +28,12 @@
   let verifyTimer = null;
   let verification = 0;
   let pending = null;
+  let verificationRun = 0;
 
   function stable(value) {
     if (Array.isArray(value)) return value.map(stable);
     if (!value || typeof value !== "object") return value;
-    return Object.fromEntries(Object.keys(value).sort().filter(k=>k!=="updatedAt" && k!=="revision").map(k=>[k,stable(value[k])]));
+    return Object.fromEntries(Object.keys(value).sort().filter(k=>k!=="updatedAt" && k!=="revision" && !(['fileData','posterData'].includes(k) && !value[k])).map(k=>[k,stable(value[k])]));
   }
   function fingerprint(value) { return JSON.stringify(stable(value)); }
   function readStorage(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
@@ -127,8 +128,10 @@
   async function establish(candidate) {
     if (!secureOrigin()) throw new Error("接続と公開はHTTPSの公開版管理画面から行ってください。ローカルファイルでは公開できません。");
     if (!/^github_pat_[A-Za-z0-9_]+$/.test(candidate)) throw new Error("Fine-grained personal access token（github_pat_で始まるキー）を入力してください。GitHubのパスワードではありません。");
+    const generation=++contentLoadVersion;
     const account=await github("https://api.github.com/user",{},candidate);
     const remote=await remoteDocument(candidate);
+    if(generation!==contentLoadVersion)throw new Error("別の読み込みが先に完了しました。編集内容を確認して、もう一度接続してください。");
     if (dirty && baseDocument && fingerprint(remote.data)!==fingerprint(baseDocument)) throw new Error("接続前に公開元の内容が変わっています。バックアップを保存し、最新の内容を読み込んでから再接続してください。編集内容は保持しています。");
     if (!dirty || !loaded) { data=remote.data; render(); setLoaded("GitHubから最新の内容を読み込みました"); }
     else baseDocument=copy(remote.data);
@@ -170,12 +173,17 @@
     connectionMessage(reason); syncControls();
   }
   async function reload() {
+    if(publishing || connecting)return;
+    const generation=++contentLoadVersion,edits=contentEditVersion;
     try {
       q("[data-load-current]").disabled=true;
-      const remote=await remoteDocument(); data=remote.data; baseSha=remote.sha;
+      const remote=await remoteDocument();
+      if(generation!==contentLoadVersion)return;
+      if(edits!==contentEditVersion){setMessage("読み込み中の編集を保持しました。必要ならもう一度最新内容を読み込んでください。");return;}
+      data=remote.data; baseSha=remote.sha;
       render(); setLoaded("GitHubから最新の内容を読み込みました"); removeStorage(draftKey);
       q("[data-draft-recovery]").hidden=true;
-    } catch(error) { setMessage(error.message,"error"); }
+    } catch(error) { if(generation===contentLoadVersion)setMessage(error.message,"error"); }
     finally { syncControls(); }
   }
   async function saveDraft() {
@@ -212,14 +220,16 @@
     data=next; baseDocument=copy(next); dirty=false;
     removeStorage(draftKey); q("[data-draft-recovery]").hidden=true;
     try { writeStorage(previousKey,old); } catch { /* Git history is still the authoritative backup. */ }
-    pending={revision:next.revision,updatedAt:next.updatedAt};
+    pending={revision:next.revision,updatedAt:next.updatedAt,fingerprint:fingerprint(next),startedAt:Date.now()};
     try { writeStorage(pendingKey,pending); } catch { /* Optional convenience only. */ }
-    setMessage("GitHubへ送信しました。ファイルを手作業で置き換える必要はありません。","success");
-    q("[data-publish-status]").textContent="公開サイトへの反映を確認中です。";
+    setMessage("保存しました。公開サイトへの反映を待っています。");
+    status.textContent="変更内容は保存済みです";
+    publishStatus('waiting','保存済み → 公開サイトへの反映を確認中です。');
+    const link=q('[data-open-public]');if(link){const url=new URL('./',location.href);url.searchParams.set('v',next.revision);link.href=url.href;}
     q("[data-publish-followup]").hidden=false;
     const sha=remote.commit?.sha;
     if (sha && /^[a-f0-9]{40}$/.test(sha)) { q("[data-commit-link]").href=`https://github.com/${owner}/${repo}/commit/${sha}`; q("[data-commit-link]").hidden=false; }
-    syncControls(); startVerification();
+    syncControls();
   }
   async function commitMedia(next, files, faqChanged=false) {
     const ref=await github(`${apiRoot}/git/ref/heads/${branch}`);
@@ -254,9 +264,15 @@
     let next,files;
     try { const publication=ClinicEditorContent.publication(JSON.parse(preparedJson()));next=publication.data;files=publication.files; }
     catch(error) { setMessage(error.message,"error"); return; }
-    if (!files.length && fingerprint(next)===fingerprint(baseDocument)) { dirty=false; removeStorage(draftKey); syncControls(); setMessage("公開元と同じ内容のため、更新は不要です。"); return; }
+    if (!files.length && fingerprint(next)===fingerprint(baseDocument)) {
+      dirty=false;removeStorage(draftKey);syncControls();
+      setMessage("保存済みの内容と一致しています。公開サイトへの反映を確認します。");
+      if(baseDocument?.revision){pending={revision:baseDocument.revision,updatedAt:baseDocument.updatedAt,fingerprint:fingerprint(baseDocument),startedAt:Date.now()};q('[data-publish-followup]').hidden=false;startVerification();}
+      return;
+    }
     // Latest SHA is checked before the write; Contents API also checks SHA atomically.
-    publishing=true; clearTimeout(draftTimer); setFormBusy(true);
+    publishing=true;clearTimeout(draftTimer);clearTimeout(verifyTimer);verificationRun++;setFormBusy(true);
+    publishStatus('saving','変更内容を保存中です…');
     setMessage("公開元の変更有無を確認しています…");
     const previous=copy(baseDocument);
     next.updatedAt=new Date().toISOString(); next.revision=crypto.randomUUID();
@@ -282,36 +298,59 @@
     } catch(error) {
       setMessage(error.message,"error");
       if (error.status===401) { token=null; connected=false; q("[data-connection]").open=true; }
-    } finally { publishing=false; setFormBusy(false); if (dirty) saveDraft(); }
+    } finally {
+      publishing=false;setFormBusy(false);
+      if(dirty){publishStatus('error','今回の変更は保存を確認できていません。編集内容を保持しています。');saveDraft();}
+      else if(pending)startVerification();
+    }
+  }
+  function publishStatus(state,text){
+    const el=q('[data-publish-status]');el.dataset.state=state;el.textContent=text;
+  }
+  function finishVerification(state,text){
+    publishStatus(state,text);clearTimeout(verifyTimer);verificationRun++;
+    pending=null;verification=0;removeStorage(pendingKey);
   }
   async function verifyPublished(manual=false) {
-    if (!pending) return false;
-    const revision=pending.revision;
+    if (!pending || publishing) return false;
+    const expected=pending,run=verificationRun;
+    const isCurrent=()=>pending===expected && verificationRun===run && !publishing;
     try {
-      const url=new URL("data/site-updates.json",location.href); url.searchParams.set("publish_check",`${revision}-${Date.now()}`);
-      const response=await fetch(url,{cache:"no-store",referrerPolicy:"no-referrer",signal:AbortSignal.timeout(12000)});
-      if (response.ok) {
-        const current=await response.json();
-        if (current.revision===revision) {
-          q("[data-publish-status]").textContent="公開サイトへの反映を確認しました。";
-          if (!dirty) setMessage("公開が完了しました。変更した掲載内容が公開サイトに反映されています。","success");
-          clearTimeout(verifyTimer); verification=0; removeStorage(pendingKey); return true;
+      const url=new URL("data/site-updates.json",location.href);url.searchParams.set("publish_check",`${expected.revision}-${Date.now()}`);
+      const current=await ClinicContent.fetchJSON(url.href,10000);
+      // A slow response from a previous save must never confirm a newer save.
+      if(!isCurrent())return false;
+      if(current.revision===expected.revision){
+        if(expected.fingerprint && fingerprint(safeData(current))!==expected.fingerprint){
+          finishVerification('error','公開データの内容が保存内容と一致しません。最新内容を読み込み、確認してください。');
+          return true;
         }
-        if (current.updatedAt && pending.updatedAt && Date.parse(current.updatedAt)>Date.parse(pending.updatedAt)) {
-          q("[data-publish-status]").textContent="公開サイトには、別の端末によるさらに新しい更新が反映されています。最新の内容をご確認ください。";
-          clearTimeout(verifyTimer); removeStorage(pendingKey); return true;
-        }
+        finishVerification('verified','保存済み → 公開サイトへの反映を確認しました。');
+        if(!dirty)setMessage("公開が完了しました。変更内容・削除内容の反映を確認しました。","success");
+        try{localStorage.setItem('hayashi-public-content-updated',JSON.stringify({revision:current.revision,at:Date.now()}));}catch{}
+        return true;
       }
-    } catch { /* Saving to GitHub and observing Pages deployment are separate states. */ }
-    if (manual || verification>=30) q("[data-publish-status]").textContent="GitHubへの保存は完了していますが、公開サイトへの反映はまだ確認できません。反映確認ボタンで再確認できます。";
+      if(current.updatedAt && expected.updatedAt && Date.parse(current.updatedAt)>Date.parse(expected.updatedAt)){
+        finishVerification('superseded','公開サイトには、さらに新しい更新が反映されています。最新内容を読み込んで確認してください。');
+        return true;
+      }
+    } catch { /* The saved source is safe even while the public CDN is unavailable. */ }
+    if(!isCurrent())return false;
+    const seconds=Math.max(0,Math.floor((Date.now()-(expected.startedAt || Date.now()))/1000));
+    publishStatus(seconds>=300?'unconfirmed':'waiting',seconds>=300
+      ?'保存済みですが、公開サイトへの反映はまだ確認できません。「公開サイトへの反映を確認」で再確認できます。'
+      :`保存済み → 公開サイトへの反映待ち（${seconds}秒）。自動で確認しています。`);
     return false;
   }
   function startVerification() {
-    clearTimeout(verifyTimer); verification=0;
+    clearTimeout(verifyTimer);verification=0;const run=++verificationRun;
     const check=async()=>{
+      if(run!==verificationRun || !pending || publishing)return;
       verification++;
-      if (await verifyPublished()) return;
-      if (verification<30) verifyTimer=setTimeout(check,5000);
+      if(await verifyPublished())return;
+      if(run!==verificationRun || !pending)return;
+      if(verification<80)verifyTimer=setTimeout(check,verification<10?2000:5000);
+      else publishStatus('unconfirmed','保存済みですが、公開反映は未確認です。反映確認ボタンで再確認できます。');
     };
     check();
   }
@@ -326,7 +365,7 @@
     if (!confirm("このChromeに保存した接続キーを削除しますか？GitHub側のキーは失効しません。不要なキーはGitHubの設定でも削除してください。")) return;
     removeStorage(vaultKey); disconnect("保存した接続キーを削除しました。新しいキーを設定できます。");
   });
-  q("[data-check-publish]").addEventListener("click",()=>verifyPublished(true));
+  q("[data-check-publish]").addEventListener("click",()=>{if(pending)startVerification();});
   q("[data-restore-draft]").addEventListener("click",restoreDraft);
   q("[data-discard-draft]").addEventListener("click",()=>{if(confirm("Chromeに残っている編集内容を破棄しますか？")){removeStorage(draftKey);q("[data-draft-recovery]").hidden=true;}});
   q("[data-restore-previous]").addEventListener("click",()=>{
@@ -339,12 +378,9 @@
   ["pointerdown","keydown","input"].forEach(name=>document.addEventListener(name,()=>lastActivity=Date.now(),{passive:true}));
   setInterval(()=>{if(connected && !publishing && Date.now()-lastActivity>30*60*1000)disconnect("30分間操作がなかったため接続を解除しました。編集内容は保持しています。");},15000);
   window.addEventListener("beforeunload",saveDraft);
-  window.ClinicPublisher=Object.freeze({isConnected:()=>connected,publish,reload});
+  window.ClinicPublisher=Object.freeze({isConnected:()=>connected,publish,reload,verifyPublished});
   window.editorReady?.then(()=>{syncControls();showRecovery();});
   pending=readStorage(pendingKey);
   if (pending?.revision) {q("[data-publish-followup]").hidden=false;startVerification();}
   syncControls();
 })();
-
-
-
