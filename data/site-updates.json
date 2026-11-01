@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-01T00:52:57.651Z",
+  "updatedAt": "2026-11-01T01:03:25.761Z",
   "siteStatus": {
     "enabled": false,
     "title": "正式公開前・ウェブサイト調整中",
@@ -56,7 +56,7 @@
       "title": "11月2日（月）より、新医院での診療を開始します",
       "body": "2026年11月2日（月）より、新医院での診療を開始いたします。\n移転に伴う休診にご理解とご協力をいただき、ありがとうございました。\n\n新しい医院でも、地域の皆さまが安心して相談できる身近なかかりつけ医として、丁寧な診療を続けてまいります。\n\n今後とも林内科医院をどうぞよろしくお願いいたします。",
       "published": true,
-      "featured": true
+      "featured": false
     },
     {
       "id": "news-flumist-draft-202611",
@@ -64,7 +64,8 @@
       "category": "vaccine",
       "title": "フルミスト入荷予定のお知らせ",
       "body": "入荷時期・対象年齢・費用などは、確定後にお知らせします。",
-      "published": false
+      "published": false,
+      "featured": false
     }
   ],
   "closures": [],
@@ -177,7 +178,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "cfc9d31b-14fd-4099-bbba-4d70dc151a5c",
+  "revision": "b38af14d-202a-4eca-b3d2-a6a1bcf0a2c7",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
