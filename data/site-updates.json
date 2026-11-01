@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-11-01T14:15:51.091Z",
+  "updatedAt": "2026-11-01T14:16:12.897Z",
   "siteStatus": {
     "enabled": false,
-    "title": "正式公開前・ウェブサイト調整中",
-    "body": "新医院の開院に向けて、掲載内容を最終調整しています。内容は変更になる場合があります。"
+    "title": "",
+    "body": ""
   },
   "highlight": {
     "enabled": false,
@@ -178,7 +178,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "4628c622-302a-45b5-a202-300da7503358",
+  "revision": "14416255-cb91-4ab0-88c9-18f441ca5c4b",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
