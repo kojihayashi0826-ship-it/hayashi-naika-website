@@ -411,7 +411,7 @@ function initPageMotion() {
       document.querySelectorAll(revealSelector).forEach((target, index) => {
         if (observed.has(target)) return;
         target.classList.add("reveal");
-        target.style.setProperty("--reveal-delay", `${(index % 3) * (isPanoramaHome ? 140 : 70)}ms`);
+        target.style.setProperty("--reveal-delay", `${(index % 3) * 70}ms`);
         revealObserver.observe(target); resetObserver?.observe(target); observed.add(target);
       });
     };
