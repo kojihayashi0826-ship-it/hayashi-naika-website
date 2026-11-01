@@ -84,7 +84,7 @@
     input(settings,'easing','フェードの変化','select',data.hero.easing,{choices:{'ease-in-out':'なめらか（標準）',linear:'一定の速さ',ease:'自然にゆっくり止まる','ease-in':'ゆっくり始まる','ease-out':'ゆっくり終わる'}});
     effectChoices(settings,'edgeSoftness','写真・動画の縁のぼかし（0〜20：0でなし）',data.hero.edgeSoftness,{min:0,max:20,step:.5},[['なし',0],['控えめ',3],['標準',6],['ふんわり',12]]);
     const slides=q('[data-slides]');slides.querySelectorAll('video').forEach(v=>{v.pause();v.removeAttribute('src');v.load();});slides.replaceChildren();
-    if(!data.hero.slides.length)slides.append(emptyState('写真・動画を追加してください。掲載するものがない間は、元の外観イラストを表示します。'));
+    if(!data.hero.slides.length)slides.append(emptyState('写真・動画を追加してください。掲載するものがない間は、画像を表示しません。'));
     data.hero.slides.forEach((item,i)=>{
       const video=ClinicContent.videoAsset(item.src);
       const row=card(slides,'slides',item,i,`トップ ${video?'動画':'写真'} ${i+1}`);
@@ -231,6 +231,3 @@
   }));
   window.ClinicEditorContent={render:renderExtra,collect:collectExtra,validate:validateExtra,preview,publication,saveFiles,isBusy:()=>pendingReads>0};
 })();
-
-
-

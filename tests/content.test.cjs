@@ -23,7 +23,11 @@ function setup(name='site-editor.html',options={}){
  const response=(json,status=200)=>({ok:status<400,status,headers:{get(){return null;}},json:async()=>json});
  w.fetch=async(url,opts={})=>{
   url=String(url);const method=opts.method||'GET';let body=opts.body?JSON.parse(opts.body):null;calls.push({url,method,body});
-  if(!url.startsWith('https://api.github.com/'))return response(remote);
+  if(!url.startsWith('https://api.github.com/')){
+   if(options.publicDelay)await sleep(options.publicDelay);
+   if(options.publicError)throw Error('Simulated settings request failure');
+   return response(remote);
+  }
   if(url==='https://api.github.com/user')return response({login:'test-user'});
   if(url.includes('/contents/index.html'))return response({encoding:'base64',content:Buffer.from(remoteHTML).toString('base64')});
   if(url.includes('/contents/data/site-updates.json')){
@@ -118,6 +122,35 @@ async function videoPlayerTests(){
  const broken=structuredClone(fixture);broken.hero.slides[0].src='assets/uploads/broken.mp4';const failure=setup('index.html',{source:broken});await waitFor(()=>failure.w.document.querySelector('.slideshow-image:not([aria-hidden])')?.alt==='Photo');assert.equal(failure.w.document.querySelector('.slideshow-image:not([aria-hidden])').alt,'Photo');failure.dom.window.close();
  const fading=structuredClone(fixture);fading.hero.fade=.25;fading.hero.slides=fading.hero.slides.slice(0,1);const fadePage=setup('index.html',{source:fading});await waitFor(()=>fadePage.w.document.querySelector('video'));const fadeToggle=fadePage.w.document.querySelector('.slideshow-video-toggle');assert.equal(fadeToggle.getAttribute('aria-label'),'動画を一時停止');fadeToggle.click();await sleep(350);assert.equal(fadePage.w.document.querySelector('video').paused,true);fadeToggle.click();await sleep(20);assert.equal(fadePage.w.document.querySelector('video').paused,false);fadePage.dom.window.close();
  console.log('PASS video player: muted/inline, ended-to-next, hover/keyboard/tab pause, single loop, manual/reduced/blocked playback, error fallback and cleanup');
+}
+async function heroLoadingTests(){
+ const staticPage=new JSDOM(load('index.html'));
+ assert.equal(staticPage.window.document.querySelector('[data-hero-slideshow] img,[data-hero-slideshow] source'),null,'No stale image even with JavaScript disabled');
+ assert.equal(staticPage.window.document.querySelector('link[rel="preload"][href*="illustration"]'),null,'Do not preload the deleted illustration');
+ staticPage.window.close();
+ const fixture=structuredClone(source);fixture.hero={autoplay:false,fade:0,slides:[{id:'current',src:'assets/uploads/current-photo.jpg',alt:'Current photo',enabled:true}]};
+ for(const mobile of [false,true]){
+  const t=setup('index.html',{source:fixture,publicDelay:100,mobile}),w=t.w,root=w.document.querySelector('[data-hero-slideshow]');
+  assert.equal(root.querySelector('img,source,video'),null,'No stale image before settings arrive');
+  assert.ok(root.querySelector('.slideshow-stage'),'Reserve the layout before loading');
+  await sleep(40);assert.equal(root.querySelector('img,video'),null,'No stale image during a slow request');
+  await waitFor(()=>root.querySelector('img'));
+  assert.equal(root.querySelector('img').getAttribute('src'),'assets/uploads/current-photo.jpg');
+  w.ClinicPublicContent.apply({loadError:true});
+  assert.equal(root.querySelector('img').alt,'Current photo','A failed refresh keeps the last loaded photo');
+  for(const slides of [[],[{...fixture.hero.slides[0],enabled:false}],[{src:'https://invalid.example/photo.jpg'}]]){
+   w.ClinicPublicContent.apply({...fixture,hero:{slides}});await sleep(10);
+   assert.equal(root.querySelector('img,source,video,button'),null,'Deleted, disabled and invalid slides stay empty');
+  }
+  w.ClinicPublicContent.apply(fixture);await waitFor(()=>root.querySelector('img'));
+  assert.equal(root.querySelector('img').alt,'Current photo','Adding a photo works after an empty playlist');
+  assert.equal(t.errors.length,0,JSON.stringify(t.errors));t.dom.window.close();
+ }
+ const failed=setup('index.html',{source:fixture,publicError:true});
+ await sleep(40);
+ assert.equal(failed.w.document.querySelector('[data-hero-slideshow] img,[data-hero-slideshow] video'),null,'A failed first load must not restore the illustration');
+ assert.equal(failed.errors.length,0,JSON.stringify(failed.errors));failed.dom.window.close();
+ console.log('PASS hero loading: slow desktop/mobile requests, failed loads/refreshes, empty/disabled/invalid playlists and recovery without stale images');
 }
 async function publicTests(){
  const fixture=structuredClone(source);fixture.highlights=[{id:'a',enabled:true,title:'FIRST',body:'<img src=x onerror=alert(1)>',mode:'banner'},{id:'b',enabled:true,title:'SECOND',body:'text',mode:'popup'},{id:'c',enabled:false,title:'HIDDEN'}];fixture.hero={hold:1,fade:.1,autoplay:true,pauseOnHover:true,slides:[{id:'1',enabled:true,src:'assets/clinic-logo-clean.webp',alt:'First',x:50,y:50},{id:'2',enabled:true,src:'assets/director-koji-hayashi.webp',alt:'Second',x:40,y:60}]};fixture.documents=[{id:'d',title:'施設基準',src:'assets/uploads/test.pdf',published:true},{id:'e',title:'非掲載',src:'assets/uploads/test.jpg',published:false}];
@@ -412,9 +445,4 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await publicTests();await repeatMotionTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
-
-
-
-
-
+(async()=>{seoTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await publicTests();await repeatMotionTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});

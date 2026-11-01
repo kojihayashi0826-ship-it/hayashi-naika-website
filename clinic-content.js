@@ -60,7 +60,13 @@
     const doc=root.ownerDocument;
     const hero=normalize({hero:config}).hero;
     const slides=hero.slides.filter(s=>s.enabled && slideAsset(s.src) && assetURL(s,preview));
-    if(!slides.length) slides.push(defaultSlide);
+    // An empty/disabled playlist is intentional; never restore a deleted image.
+    if(!slides.length){
+      root.replaceChildren();root.classList.add('clinic-slideshow');root.tabIndex=-1;
+      ['role','aria-label','aria-roledescription','aria-description'].forEach(name=>root.removeAttribute(name));
+      const stage=doc.createElement('div');stage.className='slideshow-stage';stage.setAttribute('aria-hidden','true');root.append(stage);
+      return ()=>{};
+    }
     const media=matchMedia('(prefers-reduced-motion: reduce)');
     const desktop=matchMedia('(min-width: 821px)');
     const hasVideo=slides.some(s=>videoAsset(s.src));
@@ -143,7 +149,7 @@
       if(isVideo(active))active.pause();
       img.alt=item.alt || (video?'林内科医院の動画':'林内科医院の写真');img.className='slideshow-image';img.style.objectFit=item.fit;img.style.objectPosition=`${item.x}% ${item.y}%`;
       if(video){img.muted=true;img.defaultMuted=true;img.setAttribute('muted','');img.playsInline=true;img.setAttribute('playsinline','');img.preload='auto';img.loop=slides.length===1;img.setAttribute('aria-label',img.alt);const poster=posterURL(item,preview);if(poster)img.poster=poster;}
-      else img.decoding='async';
+      else {img.decoding='async';if(index<0)img.fetchPriority='high';}
       let cancel,markReady;
       const ready=new Promise(resolve=>{
         let settled=false;const timeout=later(()=>done(false),12000);
@@ -252,8 +258,3 @@
   }
   window.ClinicContent=Object.freeze({fetchJSON,defaults,defaultSlide,normalize,safeAsset,imageAsset,videoAsset,slideAsset,assetURL,posterURL,slideshow,documentList,normalizeFaqs,faqHTML,renderFaq,updateFaqHTML});
 })();
-
-
-
-
-

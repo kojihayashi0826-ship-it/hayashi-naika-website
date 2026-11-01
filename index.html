@@ -31,7 +31,6 @@
   <title>林内科医院｜小松市の内科・生活習慣病・胃カメラ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="image" href="assets/clinic-illustration-new-building-v4.webp" type="image/webp">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&amp;family=Zen+Maru+Gothic:wght@500;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261027-desktop-motion2">
   <link rel="stylesheet" href="calendar-sync.css?v=20261025-circles1">
@@ -39,8 +38,8 @@
   <link rel="stylesheet" href="clinic-content.css?v=20261027-desktop-motion2">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
   <script src="clinic-design.js?v=20261024-gui1" defer></script>
-  <script src="clinic-content.js?v=20261027-guidance1" defer></script>
-  <script src="content-public.js?v=20261024-faq-seo1" defer></script>
+  <script src="clinic-content.js?v=20261101-hero-loading1" defer></script>
+  <script src="content-public.js?v=20261101-hero-loading1" defer></script>
   <script src="script.js?v=20261027-current-reception1" defer></script>
   <script type="application/ld+json">
 {
@@ -278,10 +277,10 @@
           </div>
 
           <div class="hero-visual">
-            <div data-hero-slideshow><picture>
-              <source srcset="assets/clinic-illustration-new-building-v4.webp" type="image/webp">
-              <img src="assets/clinic-illustration-new-building-v4.png" width="1672" height="941" fetchpriority="high" decoding="async" alt="林内科医院の外観イメージ（イラスト）">
-            </picture></div>
+            <!-- Reserve the photo area until the published slideshow settings load. -->
+            <div data-hero-slideshow class="clinic-slideshow">
+              <div class="slideshow-stage" aria-hidden="true"></div>
+            </div>
           </div>
         </div>
 
@@ -569,10 +568,3 @@
   </a>
 </body>
 </html>
-
-
-
-
-
-
-

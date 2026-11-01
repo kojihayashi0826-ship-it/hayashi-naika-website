@@ -65,8 +65,12 @@
     const content=ClinicContent.normalize(source);ClinicDesign.apply(content.design,content.theme);notices(content.highlights);
     // A failed JSON request must not overwrite the last published HTML with old defaults.
     if(!source.loadError)ClinicContent.renderFaq(document.querySelector('#faq .faq-list'),content.faqs);
-    const signature=JSON.stringify(content.hero);
-    if(signature!==heroSignature){heroSignature=signature;disposeHero?.();disposeHero=ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),content.hero);}
+    // Keep the current photo (or the empty initial stage) when settings fail.
+    // Legacy normalization defaults must not resurrect a deleted illustration.
+    if(!source.loadError){
+      const hero=source.hero || {slides:[]};
+      const signature=JSON.stringify(hero);
+      if(signature!==heroSignature){heroSignature=signature;disposeHero?.();disposeHero=ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),hero);}
+    }
   }};
 })();
-
