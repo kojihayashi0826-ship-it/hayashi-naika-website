@@ -1,0 +1,90 @@
+/* Horizontal dividers on the first-visit and care pages only. */
+.guidance-lines .bring-note,
+.guidance-lines .care-card {
+  /* Transparent sections use their parent's palette, including editor themes. */
+  --ink: inherit;
+  --text: inherit;
+  --muted: inherit;
+  --theme-heading: inherit;
+  --theme-link: inherit;
+  --green: inherit;
+  --green-dark: inherit;
+  --line: inherit;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.guidance-lines .bring-note {
+  margin: 28px 0 0;
+  padding: 28px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+.guidance-lines .bring-note + .bring-note { margin-top: 28px; }
+.guidance-lines .bring-note ul { grid-template-columns: minmax(0, 1fr); }
+.guidance-lines .bring-checklist {
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+.guidance-lines .bring-checklist li {
+  position: relative;
+  padding-left: 1.7em;
+}
+.guidance-lines .bring-checklist li::before {
+  position: absolute;
+  top: .43em;
+  left: 0;
+  width: .85em;
+  height: .85em;
+  border: 1.5px solid var(--green);
+  border-radius: 0;
+  content: "";
+}
+
+.guidance-lines .care-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+.guidance-lines .care-card {
+  grid-template-columns: 52px minmax(160px, .45fr) minmax(0, 1fr);
+  column-gap: 16px;
+  padding: 30px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+}
+.guidance-lines .care-card:hover { transform: none; box-shadow: none; }
+.guidance-lines .care-card .care-icon { grid-row: 1 / span 2; }
+.guidance-lines .care-card h3 {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  margin: 3px 0 0;
+}
+.guidance-lines .care-card p { grid-column: 3; grid-row: 1; }
+.guidance-lines .care-card .tag-list { grid-column: 3; grid-row: 2; }
+.guidance-lines .care-card > * { min-width: 0; }
+.guidance-lines .emergency-note {
+  padding: 24px 0 0;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 820px) {
+  .guidance-lines .care-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 24px 0;
+  }
+  .guidance-lines .care-card .care-icon { grid-row: 1; }
+  .guidance-lines .care-card h3 { grid-row: 1; margin: 3px 0 12px; }
+  .guidance-lines .care-card p { grid-column: 2; grid-row: 2; }
+  .guidance-lines .care-card .tag-list { grid-column: 2; grid-row: 3; }
+  .guidance-lines .bring-note { margin-top: 24px; padding-top: 24px; }
+  .guidance-lines .bring-note + .bring-note { margin-top: 24px; }
+}
