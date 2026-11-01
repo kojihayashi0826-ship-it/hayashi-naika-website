@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-01T11:30:10.239Z",
+  "updatedAt": "2026-11-01T11:31:19.570Z",
   "siteStatus": {
     "enabled": false,
     "title": "正式公開前・ウェブサイト調整中",
@@ -178,7 +178,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "08ffd378-10fe-44fb-9a8d-c4c814de30fa",
+  "revision": "3494237a-6598-4b23-9c26-be9c3e5e7b08",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
@@ -205,8 +205,8 @@
     "shadow": "soft",
     "motion": {
       "enabled": true,
-      "duration": 800,
-      "distance": 40,
+      "duration": 500,
+      "distance": 30,
       "direction": "left",
       "stagger": 30,
       "repeat": true
