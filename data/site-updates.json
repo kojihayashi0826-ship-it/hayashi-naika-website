@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-01T01:03:25.761Z",
+  "updatedAt": "2026-11-01T10:00:45.883Z",
   "siteStatus": {
     "enabled": false,
     "title": "正式公開前・ウェブサイト調整中",
@@ -178,7 +178,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "b38af14d-202a-4eca-b3d2-a6a1bcf0a2c7",
+  "revision": "panorama-20261101",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
@@ -199,7 +199,7 @@
     "spacing": 72,
     "contentWidth": 1120,
     "heroHeight": 520,
-    "heroLayout": "split",
+    "heroLayout": "panorama",
     "guideColumns": 3,
     "radius": 12,
     "shadow": "soft",
@@ -228,15 +228,27 @@
     "autoplay": true,
     "hold": 6,
     "fade": 1.2,
-    "edgeSoftness": 3,
+    "edgeSoftness": 0,
     "easing": "ease-in-out",
     "pauseOnHover": false,
     "slides": [
       {
+        "id": "slide-1793425769450-b6aa0d592c016",
+        "enabled": true,
+        "fit": "cover",
+        "x": 50,
+        "y": 35,
+        "alt": "正面_website_top",
+        "src": "assets/uploads/72a41a40-b6ab-492e-8845-af60e08c4a21.jpg",
+        "name": "正面_website_top.jpg",
+        "poster": "",
+        "duration": null
+      },
+      {
         "id": "slide-1793425432437-b140bfb090bb8",
         "enabled": true,
-        "fit": "contain",
-        "x": 100,
+        "fit": "cover",
+        "x": 50,
         "y": 50,
         "alt": "看板下から(横長)",
         "src": "assets/uploads/2ac115d3-1dcd-48a1-8efc-be5d412ab868.jpg",
@@ -245,22 +257,10 @@
         "duration": null
       },
       {
-        "id": "slide-1793425769450-b6aa0d592c016",
-        "enabled": true,
-        "fit": "contain",
-        "x": 100,
-        "y": 50,
-        "alt": "正面_website_top",
-        "src": "assets/uploads/72a41a40-b6ab-492e-8845-af60e08c4a21.jpg",
-        "name": "正面_website_top.jpg",
-        "poster": "",
-        "duration": null
-      },
-      {
         "id": "slide-1793425435565-bfd471388c00a8",
         "enabled": true,
-        "fit": "contain",
-        "x": 100,
+        "fit": "cover",
+        "x": 50,
         "y": 50,
         "alt": "林内科医院の外観と駐車場(横長)-1",
         "src": "assets/uploads/b88140ee-ca86-402f-8ab6-28c320fd767e.jpg",
@@ -271,8 +271,8 @@
       {
         "id": "slide-1793014883497-0c3d1c4988e3f",
         "enabled": true,
-        "fit": "contain",
-        "x": 100,
+        "fit": "cover",
+        "x": 50,
         "y": 50,
         "alt": "林内科医院の受付サイン",
         "src": "assets/uploads/53ff37e5-0605-4052-9c4f-e01452721fbf.jpg",
@@ -282,8 +282,8 @@
       {
         "id": "slide-1793014810214-b4bb4899d68e78",
         "enabled": true,
-        "fit": "contain",
-        "x": 100,
+        "fit": "cover",
+        "x": 50,
         "y": 50,
         "alt": "木のぬくもりあるクリニック待合室",
         "src": "assets/uploads/a477cf6c-2850-462d-a110-63beacb3fe7d.jpg",
@@ -293,8 +293,8 @@
       {
         "id": "slide-1793493599437-46b702f195168",
         "enabled": true,
-        "fit": "contain",
-        "x": 100,
+        "fit": "cover",
+        "x": 50,
         "y": 50,
         "alt": "木製ドアと椅子が並ぶ室内-1",
         "src": "assets/uploads/64696cd1-a21b-4b69-94f2-654603f53a83.jpg",

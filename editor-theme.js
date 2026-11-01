@@ -91,7 +91,7 @@
     const wrap=document.createElement('label');wrap.textContent=label;const out=document.createElement('output');out.dataset.designOutput=key;
     const input=document.createElement('input');input.type='range';input.min=ClinicDesign.ranges[key][0];input.max=ClinicDesign.ranges[key][1];input.step=step;input.dataset.designField=key;input.dataset.numeric='true';input.setAttribute('aria-label',label);wrap.append(out,input);controls.append(wrap);
   });
-  [['heroLayout','トップ画像の配置',[['overlay','画像に文字を重ねる'],['split','文章と画像を左右に並べる'],['stacked','画像を上・文章を下にする']]],['guideColumns','案内カードの列数（PC）',[[1,'1列'],[2,'2列'],[3,'3列']]],['shadow','カードの影',[['none','なし'],['soft','控えめ'],['strong','はっきり']]]].forEach(([key,label,options])=>{
+  [['heroLayout','トップ画像の配置',[['panorama','横長パノラマ'],['overlay','画像に文字を重ねる'],['split','文章と画像を左右に並べる'],['stacked','画像を上・文章を下にする']]],['guideColumns','案内カードの列数（PC）',[[1,'1列'],[2,'2列'],[3,'3列']]],['shadow','カードの影',[['none','なし'],['soft','控えめ'],['strong','はっきり']]]].forEach(([key,label,options])=>{
     const wrap=document.createElement('label');wrap.textContent=label;const input=document.createElement('select');input.dataset.designField=key;if(key==='guideColumns')input.dataset.numeric='true';options.forEach(([value,text])=>{const o=document.createElement('option');o.value=value;o.textContent=text;input.append(o);});wrap.append(input);controls.append(wrap);
   });
   controls.addEventListener('input',()=>{collect();refresh();markDirty();});

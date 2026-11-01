@@ -9,7 +9,7 @@
     const input=value && typeof value==='object'?value:{};
     const result={...defaults};
     Object.entries(ranges).forEach(([key,[min,max]])=>{if(typeof input[key]==='number' && Number.isFinite(input[key]))result[key]=Math.round(Math.min(max,Math.max(min,input[key])));});
-    if(['overlay','split','stacked'].includes(input.heroLayout))result.heroLayout=input.heroLayout;
+    if(['overlay','split','stacked','panorama'].includes(input.heroLayout))result.heroLayout=input.heroLayout;
     if([1,2,3].includes(input.guideColumns))result.guideColumns=input.guideColumns;
     if(['none','soft','strong'].includes(input.shadow))result.shadow=input.shadow;
     result.order=[...new Set([...(Array.isArray(input.order)?input.order.filter(id=>typeof id==='string' && Object.hasOwn(sections,id)):[]),...order])];

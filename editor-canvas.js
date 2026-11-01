@@ -38,7 +38,7 @@
     q('[data-visual-help]').textContent=selected.kind==='section'?'↔ で横幅、↕ で上下の余白を調整。横幅はPC表示で調整します。文字を選ぶと文字サイズを変えられます。':selected.kind==='hero'?'↕ を上下に引っ張ると写真の高さが変わります。配置は下の絵から選べます。':'↘ を右下に引っ張ると文字が大きくなります。同じ種類の文字にも反映します。';
     const host=q('[data-visual-options]');host.replaceChildren();const d=api().getDesign();
     if(selected.kind==='hero'){
-      [['overlay','▣ 画像に文字'],['split','▤ ▧ 横並び'],['stacked','▧ / ▤ 縦並び']].forEach(([value,text])=>host.append(button(text,()=>{change({...api().getDesign(),heroLayout:value},'トップ画像の配置を変更しました');inspector();},d.heroLayout===value)));
+      [['panorama','▤ 横長パノラマ'],['overlay','▣ 画像に文字'],['split','▤ ▧ 横並び'],['stacked','▧ / ▤ 縦並び']].forEach(([value,text])=>host.append(button(text,()=>{change({...api().getDesign(),heroLayout:value},'トップ画像の配置を変更しました');inspector();},d.heroLayout===value)));
     }else if(selected.kind==='heading'||selected.kind==='text'){
       const key=selected.kind==='heading'?'headingScale':'fontScale';[-5,5].forEach(delta=>host.append(button(delta<0?'A− 小さく':'A＋ 大きく',()=>change({...api().getDesign(),[key]:api().getDesign()[key]+delta},'文字サイズを変更しました'))));
     }else if(selected.id==='links'){

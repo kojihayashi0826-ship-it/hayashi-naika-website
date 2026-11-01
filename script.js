@@ -361,7 +361,16 @@ function initPageMotion() {
   updateHeader();
   window.addEventListener("scroll", updateHeader, { passive: true });
 
-  const revealSelector = [
+  const isPanoramaHome = !!document.querySelector('body.panorama-home');
+  const textRevealSelector = [
+    '.hero-title-group', '.hero-lead strong', '.panorama-caption > span',
+    '.panorama-intro > h2', '.panorama-intro > p', '.section-heading',
+    '.walkin-copy > div', '.fever-card > div:not(.card-icon)',
+    '.page-link-card h3', '.page-link-more', '.access-info',
+    '.news-content', '.faq-list summary', '.faq-list details > p',
+    '.contact-inner h2', '.contact-details'
+  ].join(',');
+  const revealSelector = isPanoramaHome ? textRevealSelector : [
     ".quick-guide .walkin-bar",
     ".quick-guide .guide-card",
     ".section-heading",
@@ -408,7 +417,7 @@ function initPageMotion() {
     const entranceObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => entry.target.classList.toggle("motion-offscreen", !entry.isIntersecting));
     }, { threshold: 0 });
-    document.querySelectorAll('.hero-copy, .today-panel').forEach(target => entranceObserver.observe(target));
+    if (!isPanoramaHome) document.querySelectorAll('.hero-copy, .today-panel').forEach(target => entranceObserver.observe(target));
   }
 
   const navLinks = [...document.querySelectorAll('.global-nav a[href^="#"]')];

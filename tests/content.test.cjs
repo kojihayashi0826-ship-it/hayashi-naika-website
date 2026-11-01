@@ -228,7 +228,7 @@ async function publicTests(){
  assert.equal(active(dw),'First');assert.equal(dw.document.querySelectorAll('.slideshow-image').length,2);
  assert.equal(dw.document.querySelector('.slideshow-image:not([aria-hidden])').style.getPropertyValue('--slideshow-fade-duration'),'100ms');
  await sleep(1250);assert.equal(active(dw),'Second');
- const reducedCard=dw.document.querySelector('.guide-card');assert.ok(dw.qaObservers.some(o=>o.targets.has(reducedCard)));
+ const reducedText=dw.document.querySelector('.hero-title-group');assert.ok(dw.qaObservers.some(o=>o.targets.has(reducedText)));
  assert.equal(desktop.errors.length,0);desktop.dom.window.close();
  const singleFixture=structuredClone(fixture);singleFixture.hero.slides=singleFixture.hero.slides.slice(0,1);const single=setup('index.html',{source:singleFixture});await sleep(35);assert.equal(single.w.document.querySelector('.slideshow-controls').hidden,true);assert.equal(single.w.document.querySelector('.clinic-slideshow').tabIndex,-1);single.dom.window.close();
  const board=setup('clinic-documents.html',{source:fixture});await sleep(20);assert.equal(board.w.document.querySelectorAll('.document-card').length,1);assert.equal(board.w.document.querySelector('.document-card a').textContent,'施設基準');assert.equal(board.errors.length,0);board.dom.window.close();
@@ -237,17 +237,20 @@ async function publicTests(){
 
 async function repeatMotionTests(){
  const t=setup('index.html'),w=t.w;await sleep(70);
- const target=w.document.querySelector('.guide-card');
+ const target=w.document.querySelector('.walkin-copy > div');
  const observer=w.qaObservers.find(o=>o.targets.has(target));assert.ok(observer);
  for(let i=0;i<3;i++){
   observer.callback([{target,isIntersecting:true,intersectionRatio:.01}],observer);assert.equal(target.classList.contains('is-visible'),true);assert.ok(observer.targets.has(target));
   observer.callback([{target,isIntersecting:false,intersectionRatio:0}],observer);assert.equal(target.classList.contains('is-visible'),false);
  }
- const hero=w.document.querySelector('.hero-copy');const entrance=w.qaObservers.find(o=>o.targets.has(hero));
- entrance.callback([{target:hero,isIntersecting:false}]);assert.equal(hero.classList.contains('motion-offscreen'),true);
- entrance.callback([{target:hero,isIntersecting:true}]);assert.equal(hero.classList.contains('motion-offscreen'),false);
+ const hero=w.document.querySelector('.hero-title-group');const entrance=w.qaObservers.find(o=>o.targets.has(hero));
+ entrance.callback([{target:hero,isIntersecting:false}]);assert.equal(hero.classList.contains('is-visible'),false);
+ entrance.callback([{target:hero,isIntersecting:true}]);assert.equal(hero.classList.contains('is-visible'),true);
+ assert.equal(w.document.querySelector('.hero-visual').classList.contains('reveal'),false);
+ assert.equal(w.document.querySelector('.guide-card').classList.contains('reveal'),false);
+ assert.match(w.document.querySelector('.contact-fax').textContent,/0761-24-6645/);
  assert.equal(t.errors.length,0);t.dom.window.close();
- console.log('PASS repeat motion: repeated entries/exits, partial visibility, retained observation and hero entrance reset');
+ console.log('PASS repeat motion: repeated entries/exits, partial visibility, retained observation, static photo/cards and hero text re-entry');
 }
 
 async function themeTests(){
@@ -303,15 +306,15 @@ async function designTests(){
  const colors=w.ClinicTheme.colors({custom});
  for(const role of ['page','surface','card','notice'])for(const part of ['ink','heading','muted'])assert.ok(w.ClinicTheme.contrast(colors[`--theme-${role}-${part}`],colors[`--theme-${role}`])>=4.5,role+part);
  w.document.querySelector('[data-design-section="news"] [data-move="1"]').click();
- field(w,'[data-design-field="fontScale"]','125');field(w,'[data-design-field="heroLayout"]','split');field(w,'[data-design-field="guideColumns"]','2');
+ field(w,'[data-design-field="fontScale"]','125');field(w,'[data-design-field="heroLayout"]','panorama');field(w,'[data-design-field="guideColumns"]','2');
  field(w,'[data-custom-colors] [data-custom-enabled="background"]',true);field(w,'[data-custom-colors] [data-custom-color="background"]','#112233');
  field(w,'[data-design-order] [data-custom-enabled="access"]',true);field(w,'[data-design-order] [data-custom-color="access"]','#fbeedf');
- const backup=w.qa.prepare();assert.equal(backup.design.order[0],'visit');assert.equal(backup.design.fontScale,125);assert.equal(backup.design.heroLayout,'split');assert.equal(backup.design.guideColumns,2);assert.equal(backup.theme.custom.background,'#112233');assert.equal(backup.design.sectionColors.access,'#fbeedf');
+ const backup=w.qa.prepare();assert.equal(backup.design.order[0],'visit');assert.equal(backup.design.fontScale,125);assert.equal(backup.design.heroLayout,'panorama');assert.equal(backup.design.guideColumns,2);assert.equal(backup.theme.custom.background,'#112233');assert.equal(backup.design.sectionColors.access,'#fbeedf');
  w.qa.set(backup);assert.deepEqual(w.qa.prepare(),backup);
  await sleep(550);assert.equal((await w.ClinicDrafts.read()).data.design.fontScale,125);
- await connect(t);await w.ClinicPublisher.publish();assert.equal(t.getRemote().design.heroLayout,'split');assert.equal(t.getRemote().theme.custom.background,'#112233');
+ await connect(t);await w.ClinicPublisher.publish();assert.equal(t.getRemote().design.heroLayout,'panorama');assert.equal(t.getRemote().theme.custom.background,'#112233');
  const publicPage=setup('index.html',{source:JSON.parse(JSON.stringify(t.getRemote()))}),pub=publicPage.w;await sleep(35);
- assert.equal(pub.document.documentElement.dataset.heroLayout,'split');assert.equal(pub.document.documentElement.style.getPropertyValue('--design-font'),'1.25');
+ assert.equal(pub.document.documentElement.dataset.heroLayout,'panorama');assert.equal(pub.document.documentElement.style.getPropertyValue('--design-font'),'1.25');
  assert.equal(pub.document.querySelector('[data-home-layout] [data-design-section]').dataset.designSection,'visit');
  assert.equal(pub.document.querySelector('#access').style.backgroundColor,'rgb(251, 238, 223)');
  assert.equal(pub.document.querySelectorAll('.access-caution').length,0);assert.equal(pub.document.querySelector('.fever-card .card-label').textContent,'発熱のある方へ');assert.equal(pub.document.querySelector('.fever-card').textContent.includes('徒歩'),false);assert.equal(pub.document.querySelector('#news h2').textContent,'お知らせ');
