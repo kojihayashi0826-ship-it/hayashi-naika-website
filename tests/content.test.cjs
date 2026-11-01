@@ -155,6 +155,58 @@ async function heroLoadingTests(){
  assert.equal(failed.errors.length,0,JSON.stringify(failed.errors));failed.dom.window.close();
  console.log('PASS hero loading: slow desktop/mobile requests, failed loads/refreshes, empty/disabled/invalid playlists and recovery without stale images');
 }
+async function noticeLoadingTests(){
+ for(const name of ['index.html','care.html','first-visit.html','tests.html','doctor.html','vaccines.html','checkups.html']){
+  const dom=new JSDOM(load(name)),d=dom.window.document;
+  const status=d.querySelector('[data-site-status]');
+  assert.equal(status.hidden,true,name+': initial status banner must be hidden without JavaScript');
+  assert.equal(status.textContent.trim(),'','No obsolete initial banner text');
+  const notices=d.querySelector('[data-important-notices]');
+  if(notices){assert.equal(notices.hidden,true);assert.equal(notices.children.length,0);}
+  dom.window.close();
+ }
+ const fixture=structuredClone(source);
+ fixture.highlights=[{id:'old',enabled:true,title:'旧休診案内',body:'古い本文',mode:'popup'}];
+ fixture.siteStatus={enabled:true,title:'公開前の案内',body:'以前の本文'};
+ for(const mobile of [false,true]){
+  const t=setup('index.html',{source:fixture,publicDelay:100,mobile}),w=t.w;
+  const root=w.document.querySelector('[data-important-notices]'),status=w.document.querySelector('[data-site-status]');
+  assert.equal(root.hidden,true);assert.equal(status.hidden,true);
+  await sleep(35);assert.equal(root.children.length,0);assert.equal(status.hidden,true);
+  await waitFor(()=>root.children.length===1);
+  assert.equal(root.hidden,false);assert.equal(status.hidden,false);
+  let finishOld,finishNew;
+  w.fetch=()=>new Promise(resolve=>{finishOld=resolve;});
+  const pending=w.refreshManagedContent();await waitFor(()=>finishOld);
+  w.dispatchEvent(new w.PageTransitionEvent('pagehide',{persisted:true}));
+  assert.equal(root.hidden,true,'Hide before the browser captures history');
+  assert.equal(root.children.length,0);assert.equal(status.hidden,true);assert.equal(w.document.querySelector('.notice-dialog'),null);
+  w.fetch=()=>new Promise(resolve=>{finishNew=resolve;});
+  w.dispatchEvent(new w.PageTransitionEvent('pageshow',{persisted:true}));
+  assert.equal(root.hidden,true,'History restoration waits for a fresh response');
+  await waitFor(()=>finishNew);
+  const latest={...fixture,highlights:[],highlight:fixture.highlight,news:[],siteStatus:{enabled:false}};
+  finishNew({ok:true,json:async()=>latest});await waitFor(()=>t.w.document.querySelector('[data-mobile-status-detail]').textContent!=='確認中');
+  finishOld({ok:true,json:async()=>fixture});await pending;await sleep(10);
+  assert.equal(root.hidden,true);assert.equal(root.children.length,0,'Late pre-navigation response cannot resurrect the deleted notice');assert.equal(status.hidden,true);
+  // Unchanged notices must reappear after a history refresh, not remain hidden forever.
+  w.fetch=async()=>({ok:true,json:async()=>fixture});await w.refreshManagedContent();assert.equal(root.hidden,false);
+  w.dispatchEvent(new w.PageTransitionEvent('pagehide',{persisted:true}));
+  w.dispatchEvent(new w.PageTransitionEvent('pageshow',{persisted:true}));await waitFor(()=>!root.hidden);
+  // A frozen/background tab also clears old notices before it becomes visible.
+  Object.defineProperty(w.document,'hidden',{configurable:true,value:true});w.document.dispatchEvent(new w.Event('visibilitychange'));
+  assert.equal(root.hidden,true);assert.equal(status.hidden,true);
+  w.fetch=async()=>{throw Error('offline');};
+  Object.defineProperty(w.document,'hidden',{configurable:true,value:false});w.document.dispatchEvent(new w.Event('visibilitychange'));
+  await sleep(20);assert.equal(root.hidden,true);assert.equal(root.children.length,0);assert.equal(status.hidden,true,'Failed refresh must not restore a historical default banner');
+  assert.equal(t.errors.length,0,JSON.stringify(t.errors));t.dom.window.close();
+ }
+ const failed=setup('index.html',{source:fixture,publicError:true});await sleep(25);
+ assert.equal(failed.w.document.querySelector('[data-site-status]').hidden,true);
+ assert.equal(failed.w.document.querySelector('[data-important-notices]').hidden,true);
+ failed.dom.window.close();
+ console.log('PASS notice loading: empty initial HTML, slow desktop/mobile loads, history/background snapshots, stale responses, unchanged recovery and offline defaults');
+}
 async function publicTests(){
  const fixture=structuredClone(source);fixture.highlights=[{id:'a',enabled:true,title:'FIRST',body:'<img src=x onerror=alert(1)>',mode:'banner'},{id:'b',enabled:true,title:'SECOND',body:'text',mode:'popup'},{id:'c',enabled:false,title:'HIDDEN'}];fixture.hero={hold:1,fade:.1,autoplay:true,pauseOnHover:true,slides:[{id:'1',enabled:true,src:'assets/clinic-logo-clean.webp',alt:'First',x:50,y:50},{id:'2',enabled:true,src:'assets/director-koji-hayashi.webp',alt:'Second',x:40,y:60}]};fixture.documents=[{id:'d',title:'施設基準',src:'assets/uploads/test.pdf',published:true},{id:'e',title:'非掲載',src:'assets/uploads/test.jpg',published:false}];
  const t=setup('index.html',{source:fixture}),w=t.w;await sleep(35);assert.equal(w.document.querySelectorAll('.important-notice').length,2);assert.equal(w.document.querySelectorAll('.important-notice img').length,0);assert.equal(w.document.querySelector('dialog').open,true);
@@ -538,4 +590,4 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await noticeSyncTests();await publicationReliabilityTests();await editorReadRaceTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await publicTests();await repeatMotionTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+(async()=>{seoTests();await noticeSyncTests();await publicationReliabilityTests();await editorReadRaceTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await noticeLoadingTests();await publicTests();await repeatMotionTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});

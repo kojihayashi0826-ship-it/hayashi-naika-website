@@ -44,13 +44,18 @@
     if(item.linkText && /^(https?:\/\/|tel:|#)/.test(item.linkUrl)){const a=document.createElement('a');a.href=item.linkUrl;a.textContent=item.linkText;if(/^https?:/.test(item.linkUrl)){a.target='_blank';a.rel='noopener noreferrer';}fragment.append(a);}
     return fragment;
   }
+  function clearNotices() {
+    disposeNotices?.();disposeNotices=null;
+    const root=document.querySelector('[data-important-notices]');
+    if(root){root.hidden=true;root.replaceChildren();}
+  }
   function notices(items) {
-    disposeNotices?.();
+    clearNotices();
     const root=document.querySelector('[data-important-notices]');if(!root)return;
-    root.replaceChildren();
     const active=items.filter(h=>h.enabled && h.title);
     // All notices remain available in the page, including dismissed popup notices.
     active.forEach(item=>{const article=document.createElement('article');article.className='important-notice';const inner=document.createElement('div');inner.className='container';inner.append(noticeContent(item,'h2'));const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label',item.title+'を閉じる');close.onclick=()=>article.remove();inner.append(close);article.append(inner);root.append(article);});
+    root.hidden=active.length===0;
     const key=item=>'hayashi-notice-v2:'+JSON.stringify([item.id,item.title,item.body,item.linkUrl,item.linkText]);
     const popups=active.filter(h=>{if(h.mode!=='popup')return false;try{return sessionStorage.getItem(key(h))!=='closed';}catch{return true;}});
     if(!popups.length){disposeNotices=null;return;}
@@ -61,8 +66,9 @@
     dialog.addEventListener('close',()=>{popups.forEach(item=>{try{sessionStorage.setItem(key(item),'closed');}catch{}});});
     document.body.append(dialog);dialog.showModal();disposeNotices=()=>dialog.remove();
   }
-  window.ClinicPublicContent={apply(source){
-    const content=ClinicContent.normalize(source);ClinicDesign.apply(content.design,content.theme);notices(ClinicContent.visibleHighlights(source));
+  clearNotices();
+  window.ClinicPublicContent={clearNotices,apply(source){
+    const content=ClinicContent.normalize(source);ClinicDesign.apply(content.design,content.theme);notices(source.loadError?[]:ClinicContent.visibleHighlights(source));
     // A failed JSON request must not overwrite the last published HTML with old defaults.
     if(!source.loadError)ClinicContent.renderFaq(document.querySelector('#faq .faq-list'),content.faqs);
     // Keep the current photo (or the empty initial stage) when settings fail.

@@ -7,7 +7,7 @@ const defaultManagedContent = {
   news: [],
   // サイト案内・お知らせ・休診・スタッフ募集・検査等は data/site-updates.json で管理します。
   // 管理データ取得失敗時に、古いお知らせや仮の休診日を代替表示しない設計です。
-  siteStatus: { enabled: true, title: "正式公開前・ウェブサイト調整中", body: "新医院の開院に向けて、掲載内容を最終調整しています。内容は変更になる場合があります。" },
+  siteStatus: { enabled: false, title: "", body: "" },
   highlight: { enabled: false, mode: "banner", title: "", body: "", linkText: "", linkUrl: "" },
   recruitment: { enabled: false, title: "スタッフ募集中", lead: "", conditions: [], note: "", buttonText: "", buttonUrl: "" },
   tests: [],
@@ -517,7 +517,7 @@ function renderSiteStatus(siteStatus) {
   if (!section) return;
 
   const enabled = !!(siteStatus && siteStatus.enabled);
-  section.hidden = !enabled;
+  section.hidden = true;
   if (!enabled) return;
 
   const title = section.querySelector("[data-site-status-title]");
@@ -533,6 +533,7 @@ function renderSiteStatus(siteStatus) {
     body.textContent = bodyText;
     body.hidden = bodyText === "";
   }
+  section.hidden = !titleText && !bodyText;
 }
 
 function renderRecruitment(recruitment) {
@@ -693,9 +694,26 @@ function showStatusUnavailable() {
 }
 
 let refreshingContent = false;
+let contentRequestGeneration = 0;
+let contentSuspended = false;
+// Remove transient notices before the browser saves a page/history snapshot.
+// Responses started before suspension must not refill that snapshot later.
+function suspendManagedContent() {
+  contentSuspended = true;
+  contentRequestGeneration++;
+  refreshingContent = false;
+  lastContentSignature = "";
+  ClinicPublicContent.clearNotices?.();
+  renderSiteStatus(null);
+}
+function resumeManagedContent() {
+  contentSuspended = false;
+  refreshManagedContent();
+}
 async function refreshManagedContent() {
-  if (refreshingContent) return;
+  if (refreshingContent || contentSuspended) return;
   refreshingContent = true;
+  const generation = ++contentRequestGeneration;
   if (!lastContentSignature) {
     const badge = document.querySelector(".mobile-clinic-status");
     if (badge) {
@@ -704,21 +722,29 @@ async function refreshManagedContent() {
       if (detail) detail.textContent = "確認中";
     }
   }
-  try { applyManagedContent(await loadManagedContent()); }
+  try {
+    const content = await loadManagedContent();
+    if (generation !== contentRequestGeneration || contentSuspended) return;
+    applyManagedContent(content);
+  }
   catch (error) {
+    if (generation !== contentRequestGeneration || contentSuspended) return;
+    ClinicPublicContent.clearNotices?.();
+    renderSiteStatus(null);
     console.warn("診療状況を表示できませんでした。", error);
     showStatusUnavailable();
   }
-  finally { refreshingContent = false; }
+  finally { if (generation === contentRequestGeneration) refreshingContent = false; }
 }
 // Page animation must not wait for the content request (up to 8 seconds).
 initPageMotion();
 refreshManagedContent();
 setInterval(updateTodayStatus, 60000);
 setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 15000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshManagedContent(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) suspendManagedContent(); else resumeManagedContent(); });
 window.addEventListener('focus',()=>{if(!document.hidden)refreshManagedContent();});
-window.addEventListener('pageshow',event=>{if(event.persisted)refreshManagedContent();});
+window.addEventListener('pagehide',suspendManagedContent);
+window.addEventListener('pageshow',event=>{if(event.persisted || contentSuspended)resumeManagedContent();});
 window.addEventListener('storage',event=>{if(event.key==='hayashi-public-content-updated' && !document.hidden)refreshManagedContent();});
 
 
