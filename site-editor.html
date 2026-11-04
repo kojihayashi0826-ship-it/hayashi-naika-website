@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="site-editor.css?v=20261024-1">
   <link rel="stylesheet" href="calendar-sync.css?v=20261025-circles1">
   <link rel="stylesheet" href="editor-publish.css?v=20261101-publish2">
-  <script src="clinic-schedule.js?v=20261025-circles1" defer></script>
+  <script src="clinic-schedule.js?v=20261104-seasonal" defer></script>
   <link rel="stylesheet" href="clinic-content.css?v=20261027-desktop-motion2">
   <link rel="stylesheet" href="editor-content.css?v=20261027-motion1">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
@@ -25,7 +25,7 @@
   <script src="editor-motion.js?v=20261101-motion-editor1" defer></script>
   <link rel="stylesheet" href="editor-canvas.css?v=20261024-gui1">
   <script src="editor-canvas.js?v=20261101-panorama1" defer></script>
-  <script src="site-editor.js?v=20261101-publish2" defer></script>
+  <script src="site-editor.js?v=20261104-seasonal" defer></script>
   <script src="editor-drafts.js?v=20261024-1" defer></script>
   <script src="github-publisher.js?v=20261101-publish2" defer></script>
 </head>
@@ -113,7 +113,10 @@
         <section class="editor-card">
           <div class="card-heading"><div><p>NEWS</p><h2>お知らせ</h2></div><button type="button" class="primary compact" data-add-news>新規追加</button></div>
           <p class="field-help">「掲載する」で記事一覧へ、「ページ上部にも表示」で上部の帯にも表示します。同じ記事の本文・非掲載・削除が両方に連動します。変更後は「公開する」を押してください。日付は予約投稿ではありません。</p>
-          <button type="button" class="secondary compact" data-new-closure-notice>休診のお知らせを作成 →</button>
+          <div class="two-columns">
+            <button type="button" class="secondary compact" data-new-closure-notice>臨時休診のお知らせを作成 →</button>
+            <button type="button" class="secondary compact" data-open-seasonal>年末年始・お盆の休診を登録 →</button>
+          </div>
           <p class="privacy-note">「非掲載」はサイト画面に出さない設定です。公開リポジトリ・JSONには残るため、患者情報・応募者情報・機密事項は入力しないでください。</p>
           <div class="stack-list news-editor-list" data-news-items></div>
         </section>
@@ -125,8 +128,13 @@
       </div>
       <div class="editor-panel" data-panel="closures" hidden>
         <section class="editor-card">
-          <div class="card-heading"><div><p>CLOSURES &amp; CALENDAR</p><h2>臨時休診のお知らせ</h2></div><button type="button" class="primary compact" data-add-closure>休診日を追加</button></div>
-          <p class="field-help">日付と休診時間帯を入力すると、カレンダー・本日の診療・お知らせが連動します。1日の休診は開始日だけで入力できます。木曜・日曜・祝日の登録は不要です。</p>
+          <div class="card-heading"><div><p>CLOSURES &amp; CALENDAR</p><h2>休診日の登録</h2></div><button type="button" class="secondary compact" data-add-closure>その他の臨時休診を追加</button></div>
+          <h3>年末年始・お盆の休診</h3>
+          <p class="field-help">休診の種類を選び、初日と最終日を入力してください。期間中の木曜・日曜・祝日もまとめて指定できます。お知らせの見出しと本文は自動で作成され、公開すると診療カレンダーと「本日の診療」にも反映されます。</p>
+          <div class="two-columns">
+            <button type="button" class="primary compact" data-add-season="yearEnd">年末年始の休診を追加</button>
+            <button type="button" class="primary compact" data-add-season="obon">お盆の休診を追加</button>
+          </div>
           <div class="stack-list" data-closures></div>
         </section>
         <section class="editor-card"><div class="card-heading"><div><p>LIVE PREVIEW</p><h2>カレンダー表示の確認</h2></div></div><p class="field-help">編集中の内容です。公開サイトは「公開する」を押すまで変わりません。</p><div data-editor-calendar></div></section>

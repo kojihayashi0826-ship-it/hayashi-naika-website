@@ -44,6 +44,10 @@
   "2027-11-23": "勤労感謝の日"
 };
   const periods = { all: "終日休診", am: "午前休診", pm: "午後休診" };
+  const seasonalNotices = {
+    yearEnd: { label: "年末年始休診", title: "年末年始の診療日程について" },
+    obon: { label: "夏季休診（お盆休み）", title: "お盆期間中の診療日程について" }
+  };
   const regular = { 0: [], 1: [["09:00","12:00"],["13:30","18:30"]],
     2: [["09:00","12:00"],["13:30","18:30"]], 3: [["09:00","12:00"],["13:30","18:30"]],
     4: [], 5: [["09:00","12:00"],["13:30","18:30"]], 6: [["09:00","12:00"],["13:30","18:30"]] };
@@ -115,11 +119,21 @@
     return c.start === c.end ? pretty(c.start,true) : `${pretty(c.start,true)}〜${pretty(c.end,true)}`;
   }
   function closureNews(closures) {
-    return active(closures).filter(c => c.announce).map(c => ({
-      id: `closure-news-${c.id || c.start+"-"+c.end+"-"+c.period}`, date: c.noticeDate,
-      category: "closure", title: c.label.endsWith("お知らせ") ? c.label : `${c.label}のお知らせ`, published: true,
-      body: `${rangeLabel(c)}は${periods[c.period]}です。${c.body ? "\n"+c.body : ""}`
-    }));
+    return active(closures).filter(c => c.announce).map(c => {
+      const season = Object.hasOwn(seasonalNotices, c.season) ? seasonalNotices[c.season] : null;
+      let title = c.label.endsWith("お知らせ") ? c.label : `${c.label}のお知らせ`;
+      let statement = `${rangeLabel(c)}は${periods[c.period]}です。`;
+      if (season) {
+        title = season.title;
+        const first = pretty(c.start, true);
+        const last = pretty(c.end, c.start.slice(0, 4) !== c.end.slice(0, 4));
+        statement = (c.start === c.end ? `${first}は` : `${first}から${last}まで、`) + "休診いたします。";
+      }
+      return {
+        id: `closure-news-${c.id || c.start+"-"+c.end+"-"+c.period}`, date: c.noticeDate,
+        category: "closure", title, published: true, body: c.body ? statement + "\n" + c.body : statement
+      };
+    });
   }
   function calendarMarkup() {
     return `<div class="calendar-header"><h3 data-calendar-title></h3><div class="calendar-controls"><button type="button" data-calendar-prev aria-label="前の月">前月</button><button type="button" data-calendar-next aria-label="次の月">翌月</button></div></div><div class="calendar-legend"></div><div class="calendar-grid" data-calendar-grid aria-live="polite"></div><p class="calendar-note" data-calendar-note></p><div class="seasonal-closures" data-closure-summary hidden></div>`;
@@ -196,6 +210,6 @@
       button.onclick=()=>{ const next=new Date(Date.UTC(year,m-1+step,1)).toISOString().slice(0,7); renderCalendar(root,closures,{...options,month:next}); };
     }
   }
-  return Object.freeze({ holidays, regular, periods, isDate, shift, japanNow, normalize, active, matching,
+  return Object.freeze({ holidays, regular, periods, seasonalNotices, isDate, shift, japanNow, normalize, active, matching,
     dayState, nextOpening, pretty, rangeLabel, closureNews, renderCalendar });
 });

@@ -262,30 +262,40 @@ function closureField(row, key, labelText, type, value) {
 
 function renderClosures() {
   closuresRoot.replaceChildren();
-  if (!data.closures.length) closuresRoot.append(emptyState("臨時休診は未登録です。「休診日を追加」から入力してください。"));
+  if (!data.closures.length) closuresRoot.append(emptyState("休診日はまだ登録されていません。"));
   data.closures.forEach((item,index) => {
     const card=document.createElement("article"); card.className="item-card closure-row"; card.dataset.id=item.id || makeId("closure");
+    const season = Object.hasOwn(ClinicSchedule.seasonalNotices, item.season) ? ClinicSchedule.seasonalNotices[item.season] : null;
+    if (season) card.dataset.season = item.season;
     const header=document.createElement("div"); header.className="item-card-header";
-    const title=document.createElement("strong"); title.textContent=`休診のお知らせ ${index+1}`;
+    const title=document.createElement("strong"); title.textContent=season ? season.title : `休診のお知らせ ${index+1}`;
     header.append(title,createButton("削除", "danger-button",()=>{
       if (!window.confirm("この休診を削除しますか？公開後にカレンダーとお知らせの両方から消えます。")) return;
       collectClosures(); data.closures.splice(index,1); renderClosures(); markDirty();
     })); card.append(header);
     const dates=document.createElement("div"); dates.className="closure-dates";
-    const start=closureField(dates,"start","開始日","date",item.start);
-    const end=closureField(dates,"end","終了日（1日だけなら空欄可）","date",item.end);
-    closureField(dates,"period","休診する時間帯","select",item.period || "all");
+    const start=closureField(dates,"start","休診開始日","date",item.start);
+    const end=closureField(dates,"end","休診最終日（1日だけなら空欄可）","date",item.end);
+    end.min=start.value;
+    if (season) {
+      closureField(dates,"noticeDate","お知らせの掲載日（表示用）","date",item.noticeDate || localDateString());
+    } else {
+      closureField(dates,"period","休診する時間帯","select",item.period || "all");
+    }
     let previousStart=start.value;
     start.addEventListener("input",()=>{
       if (!end.value || end.value === previousStart) end.value=start.value;
+      end.min=start.value;
       previousStart=start.value; collectClosures(); updateClosurePreview(true,start.value);
     });
     card.append(dates);
-    const text=document.createElement("div"); text.className="two-columns";
-    closureField(text,"label","見出し（例：移転に伴う臨時休診）","text",item.label);
-    closureField(text,"noticeDate","お知らせの掲載日（表示用）","date",item.noticeDate || localDateString());
-    card.append(text);
-    closureField(card,"body","補足・理由（任意）","textarea",item.body);
+    if (!season) {
+      const text=document.createElement("div"); text.className="two-columns";
+      closureField(text,"label","見出し（例：移転に伴う臨時休診）","text",item.label);
+      closureField(text,"noticeDate","お知らせの掲載日（表示用）","date",item.noticeDate || localDateString());
+      card.append(text);
+    }
+    closureField(card,"body",season ? "お知らせに追記する内容（任意）" : "補足・理由（任意）","textarea",item.body);
     const flags=document.createElement("div"); flags.className="closure-flags";
     closureField(flags,"published","この休診を反映する","checkbox",item.published !== false);
     closureField(flags,"announce","「お知らせ」にも自動掲載する","checkbox",item.announce !== false);
@@ -297,6 +307,11 @@ function renderClosures() {
 function collectClosures() {
   data.closures = [...closuresRoot.querySelectorAll(".closure-row")].map(row => {
     const c={id:row.dataset.id};
+    if (row.dataset.season) {
+      c.season=row.dataset.season;
+      c.label=ClinicSchedule.seasonalNotices[c.season].label;
+      c.period="all";
+    }
     row.querySelectorAll("[data-closure-field]").forEach(input=> { c[input.dataset.closureField]=input.type === "checkbox" ? input.checked : input.value.trim(); });
     c.end=c.end || c.start;
     return c;
@@ -552,12 +567,21 @@ document.querySelector("[data-add-news]").addEventListener("click", () => {
   markDirty();
 });
 
-document.querySelector("[data-add-closure]").addEventListener("click", () => {
+function addClosure(season) {
   collectClosures();
-  data.closures.push({ id: makeId("closure"), start: "", end: "", label: "臨時休診", period: "all", published: true, announce: true, noticeDate: localDateString(), body: "" });
+  const item = { id: makeId("closure"), start: "", end: "", label: "臨時休診", period: "all", published: true, announce: true, noticeDate: localDateString(), body: "" };
+  if (season) {
+    item.season = season;
+    item.label = ClinicSchedule.seasonalNotices[season].label;
+  }
+  data.closures.push(item);
   renderClosures();
   closuresRoot.lastElementChild?.querySelector("input")?.focus();
   markDirty();
+}
+document.querySelector("[data-add-closure]").addEventListener("click", () => addClosure());
+document.querySelectorAll("[data-add-season]").forEach(button => {
+  button.addEventListener("click", () => addClosure(button.dataset.addSeason));
 });
 
 document.querySelector("[data-add-condition]").addEventListener("click", () => {
@@ -598,6 +622,10 @@ form.addEventListener("submit",event=>{
 document.querySelector("[data-new-closure-notice]").addEventListener("click",()=>{
   document.querySelector('[data-tab="closures"]').click();
   document.querySelector("[data-add-closure]").click();
+});
+document.querySelector("[data-open-seasonal]").addEventListener("click",()=>{
+  document.querySelector('[data-tab="closures"]').click();
+  document.querySelector("[data-add-season]").focus();
 });
 document.querySelector('[data-tab="closures"]').addEventListener("click",()=>updateClosurePreview(true));
 
