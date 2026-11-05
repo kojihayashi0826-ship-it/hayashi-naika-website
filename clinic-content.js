@@ -10,6 +10,10 @@
   function videoAsset(path) { return typeof path === 'string' && /^assets\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(?:mp4|webm)$/i.test(path); }
   function imageAsset(path) { return safeAsset(path) && !/\.pdf$/i.test(path); }
   function slideAsset(path) { return imageAsset(path) || videoAsset(path); }
+  // Public playlists never inherit the editor's historical illustration default.
+  function publicHero(config) {
+    return { ...config, slides: Array.isArray(config?.slides) ? config.slides : [] };
+  }
   function normalize(source) {
     const h = Array.isArray(source.highlights) ? source.highlights : source.highlight && (source.highlight.title || source.highlight.body) ? [{...source.highlight,id:'legacy-highlight'}] : [];
     const hero = source.hero || {};
@@ -66,7 +70,7 @@
   function slideshow(root,config,{preview=false}={}) {
     if(!root) return ()=>{};
     const doc=root.ownerDocument;
-    const hero=normalize({hero:config}).hero;
+    const hero=normalize({hero:preview ? config : publicHero(config)}).hero;
     const slides=hero.slides.filter(s=>s.enabled && slideAsset(s.src) && assetURL(s,preview));
     // An empty/disabled playlist is intentional; never restore a deleted image.
     if(!slides.length){
@@ -157,7 +161,7 @@
       if(isVideo(active))active.pause();
       img.alt=item.alt || (video?'林内科医院の動画':'林内科医院の写真');img.className='slideshow-image';img.style.objectFit=item.fit;img.style.objectPosition=`${item.x}% ${item.y}%`;
       if(video){img.muted=true;img.defaultMuted=true;img.setAttribute('muted','');img.playsInline=true;img.setAttribute('playsinline','');img.preload='auto';img.loop=slides.length===1;img.setAttribute('aria-label',img.alt);const poster=posterURL(item,preview);if(poster)img.poster=poster;}
-      else {img.decoding='async';if(index<0)img.fetchPriority='high';}
+      else {img.decoding='async';img.loading='eager';if(index<0)img.fetchPriority='high';}
       let cancel,markReady;
       const ready=new Promise(resolve=>{
         let settled=false;const timeout=later(()=>done(false),12000);

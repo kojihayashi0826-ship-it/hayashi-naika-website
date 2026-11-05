@@ -55,8 +55,9 @@ function setup(name='site-editor.html',options={}){
  else if(['index.html','care.html','tests.html','doctor.html','first-visit.html','vaccines.html','checkups.html'].includes(name))scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','content-public.js','script.js'];
  else scripts=['clinic-theme.js','clinic-design.js','clinic-content.js','clinic-documents.js'];
  const expose=name==='site-editor.html'?`\nwindow.qa={get:()=>JSON.parse(JSON.stringify(data)),set:v=>{data=safeData(v);render();},prepare:()=>JSON.parse(preparedJson()),validate:()=>{collect();return validate();},dirty:()=>dirty,mark:markDirty};`:'';
- w.eval(scripts.map(load).join('\n')+expose);
- return {dom,w,calls,errors,getRemote:()=>remote,getRemoteHTML:()=>remoteHTML,setConflict:()=>{sha='other'},getTree:()=>tree};
+ const start=()=>w.eval(scripts.map(load).join('\n')+expose);
+ if(!options.deferScripts)start();
+ return {dom,w,calls,errors,start,getRemote:()=>remote,getRemoteHTML:()=>remoteHTML,setConflict:()=>{sha='other'},getTree:()=>tree};
 }
 const field=(w,selector,value)=>{const el=w.document.querySelector(selector);assert.ok(el,selector);if(el.type==='checkbox')el.checked=value;else el.value=value;el.dispatchEvent(new w.Event('input',{bubbles:true}));return el;};
 async function connect(t){t.w.document.querySelector('[data-token]').value='github_pat_TESTONLY';t.w.document.querySelector('[data-connect]').click();await sleep(15);assert.equal(t.w.ClinicPublisher.isConnected(),true);}
@@ -113,7 +114,7 @@ async function videoPlayerTests(){
  await sleep(1150);assert.equal(root.querySelector('.slideshow-image:not([aria-hidden])'),video); // Still waits for the movie to end.
  root.dispatchEvent(new w.Event('pointerenter'));assert.equal(video.paused,true);root.dispatchEvent(new w.Event('pointerleave'));assert.equal(video.paused,false);
  root.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));assert.equal(video.paused,true);root.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));assert.equal(video.paused,false);
- Object.defineProperty(w.document,'hidden',{configurable:true,value:true});w.document.dispatchEvent(new w.Event('visibilitychange'));assert.equal(video.paused,true);Object.defineProperty(w.document,'hidden',{configurable:true,value:false});w.document.dispatchEvent(new w.Event('visibilitychange'));assert.equal(video.paused,false);
+ Object.defineProperty(w.document,'hidden',{configurable:true,value:true});w.document.dispatchEvent(new w.Event('visibilitychange'));assert.equal(video.paused,true);assert.equal(video.hasAttribute('src'),false);assert.equal(root.querySelector('video'),null);Object.defineProperty(w.document,'hidden',{configurable:true,value:false});w.document.dispatchEvent(new w.Event('visibilitychange'));await waitFor(()=>root.querySelector('video'));video=root.querySelector('video');assert.equal(video.paused,false);
  video.dispatchEvent(new w.Event('ended'));await sleep(30);assert.equal(root.querySelector('.slideshow-image:not([aria-hidden])').alt,'Photo');assert.equal(video.paused,true);assert.equal(video.hasAttribute('src'),false);
  root.querySelector('[aria-label="前のスライド"]').click();await sleep(30);video=root.querySelector('video');assert.equal(video.paused,false);
  const single={...fixture.hero,slides:[fixture.hero.slides[0]]};const dispose=w.ClinicContent.slideshow(root,single);await sleep(30);video=root.querySelector('video');assert.equal(video.loop,true);assert.equal(video.paused,false);dispose();assert.equal(video.paused,true);assert.equal(video.hasAttribute('src'),false);
@@ -140,7 +141,7 @@ async function heroLoadingTests(){
   await waitFor(()=>root.querySelector('img'));
   assert.equal(root.querySelector('img').getAttribute('src'),'assets/uploads/current-photo.jpg');
   w.ClinicPublicContent.apply({loadError:true});
-  assert.equal(root.querySelector('img').alt,'Current photo','A failed refresh keeps the last loaded photo');
+  assert.equal(root.querySelector('img'),null,'An unverified playlist must not keep playing after a failed refresh');
   for(const slides of [[],[{...fixture.hero.slides[0],enabled:false}],[{src:'https://invalid.example/photo.jpg'}]]){
    w.ClinicPublicContent.apply({...fixture,hero:{slides}});await sleep(10);
    assert.equal(root.querySelector('img,source,video,button'),null,'Deleted, disabled and invalid slides stay empty');
@@ -224,6 +225,8 @@ async function publicTests(){
  const reduced=setup('index.html',{source:fixture,reduced:true,mobile:true});await sleep(1300);assert.equal(active(reduced.w),'First');assert.equal(reduced.w.document.querySelector('.slideshow-controls').textContent,'');reduced.w.document.querySelector('[aria-label="次の写真"]').click();await sleep(30);assert.equal(active(reduced.w),'Second');reduced.dom.window.close();
  const desktop=setup('index.html',{source:fixture,reduced:true}),dw=desktop.w;
  await sleep(1300);assert.equal(active(dw),'Second');
+ // Wait for the previous fade to finish before counting the next transition's pair.
+ await waitFor(()=>dw.document.querySelectorAll('.slideshow-image').length===1);
  dw.document.querySelector('[aria-label="次の写真"]').click();await sleep(30);
  assert.equal(active(dw),'First');assert.equal(dw.document.querySelectorAll('.slideshow-image').length,2);
  assert.equal(dw.document.querySelector('.slideshow-image:not([aria-hidden])').style.getPropertyValue('--slideshow-fade-duration'),'100ms');
@@ -631,4 +634,5 @@ function seoTests(){
  assert.ok(!load('robots.txt').includes('Disallow: /site-editor.html'));assert.ok(load('site-editor.html').includes('noindex,nofollow,noarchive'));
  console.log('PASS SEO: unique local metadata, one H1, canonical/OG/schema agreement, no Saturday promotions, static FAQ source parity and crawlable noindex');
 }
-(async()=>{seoTests();await noticeSyncTests();await publicationReliabilityTests();await editorReadRaceTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await noticeLoadingTests();await publicTests();await repeatMotionTests();await motionEditorTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});
+module.exports={setup,load,sleep,waitFor};
+if(require.main===module)(async()=>{seoTests();await noticeSyncTests();await publicationReliabilityTests();await editorReadRaceTests();await todayStatusTests();await mobileStatusTests();await faqTests();await visualTests();await designTests();await themeTests();await editorTests();await failureTests();await videoEditorTests();await videoPlayerTests();await heroLoadingTests();await noticeLoadingTests();await publicTests();await repeatMotionTests();await motionEditorTests();console.log('ALL TESTS PASSED');})().catch(e=>{console.error(e);process.exitCode=1;process.exit(1)});

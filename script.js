@@ -444,10 +444,23 @@ async function loadManagedContent() {
   if (window.location.protocol === "file:") return { ...defaultManagedContent, loadError: true };
 
   try {
-    const content = await ClinicContent.fetchJSON("data/site-updates.json?v=" + Date.now());
+    const initial = window.ClinicInitialContentRequest;
+    delete window.ClinicInitialContentRequest; // This is a one-use request, not a settings cache.
+    initial?.release();
+    let content;
+    if (initial && !initial.cancelled && Date.now() - initial.startedAt < 8000) {
+      const result = await initial.promise;
+      if (result.error) throw result.error;
+      content = result.data;
+    } else {
+      initial?.cancel();
+      content = await ClinicContent.fetchJSON("data/site-updates.json?v=" + Date.now());
+    }
     if (!content || !Array.isArray(content.closures) || !Array.isArray(content.news)) throw new Error("更新データの形式が不正です");
     return {
-      ...ClinicContent.normalize(content),
+      ...ClinicContent.normalize({ ...content, hero: {
+        ...content.hero, slides: Array.isArray(content.hero?.slides) ? content.hero.slides : []
+      } }),
       closures: Array.isArray(content.closures) ? content.closures : [],
       news: Array.isArray(content.news) ? content.news : [],
       siteStatus: (content.siteStatus && typeof content.siteStatus === "object")
@@ -672,6 +685,7 @@ function applyManagedContent(content) {
   const signature = JSON.stringify(content);
   if (signature === lastContentSignature) { updateTodayStatus(); renderMonthlyCalendar(); return; }
   lastContentSignature = signature;
+  ClinicPublicContent.applyHero?.(content);
   specialClosureRanges = ClinicSchedule.active(content.closures);
   managedContentUnavailable = content.loadError;
   renderNews([...content.news, ...ClinicSchedule.closureNews(content.closures)], content.loadError);
@@ -707,7 +721,7 @@ function showStatusUnavailable() {
 
 let refreshingContent = false;
 let contentRequestGeneration = 0;
-let contentSuspended = false;
+let contentSuspended = document.hidden;
 // Remove transient notices before the browser saves a page/history snapshot.
 // Responses started before suspension must not refill that snapshot later.
 function suspendManagedContent() {
@@ -715,6 +729,10 @@ function suspendManagedContent() {
   contentRequestGeneration++;
   refreshingContent = false;
   lastContentSignature = "";
+  window.ClinicInitialContentRequest?.cancel();
+  window.ClinicInitialContentRequest?.release();
+  delete window.ClinicInitialContentRequest;
+  ClinicPublicContent.clearHero?.();
   ClinicPublicContent.clearNotices?.();
   renderSiteStatus(null);
 }
@@ -741,6 +759,7 @@ async function refreshManagedContent() {
   }
   catch (error) {
     if (generation !== contentRequestGeneration || contentSuspended) return;
+    ClinicPublicContent.clearHero?.();
     ClinicPublicContent.clearNotices?.();
     renderSiteStatus(null);
     console.warn("診療状況を表示できませんでした。", error);

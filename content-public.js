@@ -66,17 +66,22 @@
     dialog.addEventListener('close',()=>{popups.forEach(item=>{try{sessionStorage.setItem(key(item),'closed');}catch{}});});
     document.body.append(dialog);dialog.showModal();disposeNotices=()=>dialog.remove();
   }
+  function clearHero() {
+    disposeHero?.();disposeHero=null;heroSignature='';
+    ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),{slides:[]});
+  }
+  function applyHero(source) {
+    if(source.loadError){clearHero();return;}
+    const hero={...source.hero,slides:Array.isArray(source.hero?.slides)?source.hero.slides:[]};
+    const signature=JSON.stringify(hero);
+    if(signature!==heroSignature){heroSignature=signature;disposeHero?.();disposeHero=ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),hero);}
+  }
   clearNotices();
-  window.ClinicPublicContent={clearNotices,apply(source){
+  window.ClinicPublicContent={clearNotices,clearHero,applyHero,apply(source){
+    // Start image loading before theme, notices and FAQ rendering.
+    applyHero(source);
     const content=ClinicContent.normalize(source);ClinicDesign.apply(content.design,content.theme);notices(source.loadError?[]:ClinicContent.visibleHighlights(source));
     // A failed JSON request must not overwrite the last published HTML with old defaults.
     if(!source.loadError)ClinicContent.renderFaq(document.querySelector('#faq .faq-list'),content.faqs);
-    // Keep the current photo (or the empty initial stage) when settings fail.
-    // Legacy normalization defaults must not resurrect a deleted illustration.
-    if(!source.loadError){
-      const hero=source.hero || {slides:[]};
-      const signature=JSON.stringify(hero);
-      if(signature!==heroSignature){heroSignature=signature;disposeHero?.();disposeHero=ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),hero);}
-    }
   }};
 })();
