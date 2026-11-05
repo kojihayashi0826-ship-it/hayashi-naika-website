@@ -1,0 +1,62 @@
+.seo-summary {padding:0 4% 28px;margin:auto}
+.seo-summary p {margin:0 0 14px;font-size:16px;line-height:1.9;color:var(--ink)}
+.seo-summary strong {color:var(--green-dark)}
+.seo-quicklinks {display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
+.seo-quicklinks a {color:var(--green-dark);font-size:14px;font-weight:600;text-decoration:none;padding:8px 0;border-bottom:1px solid var(--line)}
+.seo-quicklinks a span {margin-left:12px}
+
+
+
+.seo-saturday {margin:0 0 26px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-align:left}
+.seo-saturday strong {font-size:19px;color:var(--green-dark)}
+.seo-saturday p {margin:8px 0 0;line-height:1.9}
+.seo-gallery {margin:0 0 46px}
+.seo-gallery-heading {display:flex;gap:20px;align-items:end;justify-content:space-between;margin-bottom:20px}
+.seo-gallery h2 {font-size:24px;color:var(--green-dark);margin:0 0 8px}
+.seo-gallery-heading p {margin:0;color:var(--muted);font-size:14px;line-height:1.8}
+.seo-photo-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.seo-photo-grid figure {margin:0}
+.seo-photo-button {display:block;border:0;padding:0;width:100%;cursor:zoom-in;border-radius:6px;overflow:hidden;background:#edf2ee}
+.seo-photo-button img {width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;display:block;transition:transform .3s}
+.seo-photo-button:hover img {transform:scale(1.025)}
+.seo-photo-grid figcaption {padding-top:9px;color:var(--green-dark);font-weight:600;font-size:15px}
+.seo-photo-grid figcaption small {display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:3px}
+.seo-photo-dialog {padding:16px;border:0;border-radius:10px;max-width:min(96vw,1200px);background:white;color:#30483b}
+.seo-photo-dialog::backdrop {background:rgba(12,26,19,.75)}
+.seo-photo-dialog img {display:block;width:100%;max-height:78vh;object-fit:contain}
+.seo-photo-dialog button {float:right;border:1px solid #bdcabc;background:#fff;border-radius:5px;padding:7px 16px;margin:0 0 12px;cursor:pointer}
+.seo-flu {margin:0 auto 34px;padding:30px;background:var(--green-light);border-radius:12px;max-width:900px;text-align:left}
+.seo-flu h2 {font-family:var(--rounded);font-size:27px;color:var(--green-dark);margin:0 0 16px}
+.seo-flu .seo-flu-lead {font-weight:600;font-size:18px;margin:0 0 16px}
+.seo-flu dl {margin:0}
+.seo-flu dl>div {display:grid;grid-template-columns:7em 1fr;border-top:1px solid var(--line);padding:14px 0;gap:12px}
+.seo-flu dt {font-weight:600}
+.seo-flu dd {margin:0;line-height:1.8}
+
+.seo-flu-note {font-size:13px;color:var(--muted);margin-bottom:0;line-height:1.8}
+.seo-vaccine-link {margin:20px 0 0;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-decoration:none;color:var(--green-dark);font-weight:600}
+.seo-vaccine-link small {font-size:13px;color:var(--muted);font-weight:400;display:block;margin-top:4px}
+@media(max-width:640px){.seo-summary{padding:0 6% 23px}.seo-summary p{font-size:14px}.seo-quicklinks{gap:4px 18px}.seo-quicklinks a{font-size:13px}.seo-gallery-heading{display:block}.seo-gallery h2{font-size:21px}.seo-photo-grid{gap:18px 12px}.seo-photo-grid figcaption{font-size:14px}.seo-photo-grid figcaption small{font-size:11px}.seo-flu{padding:22px 18px}.seo-flu h2{font-size:23px}.seo-flu dl>div{grid-template-columns:5em 1fr}.seo-saturday strong{font-size:17px}.seo-vaccine-link{font-size:14px}}
+
+/* Preserve the existing map and hours/calendar rules; additions are isolated. */
+.seo-summary {grid-column:1 / -1; width:100%;}
+.seo-summary strong {display:block;}
+.hero-grid > .seo-summary {position:relative;z-index:1;}
+.seo-gallery-note {font-size:13px;color:var(--muted);}
+.page-links-section .seo-gallery {margin-top:42px;margin-bottom:0;}
+.seo-gallery [hidden] {display:none!important;}
+.seo-flu h3 {margin:24px 0 12px;font-family:var(--rounded);font-size:21px;}
+.seo-flu p,.seo-flu li {font-size:15px;line-height:1.9;}
+.seo-flu .seo-small {font-size:13px;color:var(--muted);}
+.seo-flu .seo-vaccine-prices {width:100%;border-collapse:collapse;margin:12px 0 16px;}
+.seo-vaccine-prices th,.seo-vaccine-prices td {padding:12px 8px;border-bottom:1px solid var(--line);text-align:left;}
+.seo-vaccine-prices td {font-size:22px;text-align:right;white-space:nowrap;font-weight:700;color:var(--green-dark);}
+.seo-vaccine-target {padding-left:1.4em;}
+.seo-vaccine-target li {margin:8px 0;}
+.seo-source-links {display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:22px;font-size:12px;}
+.seo-source-links a {text-decoration:underline;text-underline-offset:3px;}
+.seo-row {max-width:900px;margin:0 auto 30px;padding:20px 0;border-bottom:1px solid var(--line);}
+.seo-row h3 {font-family:var(--rounded);font-size:21px;}
+.seo-contact-numbers {display:grid;grid-template-columns:2.5em max-content;gap:1px 12px;align-items:baseline;font-variant-numeric:tabular-nums;}
+#main > .today-panel {margin-top:6px;margin-bottom:12px;}
+@media(max-width:640px){.seo-flu dl>div{grid-template-columns:1fr;gap:6px}.seo-flu h3{font-size:19px}.seo-flu p,.seo-flu li{font-size:14px}.seo-vaccine-prices th{font-size:14px}.seo-vaccine-prices td{font-size:20px}.seo-gallery-note{font-size:12px}.seo-contact-numbers{gap:1px 8px}}

@@ -359,7 +359,7 @@ async function designTests(){
  assert.equal(pub.document.querySelector('[data-home-layout] [data-design-section]').dataset.designSection,'visit');
  assert.equal(pub.document.querySelector('#access').style.backgroundColor,'rgb(251, 238, 223)');
  assert.equal(pub.document.querySelectorAll('.access-caution').length,0);assert.equal(pub.document.querySelector('.fever-card .card-label').textContent,'発熱のある方へ');assert.equal(pub.document.querySelector('.fever-card').textContent.includes('徒歩'),false);assert.equal(pub.document.querySelector('#news h2').textContent,'お知らせ');
- const standard=setup('index.html');await sleep(35);assert.equal(standard.w.document.querySelector('#top').nextElementSibling.id,'news');assert.equal(standard.w.document.querySelector('#top .today-panel'),null);
+ const standard=setup('index.html');await sleep(35);assert.equal(standard.w.document.querySelector('#top').nextElementSibling.id,'today-status');assert.equal(standard.w.document.querySelector('#today-status').nextElementSibling.id,'news');assert.equal(standard.w.document.querySelector('#top .today-panel'),null);assert.equal(pub.document.querySelector('#top').nextElementSibling.id,'today-status');
  w.document.querySelector('[data-design-reset]').click();assert.equal(w.qa.prepare().design.order[0],'news');assert.equal(w.qa.prepare().design.fontScale,100);assert.equal(w.qa.prepare().theme.custom.background,'#112233');
  assert.equal(t.errors.length,0,JSON.stringify(t.errors));await sleep(50);t.dom.window.close();publicPage.dom.window.close();standard.dom.window.close();
  console.log('PASS design: normalization, per-surface contrast, reorder, sizes, color overrides, backup/draft/publication, DOM reading order, content edits, independent reset');

@@ -66,7 +66,56 @@
     dialog.addEventListener('close',()=>{popups.forEach(item=>{try{sessionStorage.setItem(key(item),'closed');}catch{}});});
     document.body.append(dialog);dialog.showModal();disposeNotices=()=>dialog.remove();
   }
+  const photoCaptions = new Map([
+    ['assets/uploads/72a41a40-b6ab-492e-8845-af60e08c4a21.jpg', ['医院の入口','正面の入口からお入りください。']],
+    ['assets/uploads/b88140ee-ca86-402f-8ab6-28c320fd767e.jpg', ['外観と駐車場','医院前に9台分の駐車場があります。']],
+    ['assets/uploads/a477cf6c-2850-462d-a110-63beacb3fe7d.jpg', ['待合室','木のぬくもりを感じる待合スペースです。']],
+    ['assets/uploads/64696cd1-a21b-4b69-94f2-654603f53a83.jpg', ['院内の様子','待合室から診察室へつながる院内です。']]
+  ]);
+  let photoDialog = null;
+  function clearClinicPhotos() {
+    document.querySelector('[data-clinic-photos]')?.replaceChildren();
+    const note = document.querySelector('[data-clinic-photos-note]');
+    if (note) { note.hidden=false; note.textContent='写真を表示できません。しばらくしてから再度ご確認ください。'; }
+    if (photoDialog) { photoDialog.close(); photoDialog.remove(); photoDialog=null; }
+  }
+  function openClinicPhoto(image) {
+    if (!photoDialog) {
+      photoDialog=document.createElement('dialog');photoDialog.className='seo-photo-dialog';
+      photoDialog.setAttribute('aria-label','医院の写真');
+      const close=document.createElement('button');close.type='button';close.textContent='閉じる ×';
+      close.addEventListener('click',()=>photoDialog.close());
+      photoDialog.append(close,document.createElement('img'),document.createElement('p'));
+      photoDialog.addEventListener('click',event=>{if(event.target===photoDialog)photoDialog.close();});
+      document.body.append(photoDialog);
+    }
+    const enlarged=photoDialog.querySelector('img');enlarged.src=image.src;enlarged.alt=image.alt;
+    photoDialog.querySelector('p').textContent=image.alt;
+    photoDialog.showModal();
+  }
+  function renderClinicPhotos(hero) {
+    const grid=document.querySelector('[data-clinic-photos]');
+    if (!grid) return;
+    clearClinicPhotos();
+    const images=(hero.slides || []).filter(item=>item.enabled!==false && ClinicContent.imageAsset(item.src));
+    const preferred=[...photoCaptions.keys()].map(src=>images.find(item=>item.src===src)).filter(Boolean);
+    const selected=[...new Map([...preferred,...images].map(item=>[item.src,item])).values()].slice(0,4);
+    for (const item of selected) {
+      const caption=photoCaptions.get(item.src) || [item.alt || '医院の写真',''];
+      const figure=document.createElement('figure');
+      const button=document.createElement('button');button.type='button';button.className='seo-photo-button';button.setAttribute('aria-label',caption[0]+'の写真を拡大');
+      const img=document.createElement('img');img.src=item.src;img.alt=caption[0];img.loading='lazy';img.decoding='async';
+      button.append(img);button.addEventListener('click',()=>openClinicPhoto(img));
+      const text=document.createElement('figcaption');text.textContent=caption[0];
+      if(caption[1]){const small=document.createElement('small');small.textContent=caption[1];text.append(small);}
+      figure.append(button,text);grid.append(figure);
+    }
+    const note=document.querySelector('[data-clinic-photos-note]');
+    if(note){note.hidden=selected.length>0;note.textContent='医院の写真は準備中です。';}
+  }
+
   function clearHero() {
+    clearClinicPhotos();
     disposeHero?.();disposeHero=null;heroSignature='';
     ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),{slides:[]});
   }
@@ -74,7 +123,7 @@
     if(source.loadError){clearHero();return;}
     const hero={...source.hero,slides:Array.isArray(source.hero?.slides)?source.hero.slides:[]};
     const signature=JSON.stringify(hero);
-    if(signature!==heroSignature){heroSignature=signature;disposeHero?.();disposeHero=ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),hero);}
+    if(signature!==heroSignature){heroSignature=signature;disposeHero?.();disposeHero=ClinicContent.slideshow(document.querySelector('[data-hero-slideshow]'),hero);renderClinicPhotos(hero);}
   }
   clearNotices();
   window.ClinicPublicContent={clearNotices,clearHero,applyHero,apply(source){
