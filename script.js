@@ -278,6 +278,57 @@ function formatNewsDate(value) {
   return value.replaceAll("-", ".");
 }
 
+function newsItemId(item) {
+  // Existing editor IDs survive title changes and sorting; legacy entries use a deterministic fallback.
+  return String(item.id || `${item.date}:${item.title}`);
+}
+
+function newsItemURL(item) {
+  return `news.html?id=${encodeURIComponent(newsItemId(item))}`;
+}
+
+function renderNewsDetail(items, loadError) {
+  const detail = document.querySelector('[data-news-detail]');
+  if (!detail) return;
+  const id = new URLSearchParams(window.location.search).get('id');
+  const isDetail = id !== null;
+  detail.hidden = !isDetail;
+  document.querySelector('[data-news-index]').hidden = isDetail;
+  if (!isDetail) return;
+  const item = !loadError && items.find(entry => newsItemId(entry) === id);
+  const title = item ? item.title : loadError ? 'お知らせを表示できません' : 'お知らせが見つかりません';
+  const body = item ? String(item.body || '') : loadError
+    ? '通信状況をご確認のうえ、ページを再読み込みしてください。お急ぎの場合はお電話ください。'
+    : 'この記事は掲載を終了したか、削除された可能性があります。お知らせ一覧をご確認ください。';
+  document.querySelector('[data-news-heading]').textContent = title;
+  detail.replaceChildren();
+  if (item) {
+    const time = document.createElement('time');
+    time.dateTime = item.date;
+    time.textContent = formatNewsDate(item.date);
+    detail.append(time);
+  }
+  const paragraph = document.createElement('p');
+  paragraph.className = 'news-detail-body';
+  paragraph.textContent = body;
+  detail.append(paragraph);
+  if (loadError) {
+    const phone = document.createElement('a');
+    phone.href = 'tel:0761246288';
+    phone.textContent = '0761-24-6288';
+    detail.append(phone);
+  }
+  document.title = `${title}｜小松市の林内科医院`;
+  const canonical = new URL(item ? newsItemURL(item) : 'news.html', window.location.href).href;
+  document.querySelector('link[rel="canonical"]').href = canonical;
+  document.querySelector('meta[name="robots"]').content = item ? 'index,follow' : 'noindex,follow';
+  for (const [selector, value] of [
+    ['meta[name="description"]', body], ['meta[property="og:description"]', body],
+    ['meta[name="twitter:description"]', body], ['meta[property="og:title"]', document.title],
+    ['meta[name="twitter:title"]', document.title], ['meta[property="og:url"]', canonical]
+  ]) document.querySelector(selector)?.setAttribute('content', value);
+}
+
 function renderNews(items, loadError = false) {
   const list = document.querySelector("[data-news-list]");
   const showAllButton = document.querySelector("[data-show-all]");
@@ -292,6 +343,8 @@ function renderNews(items, loadError = false) {
   const publishedItems = Array.isArray(items) ? items
     .filter((item) => item && item.published !== false && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.title)
     .sort((a, b) => b.date.localeCompare(a.date)) : [];
+
+  renderNewsDetail(publishedItems, loadError);
 
   list.replaceChildren();
 
@@ -314,7 +367,7 @@ function renderNews(items, loadError = false) {
 
   publishedItems.forEach((item, index) => {
     const article = document.createElement("article");
-    if (index >= 3) {
+    if (showAllButton && index >= 3) {
       article.classList.add("extra-news");
       article.hidden = true;
     }
@@ -331,14 +384,12 @@ function renderNews(items, loadError = false) {
     const content = document.createElement("div");
     content.className = "news-content";
     const title = document.createElement("h3");
-    title.textContent = item.title;
+    const link = document.createElement('a');
+    link.className = 'news-title-link';
+    link.href = newsItemURL(item);
+    link.textContent = item.title;
+    title.append(link);
     content.appendChild(title);
-
-    if (item.body) {
-      const body = document.createElement("p");
-      body.textContent = item.body;
-      content.appendChild(body);
-    }
 
     article.append(time, tag, content);
     list.appendChild(article);
