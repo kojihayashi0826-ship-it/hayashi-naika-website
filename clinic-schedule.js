@@ -79,7 +79,19 @@
   }
   function active(closures) {
     return (Array.isArray(closures) ? closures : []).map(normalize)
-      .filter(c => c.published && isDate(c.start) && isDate(c.end) && c.start <= c.end);
+      .filter(c => c.published && isDate(c.start) && isDate(c.end) && c.start <= c.end && validSessionRange(c));
+  }
+  function hasSessionRange(c) { return c.startSession !== undefined || c.endSession !== undefined; }
+  function validSessionRange(c) {
+    return !hasSessionRange(c) || (["am", "pm"].includes(c.startSession) && ["am", "pm"].includes(c.endSession) &&
+      !(c.start === c.end && c.startSession === "pm" && c.endSession === "am"));
+  }
+  // Endpoint sessions describe one continuous break. Legacy period applies to every day.
+  function periodOn(c, key) {
+    if (!hasSessionRange(c)) return c.period;
+    const am = key !== c.start || c.startSession === "am";
+    const pm = key !== c.end || c.endSession === "pm";
+    return am && pm ? "all" : am ? "am" : "pm";
   }
   function matching(key, closures) { return active(closures).filter(c => c.start <= key && key <= c.end); }
   function dayState(key, closures) {
@@ -87,13 +99,13 @@
     const day = utc(key).getUTCDay();
     const regularReason = holidays[key] || (day === 4 ? "木曜休診" : day === 0 ? "日曜休診" : "");
     const matches = matching(key,closures);
-    const am = matches.some(c => c.period === "all" || c.period === "am");
-    const pm = matches.some(c => c.period === "all" || c.period === "pm");
+    const am = matches.some(c => ["all", "am"].includes(periodOn(c,key)));
+    const pm = matches.some(c => ["all", "pm"].includes(periodOn(c,key)));
     const sessions = regularReason ? [] : regular[day].filter(([start]) => parseInt(start,10) < 12 ? !am : !pm);
     const closed = sessions.length === 0;
     const partial = !closed && (am || pm);
     const status = closed ? (matches.length ? "終日休診" : "休診") : partial ? (am ? "午前休診" : "午後休診") : "診療日";
-    const details = [...new Set(matches.map(c => `${c.label}（${periods[c.period]}）`))];
+    const details = [...new Set(matches.map(c => `${c.label}（${periods[periodOn(c,key)]}）`))];
     if (regularReason) details.unshift(regularReason);
     return { key, closed, partial, special: matches.length > 0, status, sessions,
       reason: details.join("・"), matches, regularReason };
@@ -116,18 +128,32 @@
   }
   function rangeLabel(item) {
     const c = normalize(item);
-    return c.start === c.end ? pretty(c.start,true) : `${pretty(c.start,true)}〜${pretty(c.end,true)}`;
+    const startSuffix = hasSessionRange(c) && c.startSession === "pm" ? "午後" : "";
+    const endSuffix = hasSessionRange(c) && c.endSession === "am" ? "午前" : "";
+    return c.start === c.end ? pretty(c.start,true) : `${pretty(c.start,true)}${startSuffix}〜${pretty(c.end,true)}${endSuffix}`;
+  }
+  function closureSummary(item) {
+    const c = normalize(item);
+    const detail = hasSessionRange(c) && c.start !== c.end ? "休診" : periods[periodOn(c,c.start)];
+    return `${rangeLabel(c)} ${c.label}（${detail}）`;
   }
   function closureNews(closures) {
     return active(closures).filter(c => c.announce).map(c => {
       const season = Object.hasOwn(seasonalNotices, c.season) ? seasonalNotices[c.season] : null;
       let title = c.label.endsWith("お知らせ") ? c.label : `${c.label}のお知らせ`;
       let statement = `${rangeLabel(c)}は${periods[c.period]}です。`;
-      if (season) {
-        title = season.title;
+      if (season) title = season.title;
+      if (hasSessionRange(c) || (season && c.period === "all")) {
         const first = pretty(c.start, true);
         const last = pretty(c.end, c.start.slice(0, 4) !== c.end.slice(0, 4));
-        statement = (c.start === c.end ? `${first}は` : `${first}から${last}まで、`) + "休診いたします。";
+        statement = c.start === c.end ? `${first}は${periods[periodOn(c,c.start)]}です。` :
+          `${first}${c.startSession === "pm" ? "午後" : ""}から${last}${c.endSession === "am" ? "午前" : ""}まで、休診いたします。`;
+        if (c.startSession === "pm" && dayState(c.start,closures).sessions.some(([start]) => mins(start) < 720)) {
+          statement += `\n${pretty(c.start)}の午前は通常どおり診療いたします（受付は12:00まで）。`;
+        }
+        if (c.endSession === "am" && dayState(c.end,closures).sessions.some(([start]) => mins(start) >= 720)) {
+          statement += `\n${pretty(c.end)}の午後は通常どおり診療いたします。`;
+        }
       }
       return {
         id: `closure-news-${c.id || c.start+"-"+c.end+"-"+c.period}`, date: c.noticeDate,
@@ -182,6 +208,7 @@
       e.append(label);
       if (s.closed) e.classList.add("is-closed");
       if (s.special && !options.loadError) e.classList.add(s.partial ? "is-partial" : "is-special");
+      if (s.partial && !options.loadError) e.classList.add(s.status === "午前休診" ? "is-am-closed" : "is-pm-closed");
       if (key === now) { e.classList.add("is-today"); e.setAttribute("aria-current","date"); }
       if (options.loadError && !s.regularReason) e.classList.add("is-unknown");
       const explanation = options.loadError ? "臨時休診情報を取得できません。お電話でご確認ください。" : s.reason || "診療日";
@@ -197,7 +224,7 @@
     if (legend && grid.querySelector(".is-partial")) legend.insertAdjacentHTML("beforeend", '<span><i class="legend-partial" aria-hidden="true"></i>午前・午後休診</span>');
     if (legend && options.loadError) legend.insertAdjacentHTML("beforeend", '<span><i class="legend-unknown" aria-hidden="true"></i>要確認</span>');
     const inMonth = active(closures).filter(c => c.start <= month+"-"+count && c.end >= month+"-01");
-    for (const c of inMonth) notes.push(`${rangeLabel(c)} ${c.label}（${periods[c.period]}）`);
+    for (const c of inMonth) notes.push(closureSummary(c));
     note.textContent = options.loadError ? "休診情報を取得できません。臨時休診はお電話（0761-24-6288）でご確認ください。" :
       (notes.length ? notes.join("／") : "木曜・日曜・祝日は休診です。") + " 休診予定は変更になる場合があります。";
     if (year > Math.max(...Object.keys(holidays).map(k=>Number(k.slice(0,4))))) note.textContent += ` ※${year}年の祝日は未登録です。`;
@@ -211,5 +238,6 @@
     }
   }
   return Object.freeze({ holidays, regular, periods, seasonalNotices, isDate, shift, japanNow, normalize, active, matching,
-    dayState, nextOpening, pretty, rangeLabel, closureNews, renderCalendar });
+    hasSessionRange, validSessionRange, periodOn, dayState, nextOpening, pretty, rangeLabel, closureSummary, closureNews, renderCalendar });
 });
+

@@ -19,7 +19,7 @@
 .clinic-calendar .calendar-legend .legend-open { width: 6px; height: 6px; background: var(--calendar-open); }
 .clinic-calendar .calendar-legend .legend-closed { background: transparent; border: 2px solid var(--calendar-ring); }
 .clinic-calendar .calendar-legend .legend-special { background: var(--calendar-special); }
-.clinic-calendar .calendar-legend .legend-partial { background: #ffead0; border: 1px solid var(--calendar-special); }
+.clinic-calendar .calendar-legend .legend-partial { background: linear-gradient(to bottom, #fff 50%, #ffdbaf 50%); border: 1px solid var(--calendar-special); }
 .clinic-calendar .calendar-legend .legend-unknown { background: transparent; border: 1px dashed #777; }
 .clinic-calendar .calendar-grid .calendar-weekday { display: grid; place-items: center; min-height: 32px; font-size: 12px; font-weight: 500; color: #68776f; background: transparent; border: 0; border-radius: 0; }
 .clinic-calendar .calendar-grid .calendar-weekday:first-child { color: var(--calendar-closed); }
@@ -46,6 +46,9 @@
 .clinic-calendar .calendar-day.is-special .day-number { color: #fff; background: var(--calendar-special); border: 0; }
 .clinic-calendar .calendar-grid .calendar-day.is-partial { color: var(--calendar-special); }
 .clinic-calendar .calendar-day.is-partial .day-number { color: #874612; background: #ffead0; border: 1px solid var(--calendar-special); }
+.clinic-calendar .calendar-day.is-am-closed .day-number { background: linear-gradient(to bottom, #ffdbaf 50%, #fff 50%); }
+.clinic-calendar .calendar-day.is-pm-closed .day-number { background: linear-gradient(to bottom, #fff 50%, #ffdbaf 50%); }
+.clinic-calendar .calendar-day.is-partial .day-status { color: #78400e; background: #fff0dc; border-radius: 3px; padding: 1px 2px; font-weight: 700; }
 .clinic-calendar .calendar-grid .calendar-day.is-unknown { color: #68706b; }
 .clinic-calendar .calendar-day.is-unknown .day-number { color: #68706b; background: transparent; border: 1px dashed #777; }
 .clinic-calendar .calendar-day.is-today .day-number { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
@@ -58,3 +61,4 @@
   .clinic-calendar .day-number { width: min(36px, 100%); font-size: 21px; }
   .clinic-calendar .calendar-legend { gap: 8px 13px; }
 }
+

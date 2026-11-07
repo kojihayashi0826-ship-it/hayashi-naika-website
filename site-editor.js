@@ -246,11 +246,11 @@ function collectNews() {
   }));
 }
 
-function closureField(row, key, labelText, type, value) {
+function closureField(row, key, labelText, type, value, choices = ClinicSchedule.periods) {
   const label = document.createElement("label"); label.textContent = labelText;
   const input = document.createElement(type === "textarea" ? "textarea" : type === "select" ? "select" : "input");
   if (type === "select") {
-    Object.entries(ClinicSchedule.periods).forEach(([value,text]) => { const option = document.createElement("option"); option.value=value; option.textContent=text; input.append(option); });
+    Object.entries(choices).forEach(([value,text]) => { const option = document.createElement("option"); option.value=value; option.textContent=text; input.append(option); });
   } else if (type === "textarea") { input.rows=3; input.maxLength=800; }
   else input.type = type;
   if (type === "text") input.maxLength=80;
@@ -274,14 +274,16 @@ function renderClosures() {
       collectClosures(); data.closures.splice(index,1); renderClosures(); markDirty();
     })); card.append(header);
     const dates=document.createElement("div"); dates.className="closure-dates";
+    const sessionRange = ClinicSchedule.hasSessionRange(item) || (season && (!item.period || item.period === "all"));
     const start=closureField(dates,"start","休診開始日","date",item.start);
+    if (sessionRange) closureField(dates,"startSession","休診開始の時間帯","select",item.startSession || "am", { am: "午前から休診", pm: "午後から休診（午前は診療）" });
     const end=closureField(dates,"end","休診最終日（1日だけなら空欄可）","date",item.end);
-    end.min=start.value;
-    if (season) {
-      closureField(dates,"noticeDate","お知らせの掲載日（表示用）","date",item.noticeDate || localDateString());
-    } else {
-      closureField(dates,"period","休診する時間帯","select",item.period || "all");
+    if (sessionRange) {
+      dates.classList.add("closure-session-dates");
+      closureField(dates,"endSession","休診終了の時間帯","select",item.endSession || "pm", { pm: "午後まで休診", am: "午前まで休診（午後は診療）" });
     }
+    end.min=start.value;
+    if (!sessionRange) closureField(dates,"period","期間中、毎日休診する時間帯","select",item.period || "all");
     let previousStart=start.value;
     start.addEventListener("input",()=>{
       if (!end.value || end.value === previousStart) end.value=start.value;
@@ -289,6 +291,12 @@ function renderClosures() {
       previousStart=start.value; collectClosures(); updateClosurePreview(true,start.value);
     });
     card.append(dates);
+    if (season) {
+      closureField(card,"noticeDate","お知らせの掲載日（表示用）","date",item.noticeDate || localDateString());
+      const help=document.createElement("p"); help.className="field-help";
+      help.textContent=sessionRange ? "初日と最終日の間は終日休診です。半日だけ休む場合は同じ日付にし、午前のみは「午前から／午前まで」、午後のみは「午後から／午後まで」を選びます。木曜・日曜・祝日は通常どおり休診です。" : "この予定は、期間中の各日に同じ時間帯の休診を設定しています。";
+      card.append(help);
+    }
     if (!season) {
       const text=document.createElement("div"); text.className="two-columns";
       closureField(text,"label","見出し（例：移転に伴う臨時休診）","text",item.label);
@@ -296,6 +304,7 @@ function renderClosures() {
       card.append(text);
     }
     closureField(card,"body",season ? "お知らせに追記する内容（任意）" : "補足・理由（任意）","textarea",item.body);
+    const noticePreview=document.createElement("p"); noticePreview.className="closure-notice-preview"; noticePreview.dataset.closureNoticePreview=""; card.append(noticePreview);
     const flags=document.createElement("div"); flags.className="closure-flags";
     closureField(flags,"published","この休診を反映する","checkbox",item.published !== false);
     closureField(flags,"announce","「お知らせ」にも自動掲載する","checkbox",item.announce !== false);
@@ -313,6 +322,7 @@ function collectClosures() {
       c.period="all";
     }
     row.querySelectorAll("[data-closure-field]").forEach(input=> { c[input.dataset.closureField]=input.type === "checkbox" ? input.checked : input.value.trim(); });
+    if (ClinicSchedule.hasSessionRange(c)) c.period="all";
     c.end=c.end || c.start;
     return c;
   });
@@ -322,6 +332,13 @@ function updateClosurePreview(jump=false,targetDate="") {
   const first = data.closures.find(c=>c.published !== false && ClinicSchedule.isDate(c.start));
   const month=jump && ClinicSchedule.isDate(targetDate) ? targetDate.slice(0,7) : jump && first ? first.start.slice(0,7) : undefined;
   ClinicSchedule.renderCalendar(root,data.closures,{limit:false,month});
+  closuresRoot.querySelectorAll(".closure-row").forEach((row,index)=>{
+    const preview=row.querySelector("[data-closure-notice-preview]");
+    const item=data.closures[index];
+    const previewClosures=data.closures.map((c,i)=>i===index ? {...c,published:true,enabled:true,announce:true} : c);
+    const notice=ClinicSchedule.closureNews(previewClosures).find(n=>n.id===`closure-news-${item.id}`);
+    preview.textContent=notice ? notice.body : "有効な日付と時間帯を入力すると、お知らせの本文を確認できます。";
+  });
 }
 
 function renderConditions() {
@@ -430,6 +447,7 @@ function validate() {
     else if ((Date.parse(item.end)-Date.parse(item.start))/86400000 >= 366) errors.push(`臨時休診 ${index+1} は366日以内で指定してください。`);
     if (item.announce && !ClinicSchedule.isDate(item.noticeDate)) errors.push(`臨時休診 ${index+1} の掲載日を入力してください。`);
     if (!Object.hasOwn(ClinicSchedule.periods,item.period)) errors.push(`臨時休診 ${index+1} の時間帯を確認してください。`);
+    if (!ClinicSchedule.validSessionRange(item)) errors.push(`臨時休診 ${index+1} の終了時間帯は開始時間帯以降にしてください。`);
   });
   if (data.recruitment.enabled && !data.recruitment.title) {
     errors.push("スタッフ募集を掲載する場合は、見出しを入力してください。");
@@ -670,3 +688,4 @@ const requestedTab = new URLSearchParams(window.location.search).get("tab");
 tabButtons.find(button => button.dataset.tab === requestedTab)?.click();
 render();
 window.editorReady = loadCurrent();
+

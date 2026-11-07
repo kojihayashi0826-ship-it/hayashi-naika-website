@@ -2,10 +2,11 @@
   "name": "hayashi-clinic-static-site",
   "private": true,
   "scripts": {
-    "test": "node tests/loading-fallback.test.cjs && node tests/content.test.cjs && node tests/hero-startup.test.cjs && node tests/seo-gallery.test.cjs"
+    "test": "node tests/halfday-closures.test.cjs && node tests/loading-fallback.test.cjs && node tests/content.test.cjs && node tests/hero-startup.test.cjs && node tests/seo-gallery.test.cjs"
   },
   "devDependencies": {
     "fake-indexeddb": "6.2.4",
     "jsdom": "26.1.0"
   }
 }
+

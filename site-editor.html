@@ -10,9 +10,9 @@
   <title>林内科医院｜サイト更新アプリ</title>
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="site-editor.css?v=20261024-1">
-  <link rel="stylesheet" href="calendar-sync.css?v=20261025-circles1">
-  <link rel="stylesheet" href="editor-publish.css?v=20261101-publish2">
-  <script src="clinic-schedule.js?v=20261104-seasonal" defer></script>
+  <link rel="stylesheet" href="calendar-sync.css?v=20261107-halfday">
+  <link rel="stylesheet" href="editor-publish.css?v=20261107-halfday">
+  <script src="clinic-schedule.js?v=20261107-halfday" defer></script>
   <link rel="stylesheet" href="clinic-content.css?v=20261027-desktop-motion2">
   <link rel="stylesheet" href="editor-content.css?v=20261027-motion1">
   <script src="clinic-theme.js?v=20261024-7" defer></script>
@@ -25,7 +25,7 @@
   <script src="editor-motion.js?v=20261101-motion-editor1" defer></script>
   <link rel="stylesheet" href="editor-canvas.css?v=20261024-gui1">
   <script src="editor-canvas.js?v=20261101-panorama1" defer></script>
-  <script src="site-editor.js?v=20261104-seasonal" defer></script>
+  <script src="site-editor.js?v=20261107-halfday" defer></script>
   <script src="editor-drafts.js?v=20261024-1" defer></script>
   <script src="github-publisher.js?v=20261101-publish2" defer></script>
 </head>
@@ -130,7 +130,7 @@
         <section class="editor-card">
           <div class="card-heading"><div><p>CLOSURES &amp; CALENDAR</p><h2>休診日の登録</h2></div><button type="button" class="secondary compact" data-add-closure>その他の臨時休診を追加</button></div>
           <h3>年末年始・お盆の休診</h3>
-          <p class="field-help">休診の種類を選び、初日と最終日を入力してください。期間中の木曜・日曜・祝日もまとめて指定できます。お知らせの見出しと本文は自動で作成され、公開すると診療カレンダーと「本日の診療」にも反映されます。</p>
+          <p class="field-help">休診の種類を選び、初日・最終日と午前／午後を指定してください。例えば12月30日午前まで診療する場合は、開始日を12月30日・「午後から休診」にします。お知らせの見出しと本文は自動で作成され、公開すると診療カレンダーと「本日の診療」にも反映されます。</p>
           <div class="two-columns">
             <button type="button" class="primary compact" data-add-season="yearEnd">年末年始の休診を追加</button>
             <button type="button" class="primary compact" data-add-season="obon">お盆の休診を追加</button>
@@ -269,3 +269,4 @@
   <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章・写真・動画の動作・資料・休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
 </body>
 </html>
+
