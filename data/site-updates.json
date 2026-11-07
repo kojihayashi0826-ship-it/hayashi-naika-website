@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-07T12:26:07.069Z",
+  "updatedAt": "2026-11-07T12:31:31.011Z",
   "siteStatus": {
     "enabled": false,
     "title": "",
@@ -72,16 +72,30 @@
     {
       "id": "closure-year-end-2026",
       "season": "yearEnd",
-      "start": "2026-12-30",
-      "end": "2027-01-03",
-      "startSession": "pm",
-      "endSession": "pm",
-      "period": "all",
       "label": "年末年始休診",
-      "published": true,
-      "announce": true,
+      "period": "all",
+      "start": "2026-12-30",
+      "startSession": "pm",
+      "end": "2027-01-03",
+      "endSession": "pm",
       "noticeDate": "2026-11-07",
-      "body": "1月4日（月）より通常どおり診療いたします。"
+      "body": "1月4日（月）より通常どおり診療いたします。",
+      "published": true,
+      "announce": true
+    },
+    {
+      "id": "closure-1794054634921-80b6e90f595328",
+      "season": "yearEnd",
+      "label": "年末年始休診",
+      "period": "all",
+      "start": "",
+      "startSession": "am",
+      "end": "",
+      "endSession": "pm",
+      "noticeDate": "2026-11-07",
+      "body": "",
+      "published": false,
+      "announce": false
     }
   ],
   "tests": [
@@ -193,7 +207,7 @@
     }
   ],
   "checkupNote": "受診券・マイナ保険証もしくは資格確認書・お薬手帳をご持参ください。",
-  "revision": "88c9c6f3-a705-40b5-9b69-572e69c443d0",
+  "revision": "c4379035-8c0f-40a0-863e-dcca2f2df064",
   "theme": {
     "preset": "mint",
     "accent": "#8fc9aa",
@@ -379,4 +393,3 @@
     }
   ]
 }
-
