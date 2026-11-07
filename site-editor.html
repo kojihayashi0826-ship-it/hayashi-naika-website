@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#244837">
   <title>林内科医院｜サイト更新アプリ</title>
   <link rel="icon" href="favicon.ico">
-  <link rel="stylesheet" href="site-editor.css?v=0490d7ecb216a173">
+  <link rel="stylesheet" href="site-editor.css?v=33f29a1d747199b0">
   <link rel="stylesheet" href="calendar-sync.css?v=726e6f70ec7090ea">
   <link rel="stylesheet" href="editor-publish.css?v=3d6e5713f0b34f69">
   <script src="clinic-schedule.js?v=2f72784341e19fe5" defer></script>
@@ -25,7 +25,7 @@
   <script src="editor-motion.js?v=73a7e48fb8cc14ee" defer></script>
   <link rel="stylesheet" href="editor-canvas.css?v=47e23be6d2a9e2cf">
   <script src="editor-canvas.js?v=d70296fb1f29ef02" defer></script>
-  <script src="site-editor.js?v=083f5e3119aed446" defer></script>
+  <script src="site-editor.js?v=d9e28f28d74a3e7c" defer></script>
   <script src="editor-drafts.js?v=8c19f50827d13b8f" defer></script>
   <script src="github-publisher.js?v=cfd904536a28b38e" defer></script>
 </head>
@@ -112,7 +112,8 @@
       <div class="editor-panel" data-panel="news">
         <section class="editor-card">
           <div class="card-heading"><div><p>NEWS</p><h2>お知らせ</h2></div><button type="button" class="primary compact" data-add-news>新規追加</button></div>
-          <p class="field-help">トップページには日付・見出しを表示し、見出しを押すと詳細ページで本文を読めます。「掲載する」で公開し、「ページ上部にも表示」で上部の帯にも表示します。編集・非掲載・削除は一覧と詳細ページの両方に反映されます。変更後は「公開する」を押してください。日付は予約投稿ではありません。</p>
+          <p class="field-help">「表題」と「内容」を別々に入力してください。トップページには表題を表示し、押すと詳細ページで内容を読めるリンクを自動で設定します。入力後は各記事の「表題 → 内容の表示を確認」で確かめてから、「公開する」を押してください。</p>
+          <p class="field-help">「掲載する」で公開対象にし、「ページ上部にも表示」で上部の帯にも表示します。編集・非掲載・削除は一覧と詳細ページの両方に反映されます。日付は予約投稿ではありません。</p>
           <div class="two-columns">
             <button type="button" class="secondary compact" data-new-closure-notice>臨時休診のお知らせを作成 →</button>
             <button type="button" class="secondary compact" data-open-seasonal>年末年始・お盆の休診を登録 →</button>
@@ -266,6 +267,7 @@
     <p class="field-help">ページ内を上下に動かしてご確認ください。文字の動き・配色・配置に編集中の設定を使います。写真・文章は現在公開中の内容です。</p>
     <div class="motion-frame-wrap" data-motion-frame-wrap><iframe data-motion-frame title="文字アニメーションのページプレビュー" sandbox="allow-scripts allow-same-origin" referrerpolicy="same-origin"></iframe></div>
   </dialog>
+  <dialog data-news-preview-dialog class="preview-dialog news-editor-preview" aria-labelledby="news-preview-heading"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2 id="news-preview-heading">お知らせの表示確認</h2></div><button type="button" class="secondary" data-close-news-preview>閉じる</button></div><p class="field-help">編集中の内容を確認できます。「公開する」を押すまで、公開サイトには反映されません。</p><div data-news-preview-body></div></dialog>
   <dialog data-preview-dialog class="preview-dialog"><div class="preview-heading"><div><p class="editor-kicker">PREVIEW · 未公開</p><h2>掲載内容の確認</h2></div><button type="button" class="secondary" data-close-preview>閉じる</button></div><p class="field-help">文章・写真・動画の動作・資料・休診状態の確認用です。公開サイトの余白・配置とは一部異なります。</p><div data-preview-body></div></dialog>
 </body>
 </html>

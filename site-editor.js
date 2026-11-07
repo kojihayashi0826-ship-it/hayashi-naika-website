@@ -212,24 +212,35 @@ function renderNews() {
     meta.append(dateLabel, categoryLabel, publishLabel, featuredLabel);
 
     const titleLabel = document.createElement("label");
-    titleLabel.textContent = "見出し";
+    titleLabel.textContent = "表題（トップページに表示）";
     const titleInput = document.createElement("input");
     titleInput.type = "text";
     titleInput.maxLength = 120;
+    titleInput.placeholder = "例：年末年始の診療日程について";
     titleInput.value = item.title || "";
     titleInput.dataset.newsField = "title";
     titleLabel.appendChild(titleInput);
 
     const bodyLabel = document.createElement("label");
-    bodyLabel.textContent = "本文";
+    bodyLabel.textContent = "内容（詳細ページに表示）";
     const bodyInput = document.createElement("textarea");
-    bodyInput.rows = 3;
+    bodyInput.rows = 6;
     bodyInput.maxLength = 800;
+    bodyInput.placeholder = "表題を押した先で表示する内容を入力してください。改行も反映されます。";
     bodyInput.value = item.body || "";
     bodyInput.dataset.newsField = "body";
     bodyLabel.appendChild(bodyInput);
 
-    card.append(header, meta, titleLabel, bodyLabel);
+    const linkHelp = document.createElement('p');
+    linkHelp.className = 'field-help news-link-help';
+    linkHelp.textContent = '表題 → 内容のリンクは、公開時に自動で設定されます。URLの入力は不要です。';
+    const preview = createButton('表題 → 内容の表示を確認', 'secondary compact news-preview-open', () => {
+      collectNews();
+      renderNewsPreview(document.querySelector('[data-news-preview-body]'), [data.news[index]]);
+      document.querySelector('[data-news-preview-dialog]').showModal();
+    });
+    preview.dataset.newsPreviewOpen = '';
+    card.append(header, meta, titleLabel, bodyLabel, linkHelp, preview);
     newsRoot.appendChild(card);
   });
 }
@@ -647,6 +658,58 @@ document.querySelector("[data-open-seasonal]").addEventListener("click",()=>{
 });
 document.querySelector('[data-tab="closures"]').addEventListener("click",()=>updateClosurePreview(true));
 
+function renderNewsPreview(root, items) {
+  root.replaceChildren();
+  const list = document.createElement('section');
+  list.className = 'news-preview-list';
+  const label = document.createElement('h3');
+  label.textContent = 'トップページの表示';
+  const hint = document.createElement('p');
+  hint.className = 'field-help';
+  hint.textContent = '表題を押すと、内容の表示に切り替わります。';
+  list.append(label, hint);
+  const detail = document.createElement('section');
+  detail.className = 'news-preview-detail';
+  detail.hidden = true;
+  if (!items.length) {
+    const empty = document.createElement('p');
+    empty.textContent = '現在、新しいお知らせはありません。';
+    list.append(empty);
+  }
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'news-preview-row';
+    const date = document.createElement('time');
+    date.dateTime = item.date || '';
+    date.textContent = (item.date || '').replaceAll('-', '.');
+    const title = item.title || '（表題未入力）';
+    const link = createButton(title, 'news-preview-title', () => {
+      detail.replaceChildren();
+      const label = document.createElement('p');
+      label.className = 'field-help';
+      label.textContent = '詳細ページの表示';
+      const heading = document.createElement('h3');
+      heading.textContent = title;
+      heading.tabIndex = -1;
+      const body = document.createElement('p');
+      body.className = 'news-preview-body';
+      body.textContent = item.body || '（内容未入力）';
+      const back = createButton('表題の一覧に戻る', 'secondary compact', () => {
+        detail.hidden = true;
+        list.hidden = false;
+        link.focus();
+      });
+      detail.append(label, heading, date.cloneNode(true), body, back);
+      list.hidden = true;
+      detail.hidden = false;
+      heading.focus();
+    });
+    row.append(date, link);
+    list.append(row);
+  });
+  root.append(list, detail);
+}
+
 function showPreview() {
   try { collect(); const errors=validate(); if (errors.length) throw new Error(errors[0]); }
   catch(error) { setMessage(error.message,"error"); return; }
@@ -662,13 +725,16 @@ function showPreview() {
   const first=ClinicSchedule.active(data.closures).find(c=>c.end>=localDateString());
   ClinicSchedule.renderCalendar(widget,data.closures,{limit:false,month:first?.start.slice(0,7)});
   const news=[...data.news.filter(c=>c.published),...ClinicSchedule.closureNews(data.closures)].sort((a,b)=>b.date.localeCompare(a.date));
-  if (!news.length) section("お知らせ","現在、新しいお知らせはありません。");
-  news.forEach(n=>section(`${n.date}　${n.title}`,n.body));
+  const newsCard = section('お知らせ');
+  const newsPreview = document.createElement('div');
+  newsCard.append(newsPreview);
+  renderNewsPreview(newsPreview, news);
   if (data.recruitment.enabled) section(data.recruitment.title,[data.recruitment.lead,...data.recruitment.conditions.map(c=>c.label+"："+c.value),data.recruitment.note].join("\n"));
   document.querySelector("[data-preview-dialog]").showModal();
 }
 document.querySelector("[data-preview]").addEventListener("click",showPreview);
 document.querySelector("[data-close-preview]").addEventListener("click",()=>document.querySelector("[data-preview-dialog]").close());
+document.querySelector('[data-close-news-preview]').addEventListener('click', () => document.querySelector('[data-news-preview-dialog]').close());
 // Arrow-key operation for tabs; buttons are also usable with Tab and Enter.
 tabButtons.forEach((button,index)=>button.addEventListener("keydown",event=>{
   if (!["ArrowLeft","ArrowRight","Home","End"].includes(event.key)) return;
