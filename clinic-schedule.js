@@ -161,6 +161,57 @@
       };
     });
   }
+  // Reuse the calendar's effective sessions, including overlapping half-day closures.
+  function specialHours(closures) {
+    const dates = new Set();
+    for (const c of active(closures)) {
+      let key = c.start;
+      while (true) {
+        dates.add(key);
+        if (key === c.end) break;
+        key = shift(key, 1);
+      }
+    }
+    const groups = [];
+    for (const key of [...dates].sort()) {
+      const sessions = dayState(key, closures).sessions;
+      const times = sessions.length ? sessions : [["00:00", "00:00"]];
+      const previous = groups.at(-1);
+      if (previous && shift(previous.end, 1) === key && JSON.stringify(previous.times) === JSON.stringify(times)) previous.end = key;
+      else groups.push({ start: key, end: key, times });
+    }
+    return groups.flatMap(g => g.times.map(([opens, closes]) => ({
+      "@type": "OpeningHoursSpecification", validFrom: g.start, validThrough: g.end, opens, closes
+    })));
+  }
+  function setStructuredHours(data, closures) {
+    const nodes = Array.isArray(data?.["@graph"]) ? data["@graph"] : [data];
+    const clinic = nodes.find(n => n?.["@id"] === "https://www.hayashinaika.clinic/#clinic" && n["@type"] === "MedicalClinic");
+    if (!clinic) return false;
+    const hours = specialHours(closures);
+    if (hours.length) clinic.specialOpeningHoursSpecification = hours;
+    else delete clinic.specialOpeningHoursSpecification;
+    return true;
+  }
+  function updateStructuredHoursHTML(html, closures) {
+    let updated = false;
+    const result = html.replace(/(<script\b[^>]*type=["']application\/ld\+json["'][^>]*>)([\s\S]*?)(<\/script>)/gi, (all, start, json, end) => {
+      const data = JSON.parse(json);
+      if (!setStructuredHours(data, closures)) return all;
+      updated = true;
+      return start + "\n" + JSON.stringify(data, null, 2).replace(/</g, "\\u003c") + "\n  " + end;
+    });
+    if (!updated) throw new Error("トップページの医院情報が見つからないため、休診情報の公開を停止しました。最新のサイト一式を使用してください。");
+    return result;
+  }
+  function syncStructuredHours(document, closures) {
+    document.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
+      try {
+        const data = JSON.parse(script.textContent);
+        if (setStructuredHours(data, closures)) script.textContent = JSON.stringify(data).replace(/</g, "\\u003c");
+      } catch { /* Leave unrelated structured data untouched. */ }
+    });
+  }
   function calendarMarkup() {
     return `<div class="calendar-header"><h3 data-calendar-title></h3><div class="calendar-controls"><button type="button" data-calendar-prev aria-label="前の月">前月</button><button type="button" data-calendar-next aria-label="次の月">翌月</button></div></div><div class="calendar-legend"></div><div class="calendar-grid" data-calendar-grid aria-live="polite"></div><p class="calendar-note" data-calendar-note></p><div class="seasonal-closures" data-closure-summary hidden></div>`;
   }
@@ -238,6 +289,8 @@
     }
   }
   return Object.freeze({ holidays, regular, periods, seasonalNotices, isDate, shift, japanNow, normalize, active, matching,
-    hasSessionRange, validSessionRange, periodOn, dayState, nextOpening, pretty, rangeLabel, closureSummary, closureNews, renderCalendar });
+    hasSessionRange, validSessionRange, periodOn, dayState, nextOpening, pretty, rangeLabel, closureSummary, closureNews,
+    specialHours, setStructuredHours, updateStructuredHoursHTML, syncStructuredHours, renderCalendar });
 });
+
 

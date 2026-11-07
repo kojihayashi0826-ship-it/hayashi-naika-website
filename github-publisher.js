@@ -231,7 +231,7 @@
     if (sha && /^[a-f0-9]{40}$/.test(sha)) { q("[data-commit-link]").href=`https://github.com/${owner}/${repo}/commit/${sha}`; q("[data-commit-link]").hidden=false; }
     syncControls();
   }
-  async function commitMedia(next, files, faqChanged=false) {
+  async function commitMedia(next, files, faqChanged=false, closuresChanged=false) {
     const ref=await github(`${apiRoot}/git/ref/heads/${branch}`);
     const head=ref.object?.sha;
     if(!head)throw new Error("公開元の識別情報を取得できませんでした。");
@@ -239,9 +239,11 @@
     if(current.sha!==baseSha)throw new Error("別の更新を検出しました。最新の内容を読み込んでから編集し直してください。");
     const parent=await github(`${apiRoot}/git/commits/${head}`);
     const tree=[];
-    if(faqChanged){
+    if(faqChanged || closuresChanged){
       const page=await github(`${apiRoot}/contents/index.html?ref=${encodeURIComponent(head)}`);
-      const html=ClinicContent.updateFaqHTML(decodeContent(page),next.faqs);
+      let html=decodeContent(page);
+      if(faqChanged)html=ClinicContent.updateFaqHTML(html,next.faqs);
+      if(closuresChanged)html=ClinicSchedule.updateStructuredHoursHTML(html,next.closures);
       const blob=await github(`${apiRoot}/git/blobs`,{method:'POST',body:JSON.stringify({encoding:'utf-8',content:html})});
       tree.push({path:'index.html',mode:'100644',type:'blob',sha:blob.sha});
     }
@@ -283,7 +285,8 @@
       let result;
       try {
         const faqChanged=JSON.stringify(next.faqs)!==JSON.stringify(baseDocument.faqs);
-        result=files.length || faqChanged ? await commitMedia(next,files,faqChanged) : await github(contentEndpoint,{method:"PUT",body:JSON.stringify({message:"医院サイト更新：お知らせ・休診・トップ画像・院内掲示物",branch,sha:baseSha,content:encodeContent(JSON.stringify(next,null,2)+"\n")})});
+        const closuresChanged=JSON.stringify(next.closures)!==JSON.stringify(baseDocument.closures);
+        result=files.length || faqChanged || closuresChanged ? await commitMedia(next,files,faqChanged,closuresChanged) : await github(contentEndpoint,{method:"PUT",body:JSON.stringify({message:"医院サイト更新：お知らせ・休診・トップ画像・院内掲示物",branch,sha:baseSha,content:encodeContent(JSON.stringify(next,null,2)+"\n")})});
       } catch(error) {
         if (error.uncertain) {
           // Never blindly retry an uncertain PUT: it might have succeeded.
@@ -384,3 +387,4 @@
   if (pending?.revision) {q("[data-publish-followup]").hidden=false;startVerification();}
   syncControls();
 })();
+

@@ -1,0 +1,35 @@
+.endoscopy-content { max-width: 960px; padding-bottom: 64px; }
+.endoscopy-page .subpage-heading p { margin-top: 12px; }
+.endoscopy-intro { padding: 42px 0 32px; }
+.endoscopy-section { border-top: 1px solid var(--line, #dce8e4); padding: 40px 0; scroll-margin-top: 140px; }
+.endoscopy-page h2 { font-size: clamp(1.35rem, 2.4vw, 1.8rem); margin: 0 0 22px; }
+.endoscopy-page h3 { font-size: 1.1rem; margin: 0 0 10px; }
+.endoscopy-page p { line-height: 1.95; margin: 0 0 16px; }
+.endoscopy-page p + h3 { margin-top: 28px; }
+.endoscopy-page strong { font-weight: 700; }
+.endoscopy-page a:not(.button) { text-underline-offset: .22em; }
+.endoscopy-actions { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; margin-top: 24px; }
+.endoscopy-toc { display: flex; flex-wrap: wrap; gap: 10px 24px; padding-top: 28px; margin-top: 28px; border-top: 1px solid var(--line, #dce8e4); }
+.endoscopy-toc a { text-decoration: underline; }
+.endoscopy-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+.endoscopy-steps { padding-left: 1.8em; margin: 0; }
+.endoscopy-steps li { padding-left: 12px; margin-bottom: 24px; }
+.endoscopy-steps li::marker { color: #356656; font-weight: 700; }
+.endoscopy-steps li:last-child { margin-bottom: 0; }
+.endoscopy-preparation { margin: 24px 0 0; }
+.endoscopy-preparation > div { display: grid; grid-template-columns: 175px 1fr; gap: 24px; padding: 20px 0; border-top: 1px solid var(--line, #dce8e4); }
+.endoscopy-preparation dt { font-weight: 700; }
+.endoscopy-preparation dd { margin: 0; line-height: 1.95; }
+.endoscopy-important { border-left: 3px solid #427361; padding-left: 20px; margin-top: 24px !important; }
+.endoscopy-references { border-top: 1px solid var(--line, #dce8e4); padding-top: 24px; font-size: .85rem; color: #52665e; }
+.endoscopy-references a { text-decoration: underline; }
+@media (max-width: 640px) {
+  .endoscopy-page .page-breadcrumb { flex-wrap: wrap; }
+  .endoscopy-page h1 { font-size: 1.9rem; }
+  .endoscopy-intro { padding: 28px 0; }
+  .endoscopy-section { padding: 30px 0; scroll-margin-top: 110px; }
+  .endoscopy-columns { grid-template-columns: 1fr; gap: 22px; }
+  .endoscopy-preparation > div { grid-template-columns: 1fr; gap: 8px; }
+  .endoscopy-actions .button { width: 100%; white-space: normal; }
+  .endoscopy-toc { gap: 12px 20px; }
+}

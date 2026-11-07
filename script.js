@@ -687,6 +687,7 @@ function applyManagedContent(content) {
   lastContentSignature = signature;
   ClinicPublicContent.applyHero?.(content);
   specialClosureRanges = ClinicSchedule.active(content.closures);
+  if (!content.loadError) ClinicSchedule.syncStructuredHours(document, content.closures);
   managedContentUnavailable = content.loadError;
   renderNews([...content.news, ...ClinicSchedule.closureNews(content.closures)], content.loadError);
   renderTests(content.tests);
@@ -796,3 +797,4 @@ function syncTodayFloating() {
 window.addEventListener('scroll', syncTodayFloating, { passive: true });
 window.addEventListener('resize', syncTodayFloating);
 window.addEventListener('load', syncTodayFloating);
+
