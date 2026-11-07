@@ -2,12 +2,12 @@
   "name": "hayashi-clinic-static-site",
   "private": true,
   "scripts": {
-    "test": "node tests/halfday-closures.test.cjs && node tests/loading-fallback.test.cjs && node tests/content.test.cjs && node tests/hero-startup.test.cjs && node tests/seo-gallery.test.cjs && node tests/seo-hours.test.cjs"
+    "test": "npm run assets:check && node --test tests/asset-versions.test.cjs && node tests/halfday-closures.test.cjs && node tests/loading-fallback.test.cjs && node tests/content.test.cjs && node tests/hero-startup.test.cjs && node tests/seo-gallery.test.cjs && node tests/seo-hours.test.cjs",
+    "assets:check": "node tools/asset-versions.cjs --check",
+    "assets:sync": "node tools/asset-versions.cjs --write"
   },
   "devDependencies": {
     "fake-indexeddb": "6.2.4",
     "jsdom": "26.1.0"
   }
 }
-
-

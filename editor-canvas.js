@@ -92,7 +92,7 @@
   function attach(){
     try{doc=frame.contentDocument;win=frame.contentWindow;if(!doc?.querySelector('[data-home-layout]'))return;}catch{return;}
     if(doc.querySelector('[data-canvas-overlay]'))return;
-    const css=doc.createElement('link');css.rel='stylesheet';css.href='editor-canvas.css?v=20261024-gui1';doc.head.append(css);doc.documentElement.dataset.visualEditing='true';
+    const css=doc.createElement('link');css.rel='stylesheet';css.href='editor-canvas.css?v=47e23be6d2a9e2cf';doc.head.append(css);doc.documentElement.dataset.visualEditing='true';
     overlay=doc.createElement('div');overlay.dataset.canvasOverlay='';overlay.className='canvas-overlay';
     const name=doc.createElement('span');name.dataset.canvasLabel='';name.className='canvas-label';overlay.append(name);
     [['reorder','⠿ 移動','つかんで上下に移動'],['width','↔','横幅を変える'],['height','↕','高さ・上下の余白を変える'],['type','↘','文字を拡大・縮小']].forEach(([action,text,title])=>{

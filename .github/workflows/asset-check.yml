@@ -1,0 +1,21 @@
+name: Check static assets
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: git diff --exit-code -- '*.html' '*.js' '*.css'
+# Validation only: does not write commits or change the GitHub Pages source.
+# Branch-based Pages publication is NOT gated by this independent workflow.
