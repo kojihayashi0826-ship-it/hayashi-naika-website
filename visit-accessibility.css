@@ -1,0 +1,4 @@
+.visit-facilities { margin:0 0 28px; padding:0 0 24px; border-bottom:1px solid var(--line,#dce4df); }
+.visit-facilities h3 { margin:0 0 10px; color:var(--green-dark,#3e5749); font-size:22px; }
+.visit-facilities p { margin:0 0 10px; font-size:16px; line-height:1.9; }
+.visit-facilities a { color:var(--green-dark,#3e5749); font-size:16px; text-decoration:underline; text-underline-offset:.2em; }

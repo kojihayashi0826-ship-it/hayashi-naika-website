@@ -1,0 +1,793 @@
+/* Homepage controller, based on script.js. Kept separate to preserve excluded pages. */
+const schedule = ClinicSchedule.regular;
+const nationalHolidays = ClinicSchedule.holidays;
+let managedContentUnavailable = true;
+
+const defaultManagedContent = {
+  closures: [],
+  news: [],
+  // サイト案内・お知らせ・休診・スタッフ募集・検査等は data/site-updates.json で管理します。
+  // 管理データ取得失敗時に、古いお知らせや仮の休診日を代替表示しない設計です。
+  siteStatus: { enabled: false, title: "", body: "" },
+  highlight: { enabled: false, mode: "banner", title: "", body: "", linkText: "", linkUrl: "" },
+  recruitment: { enabled: false, title: "スタッフ募集中", lead: "", conditions: [], note: "", buttonText: "", buttonUrl: "" },
+  tests: [],
+  vaccines: [],
+  vaccineNote: "",
+  checkups: [],
+  checkupNote: "",
+  loadError: false
+};
+
+let specialClosureRanges = [...defaultManagedContent.closures];
+
+
+// 日本語の医療用語・固有表現を途中で改行しないための補助処理。
+// CSS の word-break: auto-phrase に未対応のブラウザーでも、重要語は一まとまりで表示します。
+const protectedJapanesePhrases = [
+  "大腸がん検診（便潜血検査）",
+  "胃カメラ・大腸カメラ",
+  "発熱・せき・のどの痛み",
+  "上部内視鏡検査",
+  "下部内視鏡検査",
+  "睡眠時無呼吸検査",
+  "インフルエンザワクチン",
+  "新型コロナワクチン",
+  "肺炎球菌ワクチン",
+  "帯状疱疹ワクチン",
+  "子宮頸がん予防",
+  "日本脳炎ワクチン",
+  "後期高齢者健康診査",
+  "特定健康診査",
+  "雇入時・定期健康診断",
+  "食道・胃・十二指腸",
+  "循環器・消化器",
+  "心電図・ABI検査",
+  "ホルター心電図",
+  "レントゲン検査",
+  "骨密度検査",
+  "骨粗しょう症",
+  "便潜血検査",
+  "大腸がん検診",
+  "胃カメラ",
+  "大腸カメラ",
+  "生活習慣病",
+  "体調不良",
+  "マイナ保険証",
+  "資格確認書",
+  "鎮静薬",
+  "心エコー",
+  "腹部エコー",
+  "ABI検査",
+  "心電図",
+  "予防接種",
+  "健康診断",
+  "林内科医院",
+  "地域の皆さま",
+  "大学病院",
+  "医療機関",
+  "かかりつけ医",
+  "わかりやすく",
+  "丁寧に診療",
+  "1988年の開業以来",
+  "心より御礼申し上げます",
+  "院長を務めること",
+  "経験を重ねてまいりました",
+  "毎日の健康",
+  "体調の不安",
+  "健康の悩み",
+  "病院にかかるほどだろうか",
+  "気軽にお話しください",
+  "身近で相談しやすい",
+  "わかりやすく丁寧な診療",
+  "安心して毎日",
+  "よろしくお願い申し上げます"
+].sort((a, b) => b.length - a.length);
+
+const readableJapaneseSelector = [
+  ".hero-lead",
+  ".walkin-copy h3",
+  ".walkin-copy p",
+  ".guide-card h3",
+  ".guide-card p",
+  ".first-visit-intro",
+  ".step-body",
+  ".bring-note",
+  ".section-heading h2",
+  ".section-heading > p:not(.eyebrow)",
+  ".care-card h3",
+  ".care-card p",
+  ".emergency-note",
+  ".test-list h3",
+  ".test-list p",
+  ".prevention-grid li",
+  ".prevention-grid article > p",
+  ".doctor-message p",
+  ".doctor-profile dd",
+  ".access-info",
+  ".news-content",
+  ".faq-list summary",
+  ".faq-list p",
+  ".contact-details",
+  ".prelaunch-notice",
+  ".site-banner-text",
+  ".highlight-modal-box p",
+  ".recruitment-section h2",
+  ".recruitment-section p",
+  ".recruitment-conditions dt",
+  ".recruitment-conditions dd"
+].join(",");
+
+function escapeForRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function protectJapanesePhrases(root = document) {
+  const phrasePattern = new RegExp(`(${protectedJapanesePhrases.map(escapeForRegExp).join("|")})`, "g");
+  const targets = root.querySelectorAll(readableJapaneseSelector);
+
+  targets.forEach((target) => {
+    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue || !protectedJapanesePhrases.some((phrase) => node.nodeValue.includes(phrase))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        const parent = node.parentElement;
+        if (!parent || parent.closest(".no-break, script, style, textarea, option")) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    textNodes.forEach((node) => {
+      const parts = node.nodeValue.split(phrasePattern);
+      if (parts.length < 2) return;
+
+      const fragment = document.createDocumentFragment();
+      parts.forEach((part) => {
+        if (!part) return;
+        if (protectedJapanesePhrases.includes(part)) {
+          const span = document.createElement("span");
+          span.className = "no-break";
+          span.textContent = part;
+          fragment.appendChild(span);
+        } else {
+          fragment.appendChild(document.createTextNode(part));
+        }
+      });
+      node.replaceWith(fragment);
+    });
+  });
+}
+
+function dateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatShortDate(date) {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+// One schedule result drives the upper, mobile, detailed and floating panels.
+function homeClinicStatus(now, closures, availability = 'ready') {
+  const clock = ClinicSchedule.japanNow(now);
+  const fallback = availability === 'loading'
+    ? {state:'loading', title:'診療状況を確認しています', detail:'診療時間・休診日をご確認ください'}
+    : {state:'unknown', title:'診療状況はお電話でご確認ください', detail:'0761-24-6288'};
+  if (availability !== 'ready') return {...fallback, clock, partial:''};
+  const day = ClinicSchedule.dayState(clock.key, closures);
+  const minutes = value => { const [h,m] = value.split(':').map(Number); return h*60+m; };
+  const time = value => value.replace(/^0/, '');
+  const active = day.sessions.find(([a,b]) => clock.minute >= minutes(a) && clock.minute < minutes(b));
+  const upcoming = day.sessions.find(([a]) => clock.minute < minutes(a));
+  const next = ClinicSchedule.nextOpening(now, closures);
+  const nextText = next ? `次の診療：${ClinicSchedule.pretty(next.key)} ${time(next.time)}から` : '次回診療日はお電話でご確認ください';
+  const morning = day.sessions.some(([a]) => minutes(a) < 720);
+  const partial = day.partial ? (morning ? '本日は午前のみ診療します。' : '本日は午後のみ診療します。') : '';
+  let model;
+  if (day.closed) model = {state:'closed', title:'本日は休診日です', detail:nextText};
+  else if (active) model = {state:'open', title:'現在診療中です', detail:`${minutes(active[0]) < 720 ? '午前' : '午後'}の受付は${time(active[1])}まで`};
+  else if (upcoming) {
+    const between = day.sessions.some(([,b]) => clock.minute >= minutes(b));
+    model = between ? {state:'next', title:`午後は${time(upcoming[0])}から診療します`, detail:`午後の受付は${time(upcoming[1])}まで`}
+      : {state:'next', title:'本日は診療日です', detail:`本日 ${time(upcoming[0])}から診療します`};
+  } else model = {state:'ended', title:'本日の診療は終了しました', detail:nextText};
+  return {...model, clock, day, partial};
+}
+
+function renderHomeClinicStatus(model) {
+  const text = (selector, value) => document.querySelectorAll(selector).forEach(el => {
+    if (el.textContent !== value) el.textContent = value;
+  });
+  text('[data-home-status-title], [data-mobile-status-label], #today-label', model.title);
+  text('[data-home-status-detail], [data-mobile-status-detail], #today-detail', model.detail);
+  text('[data-home-status-partial], [data-mobile-status-partial], #today-reception-current', model.partial);
+  document.querySelectorAll('[data-home-status-partial], [data-mobile-status-partial], #today-reception-current').forEach(el => { el.hidden = !model.partial; });
+  document.querySelectorAll('[data-home-status], .mobile-clinic-status').forEach(el => { el.dataset.state = model.state; });
+  text('#today-date', ClinicSchedule.pretty(model.clock.key) + 'の診療');
+  const day = model.day;
+  document.querySelector('.today-panel')?.classList.toggle('closed', model.state === 'closed' || model.state === 'ended');
+  text('[data-reception-heading]', day?.partial ? '本日：' : day?.closed || !day ? '通常：' : '');
+  text('[data-reception-am]', day?.partial && !day.sessions.some(([a]) => Number(a.slice(0,2)) < 12) ? '午前 休診' : '午前 9:00–12:00');
+  text('[data-reception-pm]', day?.partial && !day.sessions.some(([a]) => Number(a.slice(0,2)) >= 12) ? '午後 休診' : '午後 13:30–18:30');
+  syncTodayFloating();
+}
+let homeStatusLoading = true;
+function updateTodayStatus() {
+  renderHomeClinicStatus(homeClinicStatus(new Date(), specialClosureRanges,
+    managedContentUnavailable ? (homeStatusLoading ? 'loading' : 'unknown') : 'ready'));
+}
+
+function renderMonthlyCalendar() {
+  ClinicSchedule.renderCalendar(document.querySelector("[data-calendar]"), specialClosureRanges, { loadError: managedContentUnavailable });
+}
+
+function formatNewsDate(value) {
+  return value.replaceAll("-", ".");
+}
+
+function newsItemId(item) {
+  // Existing editor IDs survive title changes and sorting; legacy entries use a deterministic fallback.
+  return String(item.id || `${item.date}:${item.title}`);
+}
+
+function newsItemURL(item) {
+  return `news.html?id=${encodeURIComponent(newsItemId(item))}`;
+}
+
+function renderNewsDetail(items, loadError) {
+  const detail = document.querySelector('[data-news-detail]');
+  if (!detail) return;
+  const id = new URLSearchParams(window.location.search).get('id');
+  const isDetail = id !== null;
+  detail.hidden = !isDetail;
+  document.querySelector('[data-news-index]').hidden = isDetail;
+  if (!isDetail) return;
+  const item = !loadError && items.find(entry => newsItemId(entry) === id);
+  const title = item ? item.title : loadError ? 'お知らせを表示できません' : 'お知らせが見つかりません';
+  const body = item ? String(item.body || '') : loadError
+    ? '通信状況をご確認のうえ、ページを再読み込みしてください。お急ぎの場合はお電話ください。'
+    : 'この記事は掲載を終了したか、削除された可能性があります。お知らせ一覧をご確認ください。';
+  document.querySelector('[data-news-heading]').textContent = title;
+  detail.replaceChildren();
+  if (item) {
+    const time = document.createElement('time');
+    time.dateTime = item.date;
+    time.textContent = formatNewsDate(item.date);
+    detail.append(time);
+  }
+  const paragraph = document.createElement('p');
+  paragraph.className = 'news-detail-body';
+  paragraph.textContent = body;
+  detail.append(paragraph);
+  if (loadError) {
+    const phone = document.createElement('a');
+    phone.href = 'tel:0761246288';
+    phone.textContent = '0761-24-6288';
+    detail.append(phone);
+  }
+  document.title = `${title}｜小松市の林内科医院`;
+  const canonical = new URL(item ? newsItemURL(item) : 'news.html', window.location.href).href;
+  document.querySelector('link[rel="canonical"]').href = canonical;
+  document.querySelector('meta[name="robots"]').content = item ? 'index,follow' : 'noindex,follow';
+  for (const [selector, value] of [
+    ['meta[name="description"]', body], ['meta[property="og:description"]', body],
+    ['meta[name="twitter:description"]', body], ['meta[property="og:title"]', document.title],
+    ['meta[name="twitter:title"]', document.title], ['meta[property="og:url"]', canonical]
+  ]) document.querySelector(selector)?.setAttribute('content', value);
+}
+
+function renderNews(items, loadError = false) {
+  const list = document.querySelector("[data-news-list]");
+  const showAllButton = document.querySelector("[data-show-all]");
+  if (!list) return;
+
+  const categoryLabels = {
+    notice: "お知らせ",
+    trend: "お知らせ",
+    vaccine: "予防接種",
+    closure: "臨時休診"
+  };
+  const publishedItems = Array.isArray(items) ? items
+    .filter((item) => item && item.published !== false && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.title)
+    .sort((a, b) => b.date.localeCompare(a.date)) : [];
+
+  renderNewsDetail(publishedItems, loadError);
+
+  list.replaceChildren();
+
+  if (loadError) {
+    const empty = document.createElement("div");
+    empty.className = "news-empty is-error";
+    const message = document.createElement("p");
+    message.textContent = "現在、お知らせ情報を取得できません。診療状況はお電話でご確認ください。";
+    const phone = document.createElement("a");
+    phone.href = "tel:0761246288";
+    phone.textContent = "0761-24-6288";
+    empty.append(message, phone);
+    list.appendChild(empty);
+  } else if (publishedItems.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "news-empty";
+    empty.textContent = "現在、新しいお知らせはありません。";
+    list.appendChild(empty);
+  }
+
+  publishedItems.forEach((item, index) => {
+    const article = document.createElement("article");
+    if (showAllButton && index >= 3) {
+      article.classList.add("extra-news");
+      article.hidden = true;
+    }
+
+    const time = document.createElement("time");
+    time.dateTime = item.date;
+    time.textContent = formatNewsDate(item.date);
+
+    const tag = document.createElement("span");
+    const category = categoryLabels[item.category] ? item.category : "notice";
+    tag.className = `news-tag ${category}`;
+    tag.textContent = categoryLabels[category];
+
+    const content = document.createElement("div");
+    content.className = "news-content";
+    const title = document.createElement("h3");
+    const link = document.createElement('a');
+    link.className = 'news-title-link';
+    link.href = newsItemURL(item);
+    link.textContent = item.title;
+    title.append(link);
+    content.appendChild(title);
+
+    article.append(time, tag, content);
+    list.appendChild(article);
+  });
+
+  if (showAllButton) {
+    showAllButton.hidden = loadError || publishedItems.length <= 3;
+    showAllButton.dataset.expanded = "false";
+    if (showAllButton.firstChild) showAllButton.firstChild.textContent = "すべて見る ";
+  }
+}
+
+let refreshPageMotion = () => {};
+function initPageMotion() {
+  const header = document.querySelector(".site-header");
+
+  const updateHeader = () => {
+    if (header) header.classList.toggle("is-scrolled", window.scrollY > 24);
+  };
+  updateHeader();
+  window.addEventListener("scroll", updateHeader, { passive: true });
+
+  const isPanoramaHome = !!document.querySelector('body.panorama-home');
+  const textRevealSelector = [
+    '.panorama-intro > h2', '.panorama-intro > p', '.section-heading',
+    '.walkin-copy h3', '.walkin-copy p', '.fever-card h3', '.fever-card p', '.fever-card .visit-action',
+    '.page-link-card h3', '.page-link-more', '.access-info',
+    '.news-content', '.faq-list summary', '.faq-list details > p',
+    '.contact-inner h2', '.contact-details'
+  ].join(',');
+  const revealSelector = isPanoramaHome ? textRevealSelector : [
+    ".quick-guide .walkin-bar",
+    ".quick-guide .guide-card",
+    ".section-heading",
+    ".care-card",
+    ".test-list article",
+    ".prevention-grid article",
+    ".doctor-portrait",
+    ".doctor-copy",
+    ".map-card",
+    ".access-info",
+    ".news-list article",
+    ".recruitment-card",
+    ".faq-list details",
+    ".contact-inner"
+  ].join(",");
+  const revealTargets = document.querySelectorAll(revealSelector);
+
+  // Enter after the text clears the bottom controls, not at the viewport edge.
+  // A separate full-viewport observer re-arms only after the entire group leaves.
+  if (!("IntersectionObserver" in window)) {
+    revealTargets.forEach((target) => target.classList.add("is-visible"));
+  } else {
+    document.documentElement.classList.add("motion-ready");
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!isPanoramaHome) entry.target.classList.toggle("is-visible", entry.isIntersecting);
+        else if (entry.isIntersecting && entry.intersectionRatio >= .12) entry.target.classList.add("is-visible");
+      });
+    }, isPanoramaHome ? { threshold: [0, .12], rootMargin: "0px 0px -96px 0px" } : { threshold: 0, rootMargin: "0px" });
+
+    const resetObserver = isPanoramaHome ? new IntersectionObserver(entries => {
+      entries.forEach(entry => { if (!entry.isIntersecting && document.documentElement.dataset.motionRepeat !== 'false') entry.target.classList.remove('is-visible'); });
+    }, { threshold: 0, rootMargin: '0px' }) : null;
+
+    const observed = new Set();
+    refreshPageMotion = () => {
+      observed.forEach(target => { if (!target.isConnected) { revealObserver.unobserve(target); resetObserver?.unobserve(target); observed.delete(target); } });
+      document.querySelectorAll(revealSelector).forEach((target, index) => {
+        if (observed.has(target)) return;
+        target.classList.add("reveal");
+        target.style.setProperty("--reveal-delay", isPanoramaHome ? `calc(var(--text-motion-stagger,70ms) * ${index % 3})` : `${(index % 3) * 70}ms`);
+        revealObserver.observe(target); resetObserver?.observe(target); observed.add(target);
+      });
+    };
+    refreshPageMotion();
+
+    const entranceObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => entry.target.classList.toggle("motion-offscreen", !entry.isIntersecting));
+    }, { threshold: 0 });
+    if (!isPanoramaHome) document.querySelectorAll('.hero-copy, .today-panel').forEach(target => entranceObserver.observe(target));
+  }
+
+  const navLinks = [...document.querySelectorAll('.global-nav a[href^="#"]')];
+  const sections = navLinks
+    .map((link) => document.querySelector(link.getAttribute("href")))
+    .filter(Boolean);
+
+  if ("IntersectionObserver" in window && sections.length) {
+    const sectionObserver = new IntersectionObserver((entries) => {
+      const visible = entries.find((entry) => entry.isIntersecting);
+      if (!visible) return;
+      navLinks.forEach((link) => {
+        link.classList.toggle("is-current", link.getAttribute("href") === `#${visible.target.id}`);
+      });
+    }, { rootMargin: "-30% 0px -60% 0px", threshold: 0 });
+    sections.forEach((section) => sectionObserver.observe(section));
+  }
+}
+
+async function loadManagedContent() {
+  if (window.location.protocol === "file:") return { ...defaultManagedContent, loadError: true };
+
+  try {
+    const initial = window.ClinicInitialContentRequest;
+    delete window.ClinicInitialContentRequest; // This is a one-use request, not a settings cache.
+    initial?.release();
+    let content;
+    if (initial && !initial.cancelled && Date.now() - initial.startedAt < 8000) {
+      const result = await initial.promise;
+      if (result.error) throw result.error;
+      content = result.data;
+    } else {
+      initial?.cancel();
+      content = await ClinicContent.fetchJSON("data/site-updates.json?v=" + Date.now());
+    }
+    if (!content || !Array.isArray(content.closures) || !Array.isArray(content.news)) throw new Error("更新データの形式が不正です");
+    return {
+      ...ClinicContent.normalize({ ...content, hero: {
+        ...content.hero, slides: Array.isArray(content.hero?.slides) ? content.hero.slides : []
+      } }),
+      closures: Array.isArray(content.closures) ? content.closures : [],
+      news: Array.isArray(content.news) ? content.news : [],
+      siteStatus: (content.siteStatus && typeof content.siteStatus === "object")
+        ? content.siteStatus : defaultManagedContent.siteStatus,
+      highlight: (content.highlight && typeof content.highlight === "object")
+        ? content.highlight : defaultManagedContent.highlight,
+      recruitment: (content.recruitment && typeof content.recruitment === "object")
+        ? content.recruitment : defaultManagedContent.recruitment,
+      tests: Array.isArray(content.tests) ? content.tests : defaultManagedContent.tests,
+      vaccines: Array.isArray(content.vaccines) ? content.vaccines : defaultManagedContent.vaccines,
+      vaccineNote: typeof content.vaccineNote === "string" ? content.vaccineNote : defaultManagedContent.vaccineNote,
+      checkups: Array.isArray(content.checkups) ? content.checkups : defaultManagedContent.checkups,
+      checkupNote: typeof content.checkupNote === "string" ? content.checkupNote : defaultManagedContent.checkupNote,
+      loadError: false
+    };
+  } catch (error) {
+    console.warn("更新データを読み込めませんでした。古いお知らせ・休診情報は代替表示しません。", error);
+    return { ...defaultManagedContent, loadError: true };
+  }
+}
+
+function renderTests(items) {
+  const list = document.querySelector("[data-test-list]");
+  if (!list || !Array.isArray(items) || items.length === 0) return;
+
+  list.replaceChildren();
+  items
+    .filter((item) => item && item.title)
+    .forEach((item, index) => {
+      const article = document.createElement("article");
+      const number = document.createElement("span");
+      number.textContent = String(index + 1).padStart(2, "0");
+      const body = document.createElement("div");
+      const title = document.createElement("h3");
+      title.textContent = item.title;
+      body.appendChild(title);
+      if (item.body) {
+        const desc = document.createElement("p");
+        desc.textContent = item.body;
+        body.appendChild(desc);
+      }
+      article.append(number, body);
+      list.appendChild(article);
+    });
+}
+
+function renderList(selector, items, labelKey) {
+  const list = document.querySelector(selector);
+  if (!list || !Array.isArray(items) || items.length === 0) return;
+
+  list.replaceChildren();
+  items
+    .filter((item) => item && item[labelKey])
+    .forEach((item) => {
+      const li = document.createElement("li");
+      if (item.wide) li.className = "vaccine-wide";
+      li.textContent = item[labelKey];
+      list.appendChild(li);
+    });
+}
+
+function renderNote(selector, text) {
+  const note = document.querySelector(selector);
+  if (!note || typeof text !== "string" || text === "") return;
+  note.textContent = text;
+}
+
+function renderPreventionContent(content) {
+  renderList("[data-vaccine-list]", content.vaccines, "label");
+  renderNote("[data-vaccine-note]", content.vaccineNote);
+  renderList("[data-checkup-list]", content.checkups, "label");
+  renderNote("[data-checkup-note]", content.checkupNote);
+}
+
+
+
+function renderSiteStatus(siteStatus) {
+  const section = document.querySelector("[data-site-status]");
+  if (!section) return;
+
+  const enabled = !!(siteStatus && siteStatus.enabled);
+  section.hidden = true;
+  if (!enabled) return;
+
+  const title = section.querySelector("[data-site-status-title]");
+  const body = section.querySelector("[data-site-status-body]");
+  const titleText = typeof siteStatus.title === "string" ? siteStatus.title.trim() : "";
+  const bodyText = typeof siteStatus.body === "string" ? siteStatus.body.trim() : "";
+
+  if (title) {
+    title.textContent = titleText;
+    title.hidden = titleText === "";
+  }
+  if (body) {
+    body.textContent = bodyText;
+    body.hidden = bodyText === "";
+  }
+  section.hidden = !titleText && !bodyText;
+}
+
+function renderRecruitment(recruitment) {
+  const section = document.querySelector("[data-recruitment-section]");
+  const enabled = !!(recruitment && recruitment.enabled);
+  document.querySelectorAll("[data-recruitment-nav], [data-recruitment-footer]").forEach((link) => {
+    link.hidden = !enabled;
+  });
+  if (!section) return;
+  section.hidden = !enabled;
+  if (!enabled) return;
+
+  const title = section.querySelector("[data-recruitment-title]");
+  const lead = section.querySelector("[data-recruitment-lead]");
+  const conditions = section.querySelector("[data-recruitment-conditions]");
+  const note = section.querySelector("[data-recruitment-note]");
+  const button = section.querySelector("[data-recruitment-link]");
+
+  if (title) title.textContent = (recruitment.title || "スタッフ募集中").trim();
+  if (lead) {
+    const text = typeof recruitment.lead === "string" ? recruitment.lead.trim() : "";
+    lead.textContent = text;
+    lead.hidden = text === "";
+  }
+
+  if (conditions) {
+    conditions.replaceChildren();
+    const items = Array.isArray(recruitment.conditions) ? recruitment.conditions : [];
+    items.filter((item) => item && item.label && item.value).forEach((item) => {
+      const row = document.createElement("div");
+      const dt = document.createElement("dt");
+      const dd = document.createElement("dd");
+      dt.textContent = item.label;
+      dd.textContent = item.value;
+      row.append(dt, dd);
+      conditions.appendChild(row);
+    });
+    conditions.hidden = conditions.children.length === 0;
+  }
+
+  if (note) {
+    const text = typeof recruitment.note === "string" ? recruitment.note.trim() : "";
+    note.textContent = text;
+    note.hidden = text === "";
+  }
+
+  if (button) {
+    const url = typeof recruitment.buttonUrl === "string" ? recruitment.buttonUrl.trim() : "";
+    if (url && isSafeLink(url)) {
+      button.textContent = (recruitment.buttonText || "お問い合わせ").trim();
+      button.href = url;
+      button.hidden = false;
+      if (url.startsWith("http")) {
+        button.target = "_blank";
+        button.rel = "noopener";
+      } else {
+        button.removeAttribute("target");
+        button.removeAttribute("rel");
+      }
+    } else {
+      button.hidden = true;
+      button.removeAttribute("href");
+    }
+  }
+}
+
+function isSafeLink(url) {
+  return typeof url === "string" && /^(https?:\/\/|tel:|#)/.test(url);
+}
+
+const menuButton = document.querySelector(".menu-button");
+const globalNav = document.querySelector(".global-nav");
+
+
+
+if (menuButton && globalNav) {
+  const setMenuOpen = (open) => {
+    menuButton.setAttribute("aria-expanded", String(open));
+    globalNav.classList.toggle("open", open);
+    document.body.classList.toggle("menu-open", open);
+    if (open) {
+      const firstLink = globalNav.querySelector("a");
+      window.requestAnimationFrame(() => firstLink?.focus());
+    }
+  };
+
+  menuButton.addEventListener("click", () => {
+    setMenuOpen(menuButton.getAttribute("aria-expanded") !== "true");
+  });
+
+  globalNav.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => setMenuOpen(false));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menuButton.getAttribute("aria-expanded") === "true") {
+      setMenuOpen(false);
+      menuButton.focus();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (menuButton.getAttribute("aria-expanded") !== "true") return;
+    if (globalNav.contains(event.target) || menuButton.contains(event.target)) return;
+    setMenuOpen(false);
+  });
+}
+
+const showAllButton = document.querySelector("[data-show-all]");
+
+if (showAllButton) {
+  showAllButton.addEventListener("click", (event) => {
+    const expanded = event.currentTarget.dataset.expanded === "true";
+    document.querySelectorAll(".extra-news").forEach((item) => {
+      item.hidden = expanded;
+    });
+    event.currentTarget.dataset.expanded = String(!expanded);
+    event.currentTarget.firstChild.textContent = expanded ? "すべて見る " : "閉じる ";
+  });
+}
+
+let lastContentSignature = "";
+function applyManagedContent(content) {
+  const signature = JSON.stringify(content);
+  if (signature === lastContentSignature) { updateTodayStatus(); renderMonthlyCalendar(); return; }
+  lastContentSignature = signature;
+  ClinicPublicContent.applyHero?.(content);
+  specialClosureRanges = ClinicSchedule.active(content.closures);
+  if (!content.loadError) ClinicSchedule.syncStructuredHours(document, content.closures);
+  managedContentUnavailable = content.loadError;
+  homeStatusLoading = false;
+  renderNews([...content.news, ...ClinicSchedule.closureNews(content.closures)], content.loadError);
+  renderTests(content.tests);
+  renderPreventionContent(content);
+  renderSiteStatus(content.siteStatus);
+  renderRecruitment(content.recruitment);
+  ClinicPublicContent.apply(content);
+  refreshPageMotion();
+  protectJapanesePhrases();
+  updateTodayStatus();
+  renderMonthlyCalendar();
+}
+function showStatusUnavailable() {
+  managedContentUnavailable = true;
+  homeStatusLoading = false;
+  lastContentSignature = '';
+  updateTodayStatus();
+  document.querySelectorAll('[data-calendar-grid]').forEach(el => el.replaceChildren());
+  document.querySelectorAll('[data-calendar-note]').forEach(el => { el.textContent = '休診予定はお電話でご確認ください（0761-24-6288）。'; });
+  document.querySelectorAll('[data-calendar-prev], [data-calendar-next]').forEach(el => { el.disabled = true; });
+}
+
+let refreshingContent = false;
+let contentRequestGeneration = 0;
+let contentSuspended = document.hidden;
+// Remove transient notices before the browser saves a page/history snapshot.
+// Responses started before suspension must not refill that snapshot later.
+function suspendManagedContent() {
+  contentSuspended = true;
+  contentRequestGeneration++;
+  refreshingContent = false;
+  lastContentSignature = "";
+  window.ClinicInitialContentRequest?.cancel();
+  window.ClinicInitialContentRequest?.release();
+  delete window.ClinicInitialContentRequest;
+  ClinicPublicContent.clearHero?.();
+  ClinicPublicContent.clearNotices?.();
+  renderSiteStatus(null);
+}
+function resumeManagedContent() {
+  contentSuspended = false;
+  refreshManagedContent();
+}
+async function refreshManagedContent() {
+  if (refreshingContent || contentSuspended) return;
+  refreshingContent = true;
+  const generation = ++contentRequestGeneration;
+  if (!lastContentSignature) {
+    homeStatusLoading = true;
+    managedContentUnavailable = true;
+    updateTodayStatus();
+  }
+  try {
+    const content = await loadManagedContent();
+    if (generation !== contentRequestGeneration || contentSuspended) return;
+    applyManagedContent(content);
+  }
+  catch (error) {
+    if (generation !== contentRequestGeneration || contentSuspended) return;
+    ClinicPublicContent.clearHero?.();
+    ClinicPublicContent.clearNotices?.();
+    renderSiteStatus(null);
+    console.warn("診療状況を表示できませんでした。", error);
+    showStatusUnavailable();
+  }
+  finally { if (generation === contentRequestGeneration) refreshingContent = false; }
+}
+// Page animation must not wait for the content request (up to 8 seconds).
+initPageMotion();
+refreshManagedContent();
+setInterval(updateTodayStatus, 60000);
+setInterval(() => { if (!document.hidden) refreshManagedContent(); }, 15000);
+document.addEventListener("visibilitychange", () => { if (document.hidden) suspendManagedContent(); else resumeManagedContent(); });
+window.addEventListener('focus',()=>{if(!document.hidden)refreshManagedContent();});
+window.addEventListener('pagehide',suspendManagedContent);
+window.addEventListener('pageshow',event=>{if(event.persisted || contentSuspended)resumeManagedContent();});
+window.addEventListener('storage',event=>{if(event.key==='hayashi-public-content-updated' && !document.hidden)refreshManagedContent();});
+
+
+/* Keep the compact panel current even without a scroll or resize. */
+function syncTodayFloating() {
+  const panel = document.querySelector('.today-panel');
+  const floating = document.querySelector('.today-floating');
+  if (!panel || !floating) return;
+  const rect = panel.getBoundingClientRect();
+  const headerBottom = document.querySelector('.site-header')?.getBoundingClientRect().bottom || 0;
+  floating.classList.toggle('visible', rect.bottom <= headerBottom || rect.top >= window.innerHeight);
+  floating.classList.toggle('closed', panel.classList.contains('closed'));
+  for (const id of ['today-label', 'today-detail', 'today-reception-current']) {
+    const source = document.getElementById(id), target = document.getElementById('floating-' + id);
+    if (source && target) { target.textContent = source.textContent; target.hidden = source.hidden; }
+  }
+}
+window.addEventListener('scroll', syncTodayFloating, { passive: true });
+window.addEventListener('resize', syncTodayFloating);
+window.addEventListener('load', syncTodayFloating);
+

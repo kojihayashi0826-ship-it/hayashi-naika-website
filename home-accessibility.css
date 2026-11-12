@@ -1,0 +1,44 @@
+/* Homepage-only readability and controls; shared styles stay unchanged. */
+.home-status-strip { background:#f1f6f2; border-bottom:1px solid #c9d9ce; color:#254734; }
+.home-status-inner { display:flex; align-items:center; gap:20px; padding-block:14px; }
+.home-status-heading { margin:0; font-size:16px; font-weight:700; white-space:nowrap; }
+.home-status-copy { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 16px; flex:1; line-height:1.6; }
+.home-status-copy strong { font-size:18px; }
+.home-status-copy span, .home-status-inner > a { font-size:16px; }
+.home-status-inner > a { color:#254734; text-underline-offset:.2em; }
+.home-status-strip:is([data-state="closed"],[data-state="ended"]) { background:#fff7f2; color:#692e1d; }
+.home-status-strip [hidden] { display:none; }
+html[data-hero-layout="panorama"] #top .hero-lead strong { font-size:24px; line-height:1.8; }
+html[data-hero-layout="panorama"] #top .panorama-caption { font-size:16px; color:#3e5749; flex-wrap:wrap; }
+html[data-hero-layout="panorama"] #top :is(.hero-title-group,.hero-lead,.hero-lead span,.panorama-caption,.panorama-caption span,.hero-visual) {
+  opacity:1!important; transform:none!important; animation:none!important; transition:none!important;
+}
+html[data-hero-layout="panorama"] #top .slideshow-image { mask-image:none!important; -webkit-mask-image:none!important; }
+body.panorama-home .seo-summary p { font-size:16px; line-height:1.9; }
+body.panorama-home .symptom-link { color:#254734; text-decoration:underline; text-underline-offset:.2em; }
+.clinic-slideshow .slideshow-photo-toggle { position:absolute; bottom:16px; right:16px; z-index:4; min-height:44px; padding:10px 16px; border:1px solid #3e5749; border-radius:6px; background:#fff; color:#254734; font:600 16px/1.5 var(--sans); cursor:pointer; }
+.clinic-slideshow .slideshow-photo-toggle[hidden] { display:none; }
+.clinic-slideshow button:focus-visible, .home-status-inner a:focus-visible { outline:3px solid #254734; outline-offset:4px; }
+.access-info dl .access-facilities { grid-template-columns:1fr; }
+.access-info .access-facilities dt { margin-bottom:6px; font-size:16px; }
+.access-info .access-facilities dd { font-size:16px; line-height:1.9; }
+/* Keep the shoes sentence together when it fits, without overflowing narrow screens. */
+.access-shoes-note { display:inline-block; max-width:100%; }
+@media (max-width:820px) {
+  .home-status-strip { display:none; }
+  .site-header .header-inner, .site-header.is-scrolled .header-inner { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:8px 12px; padding-block:10px; }
+  .site-header .brand { grid-column:1; grid-row:1; }
+  .site-header .menu-button { grid-column:2; grid-row:1; width:44px; }
+  .site-header .mobile-clinic-status { grid-column:1/-1; grid-row:2; min-width:0; align-items:flex-start; padding:8px 12px; text-align:left; }
+  .site-header .mobile-clinic-status strong { font-size:16px; white-space:normal; }
+  .site-header .mobile-clinic-status small { font-size:14px; white-space:normal; }
+  .site-header .mobile-clinic-status [hidden] { display:none; }
+  .site-header .global-nav { top:100%; max-height:calc(100dvh - 160px); }
+  html:has(body.panorama-home) { scroll-padding-top:170px; }
+}
+@media (max-width:640px) {
+  html[data-hero-layout="panorama"] #top .hero-lead strong { font-size:20px; }
+  html[data-hero-layout="panorama"] #top .panorama-caption { font-size:16px; gap:4px 16px; }
+  .clinic-slideshow .slideshow-photo-toggle { bottom:8px; right:8px; padding:8px 12px; }
+}
+@media print { .home-status-strip, .slideshow-photo-toggle { display:none!important; } }

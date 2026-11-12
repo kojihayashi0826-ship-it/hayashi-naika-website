@@ -1,0 +1,20 @@
+{
+  "endoscopy.html": "876b74f002125273c97478ea1a57a9a4e509ef81fc5f3296e197177a561d4783",
+  "styles.css": "441c6accafedf783cae22dc36281aca68da43ae8f83fcb3a8a3b7f3f936de898",
+  "calendar-sync.css": "726e6f70ec7090ea69de619edaf0ea5c8d1c0759a7886fb05e4ece0dbe8636ef",
+  "clinic-schedule.js": "2f72784341e19fe5b0683f21a95f1258c5489fd45147c20f5471fe26a810b6bc",
+  "clinic-content.css": "9ac9f5fd075d5d950ed433bd44d4e8e6d389075538a574106a5884cafce69267",
+  "clinic-theme.js": "3408a8c041bd36c018e55e8e0b8048cb65da6332df5734304250153deee30399",
+  "clinic-design.js": "53bdd752e24c2abff6e44af3c9b549aaf3b3f514200e5d19b48de59600f5c366",
+  "clinic-content.js": "bc58ad2137365e63469cffaa8304c94ac75aba6c1d9bd2a0a286976e0428fb98",
+  "content-public.js": "afc5f856c1a7e6f9bc089b7a27d6454adcd7216b1cfbbe24fceed18d62a1d551",
+  "script.js": "59ce87afd8f9838dff37c86954439a8fe7f7124e4b5fd7844fd20ded18451fa6",
+  "page-navigation.js": "35d647a31bbba19bed0a331e392475b9998046e7d058c118c6c4fc5ac0fd70c3",
+  "clinic-theme.css": "5289da835a07cbbe19009daa8be94f48f297838730903095feb31f6840e2bdec",
+  "clinic-design.css": "125d91fe92b618ac53856e60d5f292b42888308ce82213283dfea51faece086f",
+  "today-status.css": "1b61a8af5a9d5462c08983b75864cecf75dcaa494fc98f067dc9293edb48c244",
+  "patient-guidance.css": "77945cad8eff1cbc2e9c57773c0d98b7549ddcdd66fa3de014e77dac64fea543",
+  "endoscopy.css": "54129fe34174d3516566ab2e9ccb20f44547acd677eb8b5464bc73bcaf76ca6c",
+  "site-refine.css": "cc06f2dd31e84f27ba6221327ddb46a7c9e771cc84c7177a1e62b27b228e18b5",
+  "logo-sizing.js": "37ceca1363e3fceda8ecfc98b75d59a099938743ca6320fa1a95222325c01ed6"
+}
