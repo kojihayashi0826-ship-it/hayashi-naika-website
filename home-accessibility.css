@@ -22,6 +22,8 @@ body.panorama-home .symptom-link { color:#254734; text-decoration:underline; tex
 .access-info dl .access-facilities { grid-template-columns:1fr; }
 .access-info .access-facilities dt { margin-bottom:6px; font-size:16px; }
 .access-info .access-facilities dd { font-size:16px; line-height:1.9; }
+/* Keep the shoes sentence together when it fits, without overflowing narrow screens. */
+.access-shoes-note { display:inline-block; max-width:100%; }
 @media (max-width:820px) {
   .home-status-strip { display:none; }
   .site-header .header-inner, .site-header.is-scrolled .header-inner { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:8px 12px; padding-block:10px; }
