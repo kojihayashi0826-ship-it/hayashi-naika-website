@@ -9,7 +9,7 @@ const fixture=()=>({closures:[],news:[],hero:{autoplay:false,fade:0,slides:[
 const image=t=>t.w.document.querySelector('[data-hero-slideshow] img');
 const response=data=>({ok:true,json:async()=>data});
 function page(source=fixture()){
-  const t=setup('index.html',{source,deferScripts:true});
+  const t=setup('index.html',{home:true,source,deferScripts:true});
   t.w.console.warn=()=>{};
   return t;
 }

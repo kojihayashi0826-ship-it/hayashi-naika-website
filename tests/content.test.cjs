@@ -55,6 +55,7 @@ function setup(name='site-editor.html',options={}){
  else if(['index.html','care.html','tests.html','doctor.html','first-visit.html','vaccines.html','checkups.html'].includes(name))scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','content-public.js','script.js'];
  else scripts=['clinic-theme.js','clinic-design.js','clinic-content.js','clinic-documents.js'];
  const expose=name==='site-editor.html'?`\nwindow.qa={get:()=>JSON.parse(JSON.stringify(data)),set:v=>{data=safeData(v);render();},prepare:()=>JSON.parse(preparedJson()),validate:()=>{collect();return validate();},dirty:()=>dirty,mark:markDirty};`:'';
+ if(options.home)scripts=['clinic-schedule.js','clinic-theme.js','clinic-design.js','clinic-content.js','home-slideshow.js','content-public.js','home-page.js'];
  const start=()=>w.eval(scripts.map(load).join('\n')+expose);
  if(!options.deferScripts)start();
  return {dom,w,calls,errors,start,getRemote:()=>remote,getRemoteHTML:()=>remoteHTML,setConflict:()=>{sha='other'},getTree:()=>tree};
@@ -214,7 +215,7 @@ async function publicTests(){
  const active=win=>win.document.querySelector('.slideshow-image:not([aria-hidden])').alt;
  const root=w.document.querySelector('.clinic-slideshow'),controls=root.querySelector('.slideshow-controls');
  assert.equal(controls.textContent,'');assert.equal(controls.querySelectorAll('button').length,2);assert.equal(root.querySelector('.slideshow-count'),null);assert.equal(active(w),'First');
- w.document.querySelector('dialog').close();await sleep(1150);assert.equal(active(w),'Second');
+ w.document.querySelector('dialog').close();await waitFor(()=>active(w)==='Second',2000);assert.equal(active(w),'Second');
  root.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));await sleep(1200);assert.equal(active(w),'Second');
  const next=controls.querySelector('[aria-label="次の写真"]'),prev=controls.querySelector('[aria-label="前の写真"]');
  next.click();await sleep(30);assert.equal(active(w),'First');prev.click();await sleep(30);assert.equal(active(w),'Second');

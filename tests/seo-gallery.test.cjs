@@ -9,7 +9,7 @@ const {setup,waitFor}=require('./content.test.cjs');
   {src:'https://invalid.example/external.jpg'},
   {src:'assets/uploads/video.mp4'}
  ]}};
- const t=setup('index.html',{source}),w=t.w;
+ const t=setup('index.html',{home:true,source}),w=t.w;
  const photos=()=>[...w.document.querySelectorAll('[data-clinic-photos] img')];
  try {
   await waitFor(()=>photos().length===2);
